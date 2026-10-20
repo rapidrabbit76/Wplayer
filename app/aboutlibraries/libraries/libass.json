@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:libass",
+  "name": "libass",
+  "description": "ASS/SSA subtitle renderer.",
+  "website": "https://github.com/libass/libass",
+  "developers": [
+    {
+      "name": "libass contributors"
+    }
+  ],
+  "licenses": [
+    "ISC"
+  ],
+  "artifactVersion": "${LIBASS_VERSION}"
+}

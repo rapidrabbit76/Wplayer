@@ -1,0 +1,14 @@
+{
+  "uniqueId": "shader:fsr",
+  "name": "AMD FidelityFX FSR 1 (mpv port)",
+  "description": "Sharp upscaling shader.",
+  "website": "https://github.com/GPUOpen-Effects/FidelityFX-FSR",
+  "developers": [
+    {
+      "name": "Advanced Micro Devices, agyild"
+    }
+  ],
+  "licenses": [
+    "MIT"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:mpv",
+  "name": "mpv (libmpv)",
+  "description": "Video player engine.",
+  "website": "https://mpv.io",
+  "developers": [
+    {
+      "name": "mpv contributors"
+    }
+  ],
+  "licenses": [
+    "GPL-2.0-or-later"
+  ],
+  "artifactVersion": "${MPV_VERSION}"
+}

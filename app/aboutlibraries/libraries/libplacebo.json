@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:libplacebo",
+  "name": "libplacebo",
+  "description": "GPU video rendering used by mpv.",
+  "website": "https://code.videolan.org/videolan/libplacebo",
+  "developers": [
+    {
+      "name": "libplacebo authors"
+    }
+  ],
+  "licenses": [
+    "LGPL-2.1-or-later"
+  ],
+  "artifactVersion": "${LIBPLACEBO_VERSION}"
+}

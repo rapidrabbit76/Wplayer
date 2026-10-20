@@ -1,0 +1,47 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please leave out passwords, private server addresses and personal media.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Wplayer version
+      description: Settings → About
+      placeholder: "0.1.7"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Pixel 9, Android 16"
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Source
+      options: [Device storage, SMB, NFS, FTP / FTPS, WebDAV(S), Not related to a source]
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Media details
+      description: For playback problems, the codec and container (Settings → General → Developer → playback stats).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "`adb logcat --pid=$(adb shell pidof dev.wplayer)` while reproducing, if you can."
+      render: text

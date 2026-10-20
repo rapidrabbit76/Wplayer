@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="18 18 72 72" role="img" aria-labelledby="title desc">
+  <title id="title">Wplayer</title>
+  <desc id="desc">A bold blue geometric W whose rising final stroke ends in a right-pointing play tip, on a midnight navy rounded square.</desc>
+  <defs>
+    <linearGradient id="w" gradientUnits="userSpaceOnUse" x1="27" y1="37" x2="84" y2="71">
+      <stop stop-color="#35ADFF"/>
+      <stop offset="1" stop-color="#0097FF"/>
+    </linearGradient>
+    <clipPath id="launcher-mask">
+      <rect x="18" y="18" width="72" height="72" rx="16"/>
+    </clipPath>
+  </defs>
+  <!-- The central 72dp window matches the adaptive icon at rest. -->
+  <g clip-path="url(#launcher-mask)">
+    <path fill="#001D34" d="M0 0H108V108H0Z"/>
+    <path fill="url(#w)" d="M27,37 H38 L44,58 L50,41 H58 L64,58 L70,42 V32 L84,43 L75,50 L68,71 H60 L54,55 L48,71 H39 Z"/>
+  </g>
+</svg>

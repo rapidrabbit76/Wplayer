@@ -1,0 +1,20 @@
+.gradle/
+build/
+/local.properties
+# Release signing key and its passwords (backed up outside the repo).
+/keystore.properties
+# Local release settings (secrets for scripts/release.sh).
+/scripts/release.env
+*.jks
+*.keystore
+.idea/
+*.iml
+.kotlin/
+/rust/target/
+/native/src/
+/native/build/
+/native/prefix/
+/native/out/
+/apk/
+.DS_Store
+/native/build.log

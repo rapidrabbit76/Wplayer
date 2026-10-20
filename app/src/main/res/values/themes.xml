@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark like the default app theme, so launching does not flash white before Compose draws.
+         AppCompat themes, since AppCompatActivity applies the in-app language on Android 12 and older. -->
+    <style name="Theme.Wplayer" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#FF111418</item>
+    </style>
+
+    <style name="Theme.Wplayer.Player" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
+    </style>
+</resources>
