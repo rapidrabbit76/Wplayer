@@ -1,7 +1,10 @@
 package dev.wplayer.app.ui.player
 
+import android.content.Context
 import android.graphics.Rect
+import android.os.Build
 import android.os.SystemClock
+import android.view.Surface as AndroidSurface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
@@ -433,6 +436,7 @@ fun PlayerScreen(
             val videoAspect = state.aspect.ratio ?: (playback.videoWidth.toFloat() / playback.videoHeight).takeIf { playback.videoHeight > 0 }
             VideoSurface(
                 viewModel = viewModel,
+                frameRate = displayFrameRateFor(playback.stats.containerFps, settings.screen.smoothMotion),
                 modifier = Modifier
                     .then(if (state.directOutput) Modifier.directVideoSize(videoAspect, state.scale, state.zoom) else Modifier.fillMaxSize())
                     .onGloballyPositioned { onVideoBoundsChanged(it.boundsInWindow().roundToIntRect().toAndroidRect()) },
@@ -671,16 +675,20 @@ private fun Modifier.directVideoSize(aspect: Float?, scale: ScaleMode, zoom: Flo
     layout(width, height) { placeable.place((width - placeable.width) / 2, (height - placeable.height) / 2) }
 }
 
-/** A [SurfaceView] whose lifecycle is forwarded to the player. */
+/** A [SurfaceView] whose lifecycle is forwarded to the player, asking the display for [frameRate] (0 for none). */
 @Composable
-private fun VideoSurface(viewModel: PlayerViewModel, modifier: Modifier) {
+private fun VideoSurface(viewModel: PlayerViewModel, frameRate: Float, modifier: Modifier) {
     AndroidView(
         modifier = modifier,
+        update = { it.frameRate = frameRate },
         factory = { context ->
-            SurfaceView(context).apply {
+            VideoSurfaceView(context).apply {
                 holder.addCallback(
                     object : SurfaceHolder.Callback {
-                        override fun surfaceCreated(holder: SurfaceHolder) = viewModel.onSurfaceCreated(holder.surface)
+                        override fun surfaceCreated(holder: SurfaceHolder) {
+                            applyFrameRate()
+                            viewModel.onSurfaceCreated(holder.surface)
+                        }
 
                         override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) =
                             viewModel.onSurfaceChanged(width, height)
@@ -691,6 +699,31 @@ private fun VideoSurface(viewModel: PlayerViewModel, modifier: Modifier) {
             }
         },
     )
+}
+
+/**
+ * Tells Android the video's frame rate (see [displayFrameRateFor]). Adaptive
+ * displays otherwise idle at 60 Hz during playback, since nothing touches the
+ * screen, and drop half of a 120 fps video. Only seamless switches, so TVs that
+ * blank the screen to change modes stay put.
+ */
+private class VideoSurfaceView(context: Context) : SurfaceView(context) {
+    var frameRate = 0f
+        set(value) {
+            if (field == value) return
+            field = value
+            applyFrameRate()
+        }
+
+    fun applyFrameRate() {
+        val surface = holder.surface
+        if (!surface.isValid) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            surface.setFrameRate(frameRate, AndroidSurface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE, AndroidSurface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            surface.setFrameRate(frameRate, AndroidSurface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
+        }
+    }
 }
 
 @Composable

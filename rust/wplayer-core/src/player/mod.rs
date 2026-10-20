@@ -100,6 +100,8 @@ const OBSERVED: &[(&CStr, c_int)] = &[
     (c"current-tracks/video/codec", MPV_FORMAT_STRING),
     (c"video-params/dw", MPV_FORMAT_INT64),
     (c"video-params/dh", MPV_FORMAT_INT64),
+    // Also asked of the display as the refresh rate to suit.
+    (c"container-fps", MPV_FORMAT_DOUBLE),
     (c"ab-loop-a", MPV_FORMAT_DOUBLE),
     (c"ab-loop-b", MPV_FORMAT_DOUBLE),
     (c"sub-delay", MPV_FORMAT_DOUBLE),
@@ -114,7 +116,6 @@ const OBSERVED: &[(&CStr, c_int)] = &[
 /// several of them change many times a second.
 const STATS: &[(&CStr, c_int)] = &[
     (c"estimated-vf-fps", MPV_FORMAT_DOUBLE),
-    (c"container-fps", MPV_FORMAT_DOUBLE),
     (c"frame-drop-count", MPV_FORMAT_INT64),
     (c"decoder-frame-drop-count", MPV_FORMAT_INT64),
     (c"video-bitrate", MPV_FORMAT_DOUBLE),

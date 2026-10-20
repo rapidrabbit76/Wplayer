@@ -13,6 +13,19 @@ enum class AspectRatio(val mpvValue: String, val label: String, val ratio: Float
     RATIO_1_1("1:1", "1:1", 1f),
 }
 
+/**
+ * The frame rate to ask the display for, 0 for no preference. Only videos
+ * faster than 60 fps ask: adaptive displays idle at 60 Hz during playback and
+ * drop the extra frames. Slower videos already show every frame at 60 Hz, and
+ * asking can make things worse (a ZUI tablet answers 24 fps with 30 Hz).
+ * Smooth motion fits the video to the display itself, so it never asks.
+ */
+fun displayFrameRateFor(containerFps: Double?, smoothMotion: Boolean): Float =
+    containerFps?.takeIf { !smoothMotion && it > MIN_FPS_TO_ASK && it <= MAX_VIDEO_FPS }?.toFloat() ?: 0f
+
+private const val MIN_FPS_TO_ASK = 60.5
+private const val MAX_VIDEO_FPS = 240.0
+
 enum class ScaleMode {
     /** Whole picture visible, black bars where the shapes differ. */
     FIT,
