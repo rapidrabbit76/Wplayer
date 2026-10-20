@@ -92,6 +92,8 @@
     <string name="settings_gestures">Gestures</string>
     <string name="settings_hwdec">Hardware decoding</string>
     <string name="settings_hwdec_hint">Plays AV1, HEVC and more with the device\'s decoder. If something goes wrong, turn it off to decode in software (dav1d and others).</string>
+    <string name="settings_direct_output">Direct video output</string>
+    <string name="settings_direct_output_hint">The decoder draws the picture itself: smoothest for 4K and HDR on TVs and slower devices. Subtitles show as plain text, and picture enhancement does not apply.</string>
     <string name="settings_auto_pip">Picture-in-picture when going home</string>
     <string name="settings_long_press_speed">Long-press fast-forward speed</string>
     <string name="settings_seconds">%1$d s</string>
@@ -117,6 +119,7 @@
     <string name="error_unsupported">Not supported.</string>
     <string name="error_other">An unknown error occurred.</string>
     <string name="player_software_fallback">The hardware decoder stopped responding; playing with software decoding.</string>
+    <string name="player_decoder_fallback">The picture stopped with the faster hardware decoding. Playing with software decoding now; the next video starts in a compatible mode.</string>
     <!-- Common actions -->
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>

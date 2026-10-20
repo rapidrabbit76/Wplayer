@@ -12,7 +12,7 @@ mod tracks;
 
 use std::collections::HashMap;
 use std::ffi::{CStr, CString, c_char, c_int, c_void};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::JoinHandle;
 
@@ -129,6 +129,11 @@ const STATS: &[(&CStr, c_int)] = &[
 /// Reply ids for [STATS], kept apart from the always-observed ones.
 const STATS_ID_BASE: u64 = 1000;
 
+/// Reply id for `avsync`, which mpv recomputes each time it shows a video
+/// frame. Its changes are counted in the core, not reported: see
+/// [Player::presented_frames].
+const FRAME_CLOCK_ID: u64 = 2000;
+
 /// Owned mpv handle. The libmpv client API is thread-safe.
 struct Mpv {
     api: &'static MpvApi,
@@ -216,6 +221,7 @@ impl Mpv {
 pub struct Player {
     mpv: Arc<Mpv>,
     video_output: String,
+    presented_frames: Arc<AtomicU64>,
     destroyed: AtomicBool,
     event_thread: Mutex<Option<JoinHandle<()>>>,
 }
@@ -247,6 +253,9 @@ impl Player {
                 let rc = unsafe { (api.mpv_observe_property)(handle, id as u64, name.as_ptr(), *format) };
                 mpv.check(rc, "observe")?;
             }
+            let rc =
+                unsafe { (api.mpv_observe_property)(handle, FRAME_CLOCK_ID, c"avsync".as_ptr(), MPV_FORMAT_DOUBLE) };
+            mpv.check(rc, "observe")?;
             Ok(())
         };
         if let Err(e) = configure() {
@@ -255,14 +264,17 @@ impl Player {
         }
 
         let thread_mpv = Arc::clone(&mpv);
+        let presented_frames = Arc::new(AtomicU64::new(0));
+        let thread_frames = Arc::clone(&presented_frames);
         let event_thread = std::thread::Builder::new()
             .name("wplayer-mpv-events".into())
-            .spawn(move || event_loop(&thread_mpv, listener.as_ref()))
+            .spawn(move || event_loop(&thread_mpv, listener.as_ref(), &thread_frames))
             .map_err(CoreError::from)?;
 
         Ok(Arc::new(Self {
             mpv,
             video_output: config.video_output,
+            presented_frames,
             destroyed: AtomicBool::new(false),
             event_thread: Mutex::new(Some(event_thread)),
         }))
@@ -389,6 +401,13 @@ impl Player {
         self.mpv.get_string(&name)
     }
 
+    /// Roughly how many video frames have been shown so far. It stops
+    /// growing when frames stop reaching the screen, even while audio (and
+    /// with it `time-pos`) keeps going: some hardware decoders do that.
+    pub fn presented_frames(&self) -> u64 {
+        self.presented_frames.load(Ordering::Relaxed)
+    }
+
     /// Shuts the core down and joins the event thread. Idempotent.
     pub fn shutdown(&self) {
         if self.destroyed.swap(true, Ordering::AcqRel) {
@@ -435,7 +454,7 @@ fn apply_defaults(mpv: &Mpv, config: &PlayerConfig) -> CoreResult<()> {
     Ok(())
 }
 
-fn event_loop(mpv: &Mpv, listener: &dyn PlayerListener) {
+fn event_loop(mpv: &Mpv, listener: &dyn PlayerListener, presented_frames: &AtomicU64) {
     loop {
         let event = unsafe { &*(mpv.api.mpv_wait_event)(mpv.handle, -1.0) };
         match event.event_id {
@@ -443,6 +462,9 @@ fn event_loop(mpv: &Mpv, listener: &dyn PlayerListener) {
             MPV_EVENT_SHUTDOWN => {
                 listener.on_event(PlayerEvent::Shutdown);
                 return;
+            }
+            MPV_EVENT_PROPERTY_CHANGE if event.reply_userdata == FRAME_CLOCK_ID => {
+                presented_frames.fetch_add(1, Ordering::Relaxed);
             }
             MPV_EVENT_PROPERTY_CHANGE => {
                 let property = unsafe { &*event.data.cast::<mpv_event_property>() };

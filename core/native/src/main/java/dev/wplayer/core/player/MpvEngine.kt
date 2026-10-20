@@ -106,6 +106,12 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
 
     fun setProperty(name: String, value: String) = post { player.setProperty(name, value) }
 
+    /**
+     * Roughly how many video frames have been shown, for noticing a picture
+     * that froze while the sound plays on. Does not wait for the core.
+     */
+    fun presentedFrames(): Long = runCatching { player.presentedFrames().toLong() }.getOrDefault(0)
+
     /** Reports [PlaybackStats] while [enabled]; they change often, so only for the stats overlay. */
     fun observeStats(enabled: Boolean) = post { player.observeStats(enabled) }
 

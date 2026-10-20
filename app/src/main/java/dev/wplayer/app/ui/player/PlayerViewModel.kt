@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui.player
 
 import android.graphics.Bitmap
+import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.ViewModel
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -61,7 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Something the player wants the user to know, shown briefly over the video. */
-enum class PlayerNotice { SOFTWARE_FALLBACK }
+enum class PlayerNotice { SOFTWARE_FALLBACK, DECODER_FALLBACK }
 
 data class PlayerUiState(
     val title: String = "",
@@ -83,6 +85,8 @@ data class PlayerUiState(
     val scale: ScaleMode = ScaleMode.FIT,
     val audioDelay: Double = 0.0,
     val hardwareDecoding: Boolean = true,
+    /** The decoder draws the video itself: the screen sizes it and draws the subtitles. */
+    val directOutput: Boolean = false,
     val subtitlesVisible: Boolean = true,
     val hasPrevious: Boolean = false,
     val hasNext: Boolean = false,
@@ -114,8 +118,8 @@ class PlayerViewModel @Inject constructor(
     val settings: StateFlow<AppSettings> =
         settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    /** The engine in use. Replaced (never mutated) when hardware decoding has to be abandoned. */
-    private class EngineSlot(val engine: MpvEngine, val generation: Int, val hardwareDecoding: Boolean)
+    /** The engine in use, and how its video reaches the screen. Replaced, never mutated. */
+    private class EngineSlot(val engine: MpvEngine, val generation: Int, val path: VideoPath)
 
     /** Everything about the current viewing that is not reported by mpv. */
     private data class Session(
@@ -128,14 +132,12 @@ class PlayerViewModel @Inject constructor(
         val aspect: AspectRatio = AspectRatio.DEFAULT,
         val scale: ScaleMode = ScaleMode.FIT,
         val audioDelay: Double = 0.0,
-        /** Decoder chosen in the player for this session; null follows the engine. */
-        val hardwareDecoding: Boolean? = null,
         val subtitlesVisible: Boolean? = null,
         val finished: Boolean = false,
     )
 
     private val engineError = MutableStateFlow<String?>(null)
-    private val slot = MutableStateFlow(createSlot(settings.value.playback.hardwareDecoding, generation = 0))
+    private val slot = MutableStateFlow(createSlot(VideoPath.from(settings.value.playback), generation = 0))
     private val engine: MpvEngine? get() = slot.value?.engine
     private val session = MutableStateFlow(Session())
 
@@ -158,7 +160,8 @@ class PlayerViewModel @Inject constructor(
             aspect = session.aspect,
             scale = session.scale,
             audioDelay = session.audioDelay,
-            hardwareDecoding = session.hardwareDecoding ?: (slot?.hardwareDecoding ?: false),
+            hardwareDecoding = slot?.path?.hardware ?: false,
+            directOutput = slot?.path == VideoPath.DIRECT,
             subtitlesVisible = session.subtitlesVisible ?: settings.subtitle.showByDefault,
             finished = session.finished,
             hasPrevious = currentPath != null && previousInQueue(session.queue, currentPath, repeat) != null,
@@ -178,6 +181,11 @@ class PlayerViewModel @Inject constructor(
 
     /** Fraction of the screen the subtitles are raised to clear the controls. */
     private var subtitleLift = 0f
+
+    private val _subtitlePlacement = MutableStateFlow(SubtitlePlacement())
+
+    /** What mpv was last told about subtitle position and size, for drawing them on [VideoPath.DIRECT]. */
+    val subtitlePlacement: StateFlow<SubtitlePlacement> = _subtitlePlacement.asStateFlow()
 
     /** The surface currently shown, re-attached when the engine is replaced. */
     private var surface: Surface? = null
@@ -239,10 +247,17 @@ class PlayerViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            settings.map { it.playback.hardwareDecoding }.distinctUntilChanged().drop(1).collect { enabled ->
-                session.update { it.copy(hardwareDecoding = null) }
-                engine?.setProperty("hwdec", MpvEngineFactory.hwdecValue(enabled))
+            // Also applies the stored settings once they load: the first engine starts before them.
+            var previous = VideoPath.from(settings.value.playback)
+            settings.map { VideoPath.from(it.playback) }.distinctUntilChanged().collect { path ->
+                // Remembering a freeze must not undo the software fallback chosen for that freeze.
+                val freezeRemembered = previous == VideoPath.ZERO_COPY && path == VideoPath.COPY
+                previous = path
+                if (!(freezeRemembered && slot.value?.path == VideoPath.SOFTWARE)) switchVideoPath(path)
             }
+        }
+        viewModelScope.launch {
+            slot.collectLatest { target -> if (target != null && target.path in WATCHED_PATHS) watchForFrozenVideo(target) }
         }
         // Settings changed while playing apply at once; a new engine starts with them.
         viewModelScope.launch {
@@ -255,10 +270,17 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             settings.map { it.subtitle.position }.distinctUntilChanged().collect { applySubtitlePosition() }
         }
+        viewModelScope.launch {
+            settings.map { it.subtitle.sizePercent }.distinctUntilChanged().collect { size ->
+                _subtitlePlacement.update { it.copy(sizePercent = size) }
+            }
+        }
         // Stats change many times a second; mpv reports them only while the overlay is shown.
         viewModelScope.launch {
-            combine(settings.map { it.screen.showStats }.distinctUntilChanged(), slot) { show, slot -> show to slot }
-                .collect { (show, slot) -> slot?.engine?.observeStats(show) }
+            // Keyed by engine: a slot that only changed its decoder keeps the same one.
+            combine(settings.map { it.screen.showStats }.distinctUntilChanged(), slot.map { it?.engine }.distinctUntilChanged()) { show, engine ->
+                show to engine
+            }.collect { (show, engine) -> engine?.observeStats(show) }
         }
         // New lines of AI subtitles being made for this file: reload them.
         viewModelScope.launch {
@@ -284,8 +306,8 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    private fun createSlot(hardwareDecoding: Boolean, generation: Int): EngineSlot? =
-        runCatching { EngineSlot(engineFactory.create(hardwareDecoding, settings.value), generation, hardwareDecoding) }
+    private fun createSlot(path: VideoPath, generation: Int): EngineSlot? =
+        runCatching { EngineSlot(engineFactory.create(path, settings.value), generation, path) }
             .onFailure {
                 Log.e(TAG, "libmpv failed to start", it)
                 engineError.value = it.message ?: it.javaClass.simpleName
@@ -407,20 +429,72 @@ class PlayerViewModel @Inject constructor(
      * Returns false when the fallback took over this request.
      */
     private suspend fun awaitStartOrFallBack(target: EngineSlot, request: PlaybackRequest, start: Double?): Boolean {
-        if (!target.hardwareDecoding) return true
+        if (!target.path.hardware) return true
         val alive = withTimeoutOrNull(DECODER_STALL_TIMEOUT_MS) {
             target.engine.state.first { it.playbackStarted || it.buffering || it.error != null }
         }
         if (alive != null) return true
 
         Log.w(TAG, "hardware decoding stalled for ${request.mediaKey}; switching to software")
-        val replacement = createSlot(hardwareDecoding = false, generation = target.generation + 1) ?: return false
-        slot.value = replacement
-        session.update { it.copy(notice = PlayerNotice.SOFTWARE_FALLBACK, hardwareDecoding = null) }
-        target.engine.close() // Abandons the stuck core on its own thread.
-        applySessionTo(replacement.engine)
-        load(replacement, request, start)
+        replaceEngine(target, VideoPath.SOFTWARE, request, start, PlayerNotice.SOFTWARE_FALLBACK)
         return false
+    }
+
+    /**
+     * Some decoders show the first frames on the zero-copy path and then none,
+     * while the sound plays on or mpv waits. Watches [target] for that and moves
+     * to software decoding on a new engine; the stuck decoder is not released, and
+     * TVs often have only one, so the copy path that would work cannot start now.
+     * It is remembered instead, and later engines start on the copy path.
+     */
+    private suspend fun watchForFrozenVideo(target: EngineSlot) {
+        val detector = FrozenVideoDetector()
+        while (true) {
+            delay(FROZEN_VIDEO_CHECK_MS)
+            val state = target.engine.state.value
+            // mpv counts shown frames by their A/V sync, so only video with sound can be judged.
+            val playing = state.playbackStarted && !state.paused && !state.buffering && !state.seeking &&
+                state.hardwareDecoder == "mediacodec" && state.tracks.any { it.kind == TrackKind.AUDIO && it.selected } &&
+                !inBackground.value && surfaceOwner.value === target.engine
+            if (detector.update(SystemClock.elapsedRealtime() / 1000.0, target.engine.presentedFrames(), playing)) {
+                Log.w(TAG, "video froze with hwdec=${target.path.hwdec}")
+                val notice = if (target.path == VideoPath.ZERO_COPY) PlayerNotice.DECODER_FALLBACK else PlayerNotice.SOFTWARE_FALLBACK
+                replaceEngine(target, VideoPath.SOFTWARE, session.value.request, state.position, notice)
+                if (target.path == VideoPath.ZERO_COPY) updateSettings { it.copy(playback = it.playback.copy(zeroCopyFroze = true)) }
+                return
+            }
+        }
+    }
+
+    /**
+     * Moves playback to [path]: in place when only the decoder changes, on a
+     * new engine (from the current position) when the video output does too.
+     */
+    private fun switchVideoPath(path: VideoPath) {
+        val current = slot.value ?: return
+        if (path == current.path) return
+        if (path.videoOutput == current.path.videoOutput) {
+            current.engine.setProperty("hwdec", path.hwdec)
+            slot.value = EngineSlot(current.engine, current.generation, path)
+        } else {
+            val state = current.engine.state.value
+            replaceEngine(current, path, session.value.request, state.position.takeIf { state.fileLoaded })
+        }
+    }
+
+    /**
+     * Continues [request] from [start] on a new engine that uses [path]. The
+     * old engine closes on its own thread, so a stuck core does not block this.
+     */
+    private fun replaceEngine(target: EngineSlot, path: VideoPath, request: PlaybackRequest?, start: Double?, notice: PlayerNotice? = null) {
+        val replacement = createSlot(path, generation = target.generation + 1) ?: return
+        val paused = target.engine.state.value.let { it.fileLoaded && it.paused }
+        slot.value = replacement
+        session.update { it.copy(notice = notice) }
+        target.engine.close()
+        applySessionTo(replacement.engine)
+        if (paused) replacement.engine.setPaused(true)
+        if (request != null) load(replacement, request, start)
     }
 
     /** Carries choices made in the player over to a replacement engine. */
@@ -665,6 +739,7 @@ class PlayerViewModel @Inject constructor(
     fun setSubtitleSize(percent: Int, save: Boolean = true): Int {
         val clamped = percent.coerceIn(SUBTITLE_SIZE_RANGE)
         engine?.setProperty("sub-scale", (clamped / 100.0).toString())
+        _subtitlePlacement.update { it.copy(sizePercent = clamped) }
         if (save) updateSettings { it.copy(subtitle = it.subtitle.copy(sizePercent = clamped)) }
         return clamped
     }
@@ -676,6 +751,7 @@ class PlayerViewModel @Inject constructor(
     fun setSubtitlePosition(position: Int, save: Boolean = true): Int {
         val clamped = position.coerceIn(SUBTITLE_POSITION_RANGE)
         engine?.setProperty("sub-pos", clamped.toString())
+        _subtitlePlacement.update { it.copy(position = clamped) }
         if (save) updateSettings { it.copy(subtitle = it.subtitle.copy(position = clamped)) }
         return clamped
     }
@@ -694,7 +770,9 @@ class PlayerViewModel @Inject constructor(
         minOf(settings.value.subtitle.position, (100 - subtitleLift * 100).roundToInt())
 
     private fun applySubtitlePosition() {
-        engine?.setProperty("sub-pos", effectiveSubtitlePosition().toString())
+        val position = effectiveSubtitlePosition()
+        engine?.setProperty("sub-pos", position.toString())
+        _subtitlePlacement.update { it.copy(position = position) }
     }
 
     fun setAudioDelay(seconds: Double) {
@@ -724,8 +802,8 @@ class PlayerViewModel @Inject constructor(
 
     /** Switches between the hardware and software decoder for this session. */
     fun setHardwareDecoding(enabled: Boolean) {
-        session.update { it.copy(hardwareDecoding = enabled) }
-        engine?.setProperty("hwdec", MpvEngineFactory.hwdecValue(enabled))
+        val hardware = VideoPath.from(settings.value.playback.copy(hardwareDecoding = true))
+        switchVideoPath(if (enabled) hardware else VideoPath.SOFTWARE)
     }
 
     fun setAspect(aspect: AspectRatio) {
@@ -841,6 +919,8 @@ class PlayerViewModel @Inject constructor(
         const val TAG = "PlayerViewModel"
         const val POSITION_SAVE_INTERVAL_MS = 15_000L
         const val DECODER_STALL_TIMEOUT_MS = 10_000L
+        const val FROZEN_VIDEO_CHECK_MS = 1_000L
+        val WATCHED_PATHS = setOf(VideoPath.ZERO_COPY, VideoPath.COPY)
         const val DUCK_VOLUME = 0.3
         const val RESTART_THRESHOLD_SECONDS = 30.0
         const val MIN_ZOOM = 0.5f

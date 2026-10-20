@@ -368,6 +368,13 @@ private fun LazyListScope.playbackSection(settings: AppSettings, onUpdate: ((App
             update { it.copy(hardwareDecoding = on) }
         }
     }
+    if (playback.hardwareDecoding) {
+        item {
+            SwitchRow(R.string.settings_direct_output, playback.directVideoOutput, R.string.settings_direct_output_hint) { on ->
+                update { it.copy(directVideoOutput = on) }
+            }
+        }
+    }
     item {
         ChoiceRow(R.string.settings_resume, ResumeMode.entries, playback.resume, { stringResource(it.label) }) { mode ->
             update { it.copy(resume = mode) }

@@ -19,7 +19,7 @@ class MpvEngineFactory @Inject constructor(
     private val cacheStorage: CacheStorage,
     private val environment: MpvEnvironment,
 ) {
-    fun create(hardwareDecoding: Boolean, settings: AppSettings): MpvEngine {
+    fun create(path: VideoPath, settings: AppSettings): MpvEngine {
         val dataDir = File(context.filesDir, "mpv").apply { mkdirs() }
         val fontsDir = prepareSubtitleFonts(dataDir)
         val options = buildMap {
@@ -40,10 +40,10 @@ class MpvEngineFactory @Inject constructor(
         return MpvEngine(
             PlayerConfig(
                 dataDir = dataDir.absolutePath,
-                hwdec = hwdecValue(hardwareDecoding),
-                // libplacebo renderer: mpv's recommended VO, and the legacy `gpu`
-                // VO left video black on some GLES stacks (ANGLE) in testing.
-                videoOutput = "gpu-next",
+                hwdec = path.hwdec,
+                // gpu-next (libplacebo) unless the decoder draws itself: mpv's recommended
+                // VO, and the legacy `gpu` VO left video black on some GLES stacks (ANGLE).
+                videoOutput = path.videoOutput,
                 options = options,
                 logLevel = if (BuildConfig.DEBUG) "v" else "warn",
             ),
@@ -77,8 +77,5 @@ class MpvEngineFactory @Inject constructor(
             "/system/fonts/NotoSansCJKkr-Regular.otf",
             "/system/fonts/NotoSansKR-Regular.otf",
         )
-
-        /** Zero-copy MediaCodec first, then the copy path, then software (dav1d etc.). */
-        fun hwdecValue(enabled: Boolean) = if (enabled) "mediacodec,mediacodec-copy" else "no"
     }
 }

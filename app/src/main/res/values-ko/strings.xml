@@ -88,6 +88,8 @@
     <string name="settings_gestures">제스처</string>
     <string name="settings_hwdec">하드웨어 디코딩</string>
     <string name="settings_hwdec_hint">AV1·HEVC 등을 기기 디코더로 재생합니다. 문제가 있으면 끄면 소프트웨어(dav1d 등)로 재생합니다.</string>
+    <string name="settings_direct_output">직접 영상 출력</string>
+    <string name="settings_direct_output_hint">디코더가 화면에 바로 그립니다. TV나 느린 기기에서 4K·HDR이 가장 부드럽습니다. 자막은 일반 텍스트로만 나오고 화질 개선은 적용되지 않습니다.</string>
     <string name="settings_auto_pip">홈으로 나가면 화면 속 화면</string>
     <string name="settings_long_press_speed">길게 눌러 빨리 감기 속도</string>
     <string name="settings_seconds">%1$d초</string>
@@ -113,6 +115,7 @@
     <string name="error_unsupported">지원하지 않는 기능입니다.</string>
     <string name="error_other">알 수 없는 오류가 발생했습니다.</string>
     <string name="player_software_fallback">하드웨어 디코더가 응답하지 않아 소프트웨어 디코딩으로 재생합니다.</string>
+    <string name="player_decoder_fallback">빠른 하드웨어 디코딩에서 화면이 멈춰 지금은 소프트웨어로 재생합니다. 다음 영상부터 호환 방식으로 엽니다.</string>
     <!-- Common actions -->
     <string name="action_cancel">취소</string>
     <string name="action_delete">삭제</string>

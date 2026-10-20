@@ -44,11 +44,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntRect
@@ -95,6 +97,7 @@ fun PlayerScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val seekPreview by viewModel.seekPreview.collectAsStateWithLifecycle()
+    val subtitlePlacement by viewModel.subtitlePlacement.collectAsStateWithLifecycle()
     var controlsVisible by rememberSaveable { mutableStateOf(true) }
     var locked by rememberSaveable { mutableStateOf(false) }
     var sheet by rememberSaveable { mutableStateOf(PlayerSheet.NONE) }
@@ -426,12 +429,17 @@ fun PlayerScreen(
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         // A replacement engine cannot reuse a surface the previous one may still hold.
         key(state.engineGeneration) {
+            val playback = state.playback
+            val videoAspect = state.aspect.ratio ?: (playback.videoWidth.toFloat() / playback.videoHeight).takeIf { playback.videoHeight > 0 }
             VideoSurface(
                 viewModel = viewModel,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .then(if (state.directOutput) Modifier.directVideoSize(videoAspect, state.scale, state.zoom) else Modifier.fillMaxSize())
                     .onGloballyPositioned { onVideoBoundsChanged(it.boundsInWindow().roundToIntRect().toAndroidRect()) },
             )
+        }
+        if (state.directOutput && state.subtitlesVisible) {
+            DirectSubtitles(state.playback.subtitleText, settings.subtitle, subtitlePlacement, Modifier.fillMaxSize())
         }
 
         // Overlay content is drawn straight over video, outside any Surface: default to white.
@@ -463,8 +471,9 @@ fun PlayerScreen(
                     }
 
                     if (settings.screen.showStats) {
-                        // Below the top bar, so it stays readable whether or not the controls show.
-                        StatsOverlay(state.playback, Modifier.align(Alignment.TopStart).padding(start = 16.dp, top = 80.dp))
+                        // In the corner, moving below the top bar while the controls show.
+                        val top = if (controlsVisible && !locked) 80.dp else 8.dp
+                        StatsOverlay(state.playback, Modifier.align(Alignment.TopStart).padding(start = 8.dp, top = top))
                     }
 
                     StepSeekIndicator(stepBurst, Modifier.fillMaxSize())
@@ -483,9 +492,14 @@ fun PlayerScreen(
                         }
                     }
 
-                    if (state.notice == PlayerNotice.SOFTWARE_FALLBACK) {
+                    state.notice?.let { notice ->
                         Text(
-                            text = stringResource(R.string.player_software_fallback),
+                            text = stringResource(
+                                when (notice) {
+                                    PlayerNotice.SOFTWARE_FALLBACK -> R.string.player_software_fallback
+                                    PlayerNotice.DECODER_FALLBACK -> R.string.player_decoder_fallback
+                                },
+                            ),
                             color = Color.White,
                             textAlign = TextAlign.Center,
                             modifier = Modifier
@@ -637,6 +651,24 @@ private fun ResumePrompt(position: Double, onAnswer: (Boolean) -> Unit) {
             }
         }
     }
+}
+
+/**
+ * Sizes the surface for [VideoPath.DIRECT], where the decoder stretches the
+ * picture over whatever surface it gets: [aspect] (width / height, null while
+ * unknown) fitted or cropped to the space as mpv would, then [zoom]ed, centred.
+ */
+private fun Modifier.directVideoSize(aspect: Float?, scale: ScaleMode, zoom: Float): Modifier = layout { measurable, constraints ->
+    val width = constraints.maxWidth
+    val height = constraints.maxHeight
+    val (videoWidth, videoHeight) = when {
+        aspect == null || scale == ScaleMode.STRETCH -> width.toFloat() to height.toFloat()
+        // Fit to the height when the space is wider than the video; cropping does the opposite.
+        (width.toFloat() / height > aspect) == (scale == ScaleMode.FIT) -> height * aspect to height.toFloat()
+        else -> width.toFloat() to width / aspect
+    }
+    val placeable = measurable.measure(Constraints.fixed((videoWidth * zoom).roundToInt(), (videoHeight * zoom).roundToInt()))
+    layout(width, height) { placeable.place((width - placeable.width) / 2, (height - placeable.height) / 2) }
 }
 
 /** A [SurfaceView] whose lifecycle is forwarded to the player. */

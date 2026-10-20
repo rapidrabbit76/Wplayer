@@ -75,6 +75,10 @@ enum class MediaButtonAction {
 @Serializable
 data class PlaybackSettings(
     val hardwareDecoding: Boolean = true,
+    /** With hardware decoding, let the decoder draw onto the screen itself (TVs; see VideoPath.DIRECT). */
+    val directVideoOutput: Boolean = false,
+    /** Set by the player, not the user: the zero-copy path froze on this device, so start on the copy path. */
+    val zeroCopyFroze: Boolean = false,
     val seekBackSeconds: Int = 10,
     val seekForwardSeconds: Int = 10,
     /** Repeated remote/keyboard seek taps add up and seek once after the last one. */
