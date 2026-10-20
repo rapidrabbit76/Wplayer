@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:freetype",
+  "name": "FreeType",
+  "description": "Font rasterizer.",
+  "website": "https://freetype.org",
+  "developers": [
+    {
+      "name": "The FreeType Project"
+    }
+  ],
+  "licenses": [
+    "FTL"
+  ],
+  "artifactVersion": "${FREETYPE_VERSION}"
+}

@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:ffmpeg",
+  "name": "FFmpeg",
+  "description": "Demuxing and decoding (libavcodec, libavformat, libavfilter, libavutil, libswresample, libswscale).",
+  "website": "https://ffmpeg.org",
+  "developers": [
+    {
+      "name": "FFmpeg developers"
+    }
+  ],
+  "licenses": [
+    "LGPL-2.1-or-later"
+  ],
+  "artifactVersion": "${FFMPEG_VERSION}"
+}

@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:libcxx",
+  "name": "LLVM libc++",
+  "description": "C++ standard library (libc++_shared.so).",
+  "website": "https://libcxx.llvm.org",
+  "developers": [
+    {
+      "name": "LLVM Project"
+    }
+  ],
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "artifactVersion": "Android NDK"
+}

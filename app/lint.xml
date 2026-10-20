@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- PlayerActivity.pipParams sets setAutoEnterEnabled and setSourceRectHint inside the
+         builder's apply block, which this check does not follow. -->
+    <issue id="PictureInPictureIssue" severity="ignore" />
+    <!-- The native libraries (libmpv, FFmpeg, the Rust core) are built for ARM only. -->
+    <issue id="ChromeOsAbiSupport" severity="ignore" />
+    <!-- Dependency updates come as Dependabot pull requests, not as build warnings. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+</lint>

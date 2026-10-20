@@ -1,0 +1,15 @@
+{
+  "uniqueId": "shader:anime4k",
+  "name": "Anime4K",
+  "description": "Anime upscaling and restoration shaders.",
+  "website": "https://github.com/bloc97/Anime4K",
+  "developers": [
+    {
+      "name": "bloc97"
+    }
+  ],
+  "licenses": [
+    "MIT",
+    "Unlicense"
+  ]
+}

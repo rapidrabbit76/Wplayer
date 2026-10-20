@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:dav1d",
+  "name": "dav1d",
+  "description": "AV1 decoder.",
+  "website": "https://code.videolan.org/videolan/dav1d",
+  "developers": [
+    {
+      "name": "VideoLAN and dav1d authors"
+    }
+  ],
+  "licenses": [
+    "BSD-2-Clause"
+  ],
+  "artifactVersion": "${DAV1D_VERSION}"
+}

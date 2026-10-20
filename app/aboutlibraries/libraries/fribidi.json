@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:fribidi",
+  "name": "GNU FriBidi",
+  "description": "Unicode bidirectional algorithm.",
+  "website": "https://github.com/fribidi/fribidi",
+  "developers": [
+    {
+      "name": "FriBidi authors"
+    }
+  ],
+  "licenses": [
+    "LGPL-2.1-or-later"
+  ],
+  "artifactVersion": "${FRIBIDI_VERSION}"
+}

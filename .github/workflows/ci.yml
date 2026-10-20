@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NDK_VERSION: 30.0.16248370
+  ANDROID_PLATFORM: android-37.0
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The version comes from the latest git tag.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Android SDK and NDK
+        run: |
+          (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;$ANDROID_PLATFORM" "ndk;$NDK_VERSION" >/dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >>"$GITHUB_ENV"
+
+      - name: Native build tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq ninja-build nasm pkg-config cmake libclang-dev
+          pipx install meson
+
+      - name: Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup target add aarch64-linux-android armv7-linux-androideabi
+          cargo install cargo-ndk --locked
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Cache native libraries
+        id: native-cache
+        uses: actions/cache@v6
+        with:
+          path: native/out
+          key: native-${{ runner.os }}-${{ env.NDK_VERSION }}-${{ hashFiles('native/build.sh', 'native/versions.env') }}
+
+      - name: Build libmpv and FFmpeg
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        run: native/build.sh
+
+      - name: Rust format, lints and tests
+        working-directory: rust
+        run: |
+          cargo fmt --check -p wplayer-core -p uniffi-bindgen
+          cargo clippy -p wplayer-core --all-targets -- -D warnings
+          cargo test -p wplayer-core
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Tests, lint and debug build
+        run: ./gradlew --console=plain :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease :app:assembleDebug
+
+      - name: Lint report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-*.html
+          if-no-files-found: ignore

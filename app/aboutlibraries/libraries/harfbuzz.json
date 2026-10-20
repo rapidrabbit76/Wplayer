@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:harfbuzz",
+  "name": "HarfBuzz",
+  "description": "Text shaping engine.",
+  "website": "https://github.com/harfbuzz/harfbuzz",
+  "developers": [
+    {
+      "name": "HarfBuzz contributors"
+    }
+  ],
+  "licenses": [
+    "MIT"
+  ],
+  "artifactVersion": "${HARFBUZZ_VERSION}"
+}

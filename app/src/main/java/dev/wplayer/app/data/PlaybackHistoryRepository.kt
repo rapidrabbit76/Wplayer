@@ -1,0 +1,71 @@
+package dev.wplayer.app.data
+
+import dev.wplayer.app.data.local.PlaybackPositionDao
+import dev.wplayer.app.data.local.PlaybackPositionEntity
+import dev.wplayer.app.data.local.RecentMediaDao
+import dev.wplayer.app.data.local.RecentMediaEntity
+import dev.wplayer.app.data.model.MediaRef
+import dev.wplayer.app.data.model.RecentMedia
+import dev.wplayer.app.data.model.WatchProgress
+import dev.wplayer.app.data.model.mediaKey
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+
+/** Resume positions and the recently played list. */
+@Singleton
+class PlaybackHistoryRepository @Inject constructor(
+    private val positions: PlaybackPositionDao,
+    private val recents: RecentMediaDao,
+    private val lockedFolders: LockedFolders,
+) {
+    /** Position to resume from, or null when the file is new or was finished. */
+    suspend fun resumePosition(mediaKey: String): Double? =
+        positions.get(mediaKey)?.positionSeconds?.takeIf { it >= WatchProgress.MIN_RESUME_SECONDS }
+
+    suspend fun save(mediaKey: String, positionSeconds: Double, durationSeconds: Double) {
+        val finished = durationSeconds > 0 && durationSeconds - positionSeconds < FINISHED_MARGIN_SECONDS
+        if (finished) {
+            positions.delete(mediaKey)
+        } else {
+            positions.upsert(PlaybackPositionEntity(mediaKey, positionSeconds, durationSeconds, System.currentTimeMillis()))
+        }
+    }
+
+    /** Watch progress of unfinished files, by media key. */
+    val progress: Flow<Map<String, WatchProgress>> = positions.observeAll().map { rows ->
+        rows.associate { it.mediaKey to WatchProgress(it.positionSeconds, it.durationSeconds) }
+    }
+
+    /** Newest first. Files in locked folders never appear, even while unlocked. */
+    fun recent(limit: Int = RECENT_LIMIT): Flow<List<RecentMedia>> =
+        combine(recents.observeLatest(limit), lockedFolders.state) { rows, locks ->
+            rows.filterNot { locks.isLocked(it.sourceKey, it.path) }
+                .map { RecentMedia(MediaRef(it.sourceKey, it.path, it.name, isDirectory = false), it.playedAtMillis) }
+        }
+
+    /** Adds [ref] to the recent list, unless it is in a locked folder. */
+    suspend fun recordPlayed(ref: MediaRef) {
+        if (lockedFolders.isLocked(ref.sourceKey, ref.path)) return
+        recents.upsert(RecentMediaEntity(ref.sourceKey, ref.path, ref.name, System.currentTimeMillis()))
+        recents.trim(RECENT_LIMIT)
+    }
+
+    /** Forgets where [ref] was left and removes it from the recent list. */
+    suspend fun forget(ref: MediaRef) {
+        positions.delete(mediaKey(ref.sourceKey, ref.path))
+        recents.delete(ref.sourceKey, ref.path)
+    }
+
+    suspend fun clearAll() {
+        positions.clear()
+        recents.clear()
+    }
+
+    private companion object {
+        const val FINISHED_MARGIN_SECONDS = 15.0
+        const val RECENT_LIMIT = 50
+    }
+}

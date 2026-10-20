@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = ["wplayer-core", "uniffi-bindgen"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "unwind"
+
+# Local fixes for the SMB client; see patches/README.md.
+[patch.crates-io]
+smb = { path = "patches/smb" }
+smb-transport = { path = "patches/smb-transport" }
+whisper-rs-sys = { path = "patches/whisper-rs-sys" }

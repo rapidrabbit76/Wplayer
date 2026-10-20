@@ -1,0 +1,2 @@
+# Shared by the workspace crates; the patched crates in patches/ keep their upstream formatting.
+max_width = 120

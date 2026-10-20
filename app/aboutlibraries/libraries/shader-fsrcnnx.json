@@ -1,0 +1,14 @@
+{
+  "uniqueId": "shader:fsrcnnx",
+  "name": "FSRCNNX",
+  "description": "Detail upscaling shader (FSRCNNX_x2_8-0-4-1).",
+  "website": "https://github.com/igv/FSRCNN-TensorFlow",
+  "developers": [
+    {
+      "name": "igv"
+    }
+  ],
+  "licenses": [
+    "LGPL-3.0-or-later"
+  ]
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The TV home screen's app banner (320x180): the launcher icon's W on its background.
+     Larger than lint likes for a vector, but only the launcher draws it, once. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180"
+    tools:ignore="VectorRaster">
+    <path
+        android:fillColor="#FF001D34"
+        android:pathData="M0,0 H320 V180 H0 Z" />
+    <!-- The icon's W spans 27..84 x 32..71 (center 55.5, 51.5); scaled 2.2 into the middle. -->
+    <group
+        android:scaleX="2.2"
+        android:scaleY="2.2"
+        android:translateX="37.9"
+        android:translateY="-23.3">
+        <path
+            android:pathData="M27,37 H38 L44,58 L50,41 H58 L64,58 L70,42 V32 L84,43 L75,50 L68,71 H60 L54,55 L48,71 H39 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="27"
+                    android:startY="37"
+                    android:endX="84"
+                    android:endY="71"
+                    android:startColor="#FF35ADFF"
+                    android:endColor="#FF0097FF" />
+            </aapt:attr>
+        </path>
+    </group>
+</vector>

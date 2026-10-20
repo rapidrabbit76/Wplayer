@@ -1,0 +1,14 @@
+{
+  "uniqueId": "native:whisper.cpp",
+  "name": "whisper.cpp",
+  "description": "Speech recognition for AI subtitles (with ggml).",
+  "website": "https://github.com/ggml-org/whisper.cpp",
+  "developers": [
+    {
+      "name": "The ggml authors"
+    }
+  ],
+  "licenses": [
+    "MIT"
+  ]
+}
