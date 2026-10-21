@@ -175,6 +175,9 @@
     <string name="repeat_all">전체</string>
     <string name="repeat_one">한 파일</string>
     <string name="player_subtitles_show">자막 표시</string>
+    <string name="player_subtitle_load">자막 파일 불러오기</string>
+    <string name="subtitle_picker_title">자막 파일 선택</string>
+    <string name="subtitle_picker_empty">자막 파일이나 폴더가 없습니다</string>
     <string name="player_subtitle_sync">자막 싱크</string>
     <string name="player_subtitle_size">자막 크기</string>
     <string name="player_subtitle_position">자막 위치</string>

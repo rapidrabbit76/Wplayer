@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.CacheStorage
@@ -17,8 +18,9 @@ import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.SourceRepository
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.SubtitleFont
-import androidx.media3.common.C
 import dev.wplayer.app.data.model.MediaButtonAction
+import dev.wplayer.app.data.model.MediaEntry
+import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.ResumeMode
@@ -28,6 +30,7 @@ import dev.wplayer.app.data.model.SeekPrecision
 import dev.wplayer.app.data.transcription.TranscriptionRepository
 import dev.wplayer.app.data.transcription.WhisperModelStore
 import dev.wplayer.app.di.ApplicationScope
+import dev.wplayer.app.ui.browser.parentPath
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
 import dev.wplayer.core.ffi.CoreException
@@ -525,13 +528,50 @@ class PlayerViewModel @Inject constructor(
         session.update { it.copy(openFailure = UserError.from(error)) }
     }
 
-    /** The best-matching subtitle becomes active; the rest are only listed. */
+    /**
+     * The subtitle picked by hand for this video last time becomes active, or else
+     * the best-matching one; the rest are only listed.
+     */
     private suspend fun addSiblingSubtitles(engine: MpvEngine, request: PlaybackRequest.FromSource) {
-        val subtitles = browserRepository.siblingSubtitles(request.sourceKey, request.path)
-        if (subtitles.isEmpty()) return
+        val chosen = chosenSubtitle(request)
+        val subtitles = browserRepository.siblingSubtitles(request.sourceKey, request.path).filter { it.path != chosen?.path }
+        if (subtitles.isEmpty() && chosen == null) return
         engine.state.first { it.fileLoaded }
         subtitles.forEachIndexed { index, subtitle ->
-            engine.addSubtitle(browserRepository.subtitleUri(request.sourceKey, subtitle.path), select = index == 0)
+            engine.addSubtitle(browserRepository.anySubtitleUri(request.sourceKey, subtitle), select = chosen == null && index == 0)
+        }
+        chosen?.let { engine.addSubtitle(browserRepository.anySubtitleUri(request.sourceKey, it), select = true) }
+    }
+
+    /** The remembered subtitle file, if it is still there. */
+    private suspend fun chosenSubtitle(request: PlaybackRequest.FromSource): MediaEntry? {
+        val path = history.chosenSubtitle(request.mediaKey) ?: return null
+        val folder = parentPath(path) ?: return null
+        return catchingFailures { browserRepository.list(request.sourceKey, folder) }.getOrNull()
+            ?.firstOrNull { it.path == path && it.kind == MediaKind.SUBTITLE }
+    }
+
+    /** Where the subtitle file picker starts: the playing video's folder, or null for media from other apps. */
+    val subtitlePickerStart: String?
+        get() = (session.value.request as? PlaybackRequest.FromSource)?.let { parentPath(it.path) ?: "/" }
+
+    /** Folders and subtitle files in [path] of the playing video's source. */
+    suspend fun listSubtitleFolder(path: String): List<MediaEntry> {
+        val request = session.value.request as? PlaybackRequest.FromSource ?: return emptyList()
+        return browserRepository.subtitlePickerListing(request.sourceKey, path)
+    }
+
+    /** Adds [entry] as the active subtitle, shows subtitles and remembers it for this video. */
+    fun loadSubtitleFile(entry: MediaEntry) {
+        val request = session.value.request as? PlaybackRequest.FromSource ?: return
+        val engine = engine ?: return
+        viewModelScope.launch {
+            catchingFailures { engine.addSubtitle(browserRepository.anySubtitleUri(request.sourceKey, entry), select = true) }
+                .onSuccess {
+                    setSubtitlesVisible(true)
+                    history.rememberSubtitle(request.mediaKey, entry.path)
+                }
+                .onFailure { Log.w(TAG, "cannot load subtitle ${entry.path}", it) }
         }
     }
 

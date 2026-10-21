@@ -180,6 +180,9 @@
     <string name="repeat_all">All</string>
     <string name="repeat_one">One file</string>
     <string name="player_subtitles_show">Show subtitles</string>
+    <string name="player_subtitle_load">Load subtitle file</string>
+    <string name="subtitle_picker_title">Choose a subtitle file</string>
+    <string name="subtitle_picker_empty">No subtitle files or folders here</string>
     <string name="player_subtitle_sync">Subtitle delay</string>
     <string name="player_subtitle_size">Subtitle size</string>
     <string name="player_subtitle_position">Subtitle position</string>

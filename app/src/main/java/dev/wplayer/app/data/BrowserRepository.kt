@@ -68,6 +68,20 @@ internal fun matchSubtitles(videoName: String, candidates: Collection<String>): 
         .sortedWith(compareBy<String> { !it.isKoreanTagged() }.thenBy(NaturalOrderComparator) { it })
 }
 
+/**
+ * What the subtitle file picker lists from a folder: subfolders, then subtitle
+ * files, each in natural name order. Hidden entries are left out.
+ */
+internal fun subtitlePickerEntries(entries: List<MediaEntry>): List<MediaEntry> =
+    entries
+        .filter { !isHiddenName(it.name) && (it.kind == MediaKind.DIRECTORY || it.kind == MediaKind.SUBTITLE) }
+        .sortedWith(compareBy<MediaEntry> { it.kind != MediaKind.DIRECTORY }.thenBy(NaturalOrderComparator) { it.name })
+
+/** Subtitle formats the core re-encodes to UTF-8; the rest (idx/sub, sup) are images. */
+private val TEXT_SUBTITLES = setOf("ass", "sami", "smi", "srt", "ssa", "vtt")
+
+internal fun MediaEntry.isTextSubtitle(): Boolean = extension in TEXT_SUBTITLES
+
 private val KOREAN_TAGS = setOf("ko", "kor", "kr", "korean", "한국어", "한글")
 
 private fun String.isKoreanTagged(): Boolean =
@@ -208,6 +222,14 @@ class BrowserRepository @Inject constructor(
             MediaEntry(entry.name, entry.path, MediaKind.SUBTITLE, entry.size.toLong(), entry.modifiedEpochMs)
         }
     }
+
+    /** Folders and subtitle files in [path] for the subtitle picker; see [subtitlePickerEntries]. */
+    suspend fun subtitlePickerListing(sourceKey: String, path: String): List<MediaEntry> =
+        subtitlePickerEntries(list(sourceKey, path))
+
+    /** URI for a subtitle file of any format: text ones are re-encoded, image ones read as they are. */
+    suspend fun anySubtitleUri(sourceKey: String, entry: MediaEntry): String =
+        if (entry.isTextSubtitle()) subtitleUri(sourceKey, entry.path) else playbackUri(sourceKey, entry.path)
 
     /** Re-establishes a source whose connection went stale. */
     suspend fun reconnect(sourceKey: String) = sources.reconnect(sourceKey)

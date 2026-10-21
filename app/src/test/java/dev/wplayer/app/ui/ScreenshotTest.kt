@@ -74,6 +74,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import dev.wplayer.app.ui.player.SubtitleFileSheet
 
 /**
  * Renders screens at phone and tablet sizes to catch layout breakage without
@@ -177,6 +178,16 @@ class ScreenshotTest {
     @Test
     @Config(qualifiers = PHONE)
     fun subtitle_panel_phone() = capture("player_subtitle_panel_phone") { SubtitlePanel() }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun subtitle_file_panel_tablet() = capture("player_subtitle_file_panel_tablet") {
+        VideoBackground {
+            val entries = listOf("Extras", "Season 2").map { MediaEntry(it, "/video/드라마/$it", MediaKind.DIRECTORY, 0, null) } +
+                listOf("드라마 1화.smi", "드라마 1화.ko.srt", "드라마 2화.ass").map { MediaEntry(it, "/video/드라마/$it", MediaKind.SUBTITLE, 0, null) }
+            SubtitleFileSheet(startPath = "/video/드라마", list = { entries }, onPick = {}, onBack = {}, onDismiss = {})
+        }
+    }
 
     @Test
     @Config(qualifiers = TABLET)
@@ -292,6 +303,7 @@ class ScreenshotTest {
             position = 92,
             ai = AiSubtitleStatus.Ready(made = false),
             actions = NoOpSubtitleActions,
+            onLoadFile = {},
             onDismiss = {},
         )
     }

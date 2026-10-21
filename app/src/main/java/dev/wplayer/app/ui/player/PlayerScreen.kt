@@ -547,7 +547,7 @@ fun PlayerScreen(
                         }
                     }
 
-                    PlayerSheets(sheet, state, settings, viewModel, onDismiss = { sheet = PlayerSheet.NONE })
+                    PlayerSheets(sheet, state, settings, viewModel, onOpen = { sheet = it }, onDismiss = { sheet = PlayerSheet.NONE })
 
                     state.resumePrompt?.let { position ->
                         ResumePrompt(position, onAnswer = viewModel::answerResume)
@@ -564,6 +564,7 @@ private fun PlayerSheets(
     state: PlayerUiState,
     settings: AppSettings,
     viewModel: PlayerViewModel,
+    onOpen: (PlayerSheet) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val aiSubtitles by viewModel.aiSubtitles.collectAsStateWithLifecycle()
@@ -592,8 +593,21 @@ private fun PlayerSheets(
             position = settings.subtitle.position,
             ai = aiSubtitles,
             actions = subtitleActions,
+            onLoadFile = viewModel.subtitlePickerStart?.let { { onOpen(PlayerSheet.SUBTITLE_FILE) } },
             onDismiss = onDismiss,
         )
+        PlayerSheet.SUBTITLE_FILE -> viewModel.subtitlePickerStart?.let { start ->
+            SubtitleFileSheet(
+                startPath = start,
+                list = viewModel::listSubtitleFolder,
+                onPick = {
+                    viewModel.loadSubtitleFile(it)
+                    onOpen(PlayerSheet.SUBTITLES)
+                },
+                onBack = { onOpen(PlayerSheet.SUBTITLES) },
+                onDismiss = onDismiss,
+            )
+        }
         PlayerSheet.AUDIO -> AudioSheet(
             tracks = state.playback.tracks,
             boostPercent = settings.audio.boostPercent,
