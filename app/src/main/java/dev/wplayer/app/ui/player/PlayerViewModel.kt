@@ -329,8 +329,10 @@ class PlayerViewModel @Inject constructor(
         }
         resetZoom()
         engine?.setProperty("audio-delay", "0")
-        val playbackSettings = settings.value.playback
-        setSpeed(if (playbackSettings.keepSpeed) playbackSettings.lastSpeed else 1.0, remember = false)
+        viewModelScope.launch {
+            val playbackSettings = savedSettings().playback
+            setSpeed(if (playbackSettings.keepSpeed) playbackSettings.lastSpeed else 1.0, remember = false)
+        }
         if (newRequest is PlaybackRequest.FromSource) {
             loadQueue(newRequest)
             applicationScope.launch {
@@ -346,15 +348,16 @@ class PlayerViewModel @Inject constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             catchingFailures {
-                if (isBlockedOnCellular(request)) {
+                val appSettings = savedSettings()
+                if (isBlockedOnCellular(request, appSettings)) {
                     session.update { it.copy(openFailure = UserError(UserError.Reason.CELLULAR_BLOCKED)) }
                     return@catchingFailures
                 }
-                val from = start ?: startPosition(request)
+                val from = start ?: startPosition(request, appSettings)
                 val uri = resolveUri(request)
-                previewUri = uri.takeIf { request.allowsSeekPreview() }
+                previewUri = uri.takeIf { request.allowsSeekPreview(appSettings) }
                 // Local files are already on flash: copying them into the disk cache would only wear it.
-                val cache = if (request.isLocal) "no" else mpvEnvironment.options(settings.value).getValue("cache")
+                val cache = if (request.isLocal) "no" else mpvEnvironment.options(appSettings).getValue("cache")
                 target.engine.setProperty("cache", cache)
                 // Loading before the video output exists makes mpv start a decoder, then
                 // tear it down and rebuild it once the surface arrives. In the background
@@ -371,8 +374,15 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    private fun isBlockedOnCellular(request: PlaybackRequest): Boolean {
-        if (settings.value.network.allowCellular) return false
+    /**
+     * The stored settings. [settings] starts out as the defaults until the store has
+     * been read, and a player opened right away must not decide on those (mobile data
+     * is off by default, so playback was refused even with it allowed).
+     */
+    private suspend fun savedSettings(): AppSettings = settingsRepository.settings.first()
+
+    private fun isBlockedOnCellular(request: PlaybackRequest, appSettings: AppSettings): Boolean {
+        if (appSettings.network.allowCellular) return false
         return !request.isLocal && network.isOnCellular()
     }
 
@@ -380,9 +390,9 @@ class PlayerViewModel @Inject constructor(
      * Previews open the file a second time: not possible for a content URI's
      * single file descriptor, and not wanted over mobile data unless allowed.
      */
-    private fun PlaybackRequest.allowsSeekPreview(): Boolean {
+    private fun PlaybackRequest.allowsSeekPreview(appSettings: AppSettings): Boolean {
         if (this is PlaybackRequest.FromUri && uri.scheme != "http" && uri.scheme != "https") return false
-        return isLocal || settings.value.network.thumbnailsOnCellular || !network.isOnCellular()
+        return isLocal || appSettings.network.thumbnailsOnCellular || !network.isOnCellular()
     }
 
     /** Media on this device: device storage, or a file or content URI from another app. */
@@ -393,9 +403,9 @@ class PlayerViewModel @Inject constructor(
         }
 
     /** Where to start [request], asking the user first when the settings say so. */
-    private suspend fun startPosition(request: PlaybackRequest): Double? {
+    private suspend fun startPosition(request: PlaybackRequest, appSettings: AppSettings): Double? {
         val saved = history.resumePosition(request.mediaKey) ?: return null
-        return when (settings.value.playback.resume) {
+        return when (appSettings.playback.resume) {
             ResumeMode.ALWAYS -> saved
             ResumeMode.NEVER -> null
             ResumeMode.ASK -> {
