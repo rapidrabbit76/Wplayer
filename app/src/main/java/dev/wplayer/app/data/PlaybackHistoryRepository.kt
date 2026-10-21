@@ -4,6 +4,8 @@ import dev.wplayer.app.data.local.PlaybackPositionDao
 import dev.wplayer.app.data.local.PlaybackPositionEntity
 import dev.wplayer.app.data.local.RecentMediaDao
 import dev.wplayer.app.data.local.RecentMediaEntity
+import dev.wplayer.app.data.local.SubtitleChoiceDao
+import dev.wplayer.app.data.local.SubtitleChoiceEntity
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RecentMedia
 import dev.wplayer.app.data.model.WatchProgress
@@ -14,11 +16,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-/** Resume positions and the recently played list. */
+/** Resume positions, the recently played list and subtitle files picked for a video. */
 @Singleton
 class PlaybackHistoryRepository @Inject constructor(
     private val positions: PlaybackPositionDao,
     private val recents: RecentMediaDao,
+    private val subtitleChoices: SubtitleChoiceDao,
     private val lockedFolders: LockedFolders,
 ) {
     /** Position to resume from, or null when the file is new or was finished. */
@@ -59,6 +62,16 @@ class PlaybackHistoryRepository @Inject constructor(
         recents.delete(ref.sourceKey, ref.path)
     }
 
+    /** The subtitle path picked by hand for [mediaKey], in the same source. */
+    suspend fun chosenSubtitle(mediaKey: String): String? = subtitleChoices.get(mediaKey)?.subtitlePath
+
+    suspend fun rememberSubtitle(mediaKey: String, subtitlePath: String) {
+        subtitleChoices.upsert(SubtitleChoiceEntity(mediaKey, subtitlePath, System.currentTimeMillis()))
+        subtitleChoices.trim(SUBTITLE_CHOICE_LIMIT)
+    }
+
+    suspend fun forgetSubtitle(mediaKey: String) = subtitleChoices.delete(mediaKey)
+
     suspend fun clearAll() {
         positions.clear()
         recents.clear()
@@ -67,5 +80,6 @@ class PlaybackHistoryRepository @Inject constructor(
     private companion object {
         const val FINISHED_MARGIN_SECONDS = 15.0
         const val RECENT_LIMIT = 50
+        const val SUBTITLE_CHOICE_LIMIT = 500
     }
 }

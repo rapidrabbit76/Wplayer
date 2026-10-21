@@ -75,8 +75,23 @@ import dev.wplayer.app.ui.settings.categoryRows
 import dev.wplayer.core.ffi.Track
 import dev.wplayer.core.ffi.TrackKind
 import kotlin.math.roundToInt
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.DriveFolderUpload
+import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Subtitles
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.graphics.vector.ImageVector
+import dev.wplayer.app.data.model.MediaEntry
+import dev.wplayer.app.data.model.MediaKind
+import dev.wplayer.app.ui.browser.parentPath
+import dev.wplayer.app.ui.common.UserError
+import dev.wplayer.app.ui.common.catchingFailures
+import dev.wplayer.app.ui.common.message
 
-enum class PlayerSheet { NONE, SUBTITLES, AUDIO, VIDEO, QUEUE, SETTINGS }
+enum class PlayerSheet { NONE, SUBTITLES, SUBTITLE_FILE, AUDIO, VIDEO, QUEUE, SETTINGS }
 
 internal val SPEEDS = listOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0)
 
@@ -92,9 +107,11 @@ private fun PlayerPanel(
     width: Dp = 360.dp,
     /** False for content that scrolls itself, such as a lazy list. */
     scrollable: Boolean = true,
+    /** What the back gesture does; closing the panel unless the panel has its own levels. */
+    onBack: () -> Unit = onDismiss,
     content: @Composable () -> Unit,
 ) {
-    BackHandler(onBack = onDismiss)
+    BackHandler(onBack = onBack)
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -152,6 +169,8 @@ fun SubtitleSheet(
     position: Int,
     ai: AiSubtitleStatus,
     actions: SubtitlePanelActions,
+    /** Opens the subtitle file picker; null when the video is not from a source. */
+    onLoadFile: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) = PlayerPanel(onDismiss) {
     val external = stringResource(R.string.player_track_external)
@@ -163,6 +182,14 @@ fun SubtitleSheet(
     subtitles.forEach { track ->
         val label = if (track.title == AI_SUBTITLE_TITLE) aiTrack else track.label(external)
         TrackRow(label, track.selected) { actions.onSelectTrack(track.id) }
+    }
+    if (onLoadFile != null) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.player_subtitle_load)) },
+            leadingContent = { Icon(Icons.Outlined.FileOpen, contentDescription = null) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier.clickable(onClick = onLoadFile),
+        )
     }
     if (ai != AiSubtitleStatus.Unavailable) {
         SectionTitle(stringResource(R.string.ai_subtitles))
@@ -190,6 +217,96 @@ fun SubtitleSheet(
     Text(
         text = stringResource(R.string.player_subtitle_gesture_hint),
         style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
+/** A folder of the subtitle file picker, as it is being listed. */
+private sealed interface SubtitleFolder {
+    data object Loading : SubtitleFolder
+    data class Listed(val entries: List<MediaEntry>) : SubtitleFolder
+    data class Failed(val error: UserError) : SubtitleFolder
+}
+
+/**
+ * Picks a subtitle file from the playing video's source, starting in its folder.
+ * The back gesture goes up a folder first; the back button returns to the subtitle panel.
+ */
+@Composable
+fun SubtitleFileSheet(
+    startPath: String,
+    list: suspend (String) -> List<MediaEntry>,
+    onPick: (MediaEntry) -> Unit,
+    onBack: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var path by rememberSaveable { mutableStateOf(startPath) }
+    var folder by remember { mutableStateOf<SubtitleFolder>(SubtitleFolder.Loading) }
+    LaunchedEffect(path) {
+        folder = SubtitleFolder.Loading
+        folder = catchingFailures { list(path) }.fold({ SubtitleFolder.Listed(it) }, { SubtitleFolder.Failed(UserError.from(it)) })
+    }
+    val parent = parentPath(path)
+    PlayerPanel(onDismiss, scrollable = false, onBack = { parent?.let { path = it } ?: onBack() }) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp, end = 16.dp)) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.subtitle_picker_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = path,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.StartEllipsis,
+                )
+            }
+        }
+        LazyColumn(Modifier.fillMaxWidth()) {
+            if (parent != null) {
+                item(key = "..") {
+                    PickerRow(stringResource(R.string.browser_parent_folder), Icons.Outlined.DriveFolderUpload) { path = parent }
+                }
+            }
+            when (val current = folder) {
+                SubtitleFolder.Loading -> item(key = "loading") {
+                    Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                }
+                is SubtitleFolder.Failed -> item(key = "error") {
+                    PickerMessage(stringResource(R.string.browser_error, current.error.message()))
+                }
+                is SubtitleFolder.Listed -> {
+                    if (current.entries.isEmpty()) item(key = "empty") { PickerMessage(stringResource(R.string.subtitle_picker_empty)) }
+                    items(current.entries, key = { it.path }) { entry ->
+                        if (entry.kind == MediaKind.DIRECTORY) {
+                            PickerRow(entry.name, Icons.Outlined.Folder) { path = entry.path }
+                        } else {
+                            PickerRow(entry.name, Icons.Outlined.Subtitles) { onPick(entry) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PickerRow(text: String, icon: ImageVector, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(text, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        leadingContent = { Icon(icon, contentDescription = null) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.clickable(onClick = onClick),
+    )
+}
+
+@Composable
+private fun PickerMessage(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )

@@ -20,6 +20,7 @@ import dev.wplayer.app.data.local.PlaylistDao
 import dev.wplayer.app.data.local.RecentMediaDao
 import dev.wplayer.app.data.local.SearchIndexDao
 import dev.wplayer.app.data.local.SourceDao
+import dev.wplayer.app.data.local.SubtitleChoiceDao
 import dev.wplayer.app.data.model.AppSettings
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -72,6 +73,9 @@ object AppModule {
 
     @Provides
     fun lockedFolderDao(database: AppDatabase): LockedFolderDao = database.lockedFolderDao()
+
+    @Provides
+    fun subtitleChoiceDao(database: AppDatabase): SubtitleChoiceDao = database.subtitleChoiceDao()
 
     @Provides
     @Singleton
