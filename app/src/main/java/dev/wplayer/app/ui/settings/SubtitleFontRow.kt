@@ -1,6 +1,8 @@
 package dev.wplayer.app.ui.settings
 
 import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -91,7 +94,8 @@ private fun SubtitleFontDialog(
     onSelect: (SubtitleFont?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var noPicker by remember { mutableStateOf(false) }
+    val packageManager = LocalContext.current.packageManager
+    var noPicker by remember { mutableStateOf(!hasDocumentPicker(packageManager)) }
     // Font files rarely carry a font MIME type, so any file can be picked; adding checks it is a font.
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(actions::add) }
     AlertDialog(
@@ -121,19 +125,33 @@ private fun SubtitleFontDialog(
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    actions.dismissFailure()
-                    try {
-                        picker.launch(arrayOf("*/*"))
-                    } catch (_: ActivityNotFoundException) {
-                        noPicker = true
-                    }
-                },
-            ) { Text(stringResource(R.string.settings_subtitle_font_add)) }
+            if (noPicker) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) }
+            } else {
+                TextButton(
+                    onClick = {
+                        actions.dismissFailure()
+                        try {
+                            picker.launch(arrayOf("*/*"))
+                        } catch (_: ActivityNotFoundException) {
+                            noPicker = true
+                        }
+                    },
+                ) { Text(stringResource(R.string.settings_subtitle_font_add)) }
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) } },
+        dismissButton = if (noPicker) null else ({ TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) } }),
     )
+}
+
+/**
+ * Whether a file picker answers ACTION_OPEN_DOCUMENT. Android TV answers it
+ * with a stub (com.google.android.tv.frameworkpackagestubs) that shows nothing.
+ */
+private fun hasDocumentPicker(packageManager: PackageManager): Boolean {
+    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+    val picker = packageManager.resolveActivity(intent, 0)?.activityInfo ?: return false
+    return !picker.packageName.endsWith(".frameworkpackagestubs")
 }
 
 @Composable
