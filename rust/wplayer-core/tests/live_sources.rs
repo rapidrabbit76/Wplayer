@@ -102,6 +102,20 @@ fn ftp_lists_and_reads() {
 }
 
 #[test]
+#[ignore = "needs WPLAYER_TEST_FTP_LIST (a server without MLSD)"]
+fn ftp_without_mlsd_lists_and_reads() {
+    let address = std::env::var("WPLAYER_TEST_FTP_LIST").expect("WPLAYER_TEST_FTP_LIST");
+    exercise(config(Protocol::Ftp, &address, Some("tester"), Some("secret")));
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_FTP_CP949 (a server naming files in CP949)"]
+fn ftp_with_cp949_names_lists_and_reads() {
+    let address = std::env::var("WPLAYER_TEST_FTP_CP949").expect("WPLAYER_TEST_FTP_CP949");
+    exercise(config(Protocol::Ftp, &address, Some("tester"), Some("secret")));
+}
+
+#[test]
 #[ignore = "needs WPLAYER_TEST_WEBDAV"]
 fn webdav_lists_and_reads() {
     let address = std::env::var("WPLAYER_TEST_WEBDAV").expect("WPLAYER_TEST_WEBDAV");
@@ -112,6 +126,15 @@ fn webdav_lists_and_reads() {
 #[ignore = "needs WPLAYER_TEST_SMB (share named `share`)"]
 fn smb_lists_and_reads() {
     let address = std::env::var("WPLAYER_TEST_SMB").expect("WPLAYER_TEST_SMB");
+    let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
+    config.root_path = "/share".to_owned();
+    exercise(config);
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_SMB_SMALL_READS (a server taking reads of 64 KiB)"]
+fn smb_with_small_reads_lists_and_reads() {
+    let address = std::env::var("WPLAYER_TEST_SMB_SMALL_READS").expect("WPLAYER_TEST_SMB_SMALL_READS");
     let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
     config.root_path = "/share".to_owned();
     exercise(config);

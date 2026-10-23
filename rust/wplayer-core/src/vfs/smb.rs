@@ -177,11 +177,11 @@ impl Vfs for SmbVfs {
 
     fn open(&self, path: &str) -> CoreResult<Box<dyn RandomReader>> {
         let file_path = path::normalize(path)?;
-        let (file, size) = runtime::block_on(bounded("open", async {
+        let (file, size, max_read) = runtime::block_on(bounded("open", async {
             match self.open_resource(&file_path).await? {
                 Resource::File(file) => {
                     let size = file.get_len().await.map_err(map_error)?;
-                    Ok((file, size))
+                    Ok((file, size, self.max_read().await))
                 }
                 _ => Err(CoreError::InvalidArgument {
                     detail: format!("not a file: {file_path}"),
@@ -191,11 +191,29 @@ impl Vfs for SmbVfs {
         Ok(Box::new(ChunkedReader::new(SmbReader {
             file: Arc::new(file),
             size,
+            max_read,
         })))
     }
 }
 
 impl SmbVfs {
+    /// The longest READ the server accepts, as it said when the connection was
+    /// negotiated. Servers reject a longer one instead of shortening it.
+    async fn max_read(&self) -> usize {
+        let negotiated = match self.client.get_connection(&self.host).await {
+            Ok(connection) => connection
+                .conn_info()
+                .map(|info| info.negotiation.max_read_size as usize),
+            Err(e) => {
+                log::debug!("SMB connection info: {e}");
+                None
+            }
+        };
+        negotiated
+            .filter(|&n| n > 0)
+            .map_or(MIN_READ_BYTES, |n| n.min(MAX_READ_BYTES))
+    }
+
     async fn list_folder(&self, path: &str) -> CoreResult<Vec<Entry>> {
         let dir_path = path::normalize(path)?;
         if self.locate(&dir_path).is_none() {
@@ -239,7 +257,10 @@ impl SmbVfs {
     }
 }
 
+/// Reads are at most 1 MiB, which keeps seeks quick; ChunkedReader asks again for the rest.
 const MAX_READ_BYTES: usize = 1024 * 1024;
+/// SMB 2.0.2 servers, such as old NAS and routers, may accept no more than 64 KiB.
+const MIN_READ_BYTES: usize = 64 * 1024;
 
 /// Longest one SMB request may take. A connection that stops answering then
 /// fails with a connection error, which the app answers by reconnecting,
@@ -257,6 +278,7 @@ async fn bounded<T>(what: &str, request: impl std::future::Future<Output = CoreR
 struct SmbReader {
     file: Arc<File>,
     size: u64,
+    max_read: usize,
 }
 
 impl RandomReader for SmbReader {
@@ -265,9 +287,7 @@ impl RandomReader for SmbReader {
     }
 
     fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> CoreResult<usize> {
-        // Servers reject a READ longer than their MaxReadSize instead of shortening it.
-        // 1 MiB is within every SMB 2.1+ server's limit; ChunkedReader asks again for the rest.
-        let len = buf.len().min(MAX_READ_BYTES);
+        let len = buf.len().min(self.max_read);
         let file = &self.file;
         runtime::block_on(bounded("read", async {
             file.read_block(&mut buf[..len], offset, None, false)
