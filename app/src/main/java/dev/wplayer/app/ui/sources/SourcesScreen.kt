@@ -2,6 +2,7 @@ package dev.wplayer.app.ui.sources
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -196,28 +197,38 @@ private fun LazyGridScope.sectionTitle(title: Int) {
     }
 }
 
+/**
+ * The card opens the source; its edit button sits beside the part that opens,
+ * not inside it, so a remote can move to the button: focus never moves to a
+ * button inside the focused card.
+ */
 @Composable
 private fun SourceCard(source: Source, onOpen: () -> Unit, onEdit: () -> Unit) {
-    OutlinedCard(onClick = onOpen) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(44.dp)) {
-                Box(contentAlignment = Alignment.Center) { Icon(source.protocol.icon, contentDescription = null) }
-            }
-            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(source.displayName(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = source.summary(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+    OutlinedCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpen)
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(44.dp)) {
+                    Box(contentAlignment = Alignment.Center) { Icon(source.protocol.icon, contentDescription = null) }
+                }
+                Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                    Text(source.displayName(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        text = source.summary(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             if (source.protocol != SourceProtocol.LOCAL) {
-                IconButton(onClick = onEdit) {
+                IconButton(onClick = onEdit, modifier = Modifier.padding(end = 4.dp)) {
                     Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
                 }
             }

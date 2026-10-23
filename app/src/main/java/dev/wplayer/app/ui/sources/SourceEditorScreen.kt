@@ -1,11 +1,11 @@
 package dev.wplayer.app.ui.sources
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -49,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.SourceProtocol
+import dev.wplayer.app.ui.common.leaveOnVerticalKeys
+import dev.wplayer.app.ui.common.rememberRemoteTextField
 import dev.wplayer.app.ui.common.message
 
 private val EDITABLE_PROTOCOLS = SourceProtocol.entries - SourceProtocol.LOCAL
@@ -146,16 +149,18 @@ internal fun SourceEditorContent(state: SourceEditorUiState, actions: SourceEdit
             Field(R.string.source_port, state.port, actions::onPortChange, keyboardType = KeyboardType.Number)
             Field(R.string.source_path, state.path, actions::onPathChange, keyboardType = KeyboardType.Uri)
             Field(R.string.source_username, state.username, actions::onUsernameChange, autoCorrect = false)
+            val passwordRemote = rememberRemoteTextField()
             OutlinedTextField(
                 value = state.password,
                 onValueChange = actions::onPasswordChange,
+                readOnly = passwordRemote.readOnly,
                 label = {
                     Text(stringResource(if (state.hasStoredPassword) R.string.source_password_kept else R.string.source_password))
                 },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().then(passwordRemote.modifier),
             )
             if (state.protocol.usesTls) {
                 ListItem(
@@ -179,9 +184,9 @@ internal fun SourceEditorContent(state: SourceEditorUiState, actions: SourceEdit
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
             ) {
+                // Kept enabled while testing: a disabled button loses focus, which a remote then finds at the top.
                 OutlinedButton(
-                    onClick = actions::onTest,
-                    enabled = state.connectionTest != ConnectionTest.Running,
+                    onClick = { if (state.connectionTest != ConnectionTest.Running) actions.onTest() },
                 ) { Text(stringResource(R.string.source_test)) }
                 Button(onClick = actions::onSave, enabled = !state.isSaving) {
                     Text(stringResource(R.string.source_save))
@@ -205,7 +210,8 @@ private fun ProtocolField(selected: SourceProtocol, onSelect: (SourceProtocol) -
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .leaveOnVerticalKeys(LocalFocusManager.current),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             EDITABLE_PROTOCOLS.forEach { protocol ->
@@ -229,9 +235,11 @@ private fun Field(
     keyboardType: KeyboardType = KeyboardType.Text,
     autoCorrect: Boolean = true,
 ) {
+    val remote = rememberRemoteTextField()
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
+        readOnly = remote.readOnly,
         label = { Text(stringResource(label)) },
         singleLine = true,
         // Next moves focus down the form; addresses and user names must not be autocorrected.
@@ -240,7 +248,7 @@ private fun Field(
             imeAction = ImeAction.Next,
             autoCorrectEnabled = autoCorrect && keyboardType == KeyboardType.Text,
         ),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().then(remote.modifier),
     )
 }
 

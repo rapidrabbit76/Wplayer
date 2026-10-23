@@ -113,7 +113,8 @@ private fun UpdateStatus(state: UpdateState, viewModel: UpdateViewModel) {
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(onClick = viewModel::check, enabled = state !is UpdateState.Checking && state !is UpdateState.Downloading) {
+            // Kept enabled while busy: a disabled button loses focus, which a remote then finds elsewhere.
+            Button(onClick = { if (state !is UpdateState.Checking && state !is UpdateState.Downloading) viewModel.check() }) {
                 Text(stringResource(R.string.update_check))
             }
             val message = when (state) {
