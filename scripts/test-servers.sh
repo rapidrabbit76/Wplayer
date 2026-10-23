@@ -59,6 +59,10 @@ CONF
     { printf '[global]\n    smb2 max read = 65536\n'; sed 1d "$WORK/smb.conf"; } >"$WORK/smb-small.conf"
     docker run -d --rm --name wplayer-test-smb-small -p 1446:445 \
         -e USER=tester -e PASS=secret -v "$SHARE:/storage" -v "$WORK/smb-small.conf:/etc/samba/smb.conf" dockurr/samba >/dev/null
+    # openmediavault: shares behind mod_vroot aliases in ProFTPD, and its Samba options.
+    docker build -q -t wplayer-test-omv "$here/omv-test-server" >/dev/null
+    docker run -d --rm --name wplayer-test-omv -p 2124:21 -p 30000-30009:30000-30009 -p 1447:445 \
+        -v "$SHARE:/srv/dev-disk-by-uuid-1234/Videos" wplayer-test-omv >/dev/null
 
     cat <<EOF
 export WPLAYER_TEST_FTP=127.0.0.1:2121
@@ -67,6 +71,8 @@ export WPLAYER_TEST_FTP_CP949=127.0.0.1:2123
 export WPLAYER_TEST_WEBDAV=127.0.0.1:8088
 export WPLAYER_TEST_SMB=127.0.0.1:1445
 export WPLAYER_TEST_SMB_SMALL_READS=127.0.0.1:1446
+export WPLAYER_TEST_OMV_FTP=127.0.0.1:2124
+export WPLAYER_TEST_OMV_SMB=127.0.0.1:1447
 export WPLAYER_TEST_NFS=127.0.0.1:11111
 # then: (cd rust && cargo test -p wplayer-core --test live_sources -- --ignored)
 EOF
@@ -78,7 +84,7 @@ stop() {
         [[ -f "$WORK/$pid.pid" ]] && kill "$(cat "$WORK/$pid.pid")" 2>/dev/null || true
         rm -f "$WORK/$pid.pid"
     done
-    docker stop wplayer-test-smb wplayer-test-smb-small >/dev/null 2>&1 || true
+    docker stop wplayer-test-smb wplayer-test-smb-small wplayer-test-omv >/dev/null 2>&1 || true
 }
 
 case "${1:-}" in
