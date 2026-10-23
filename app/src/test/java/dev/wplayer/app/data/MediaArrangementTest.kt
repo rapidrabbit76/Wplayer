@@ -31,6 +31,12 @@ class MediaArrangementTest {
     }
 
     @Test
+    fun `font files show while other files are hidden, so they can be added as subtitle fonts`() {
+        val fonts = listOf(entry("DX영화자막Medium.ttf"), entry("Nanum.OTF"), entry("notes.txt"))
+        assertEquals(listOf("DX영화자막Medium.ttf", "Nanum.OTF"), arrange(fonts, BrowserSettings()).map { it.name })
+    }
+
+    @Test
     fun `descending size keeps folders on top`() {
         val names = arrange(listing, BrowserSettings(sortField = SortField.SIZE, ascending = false)).map { it.name }
         assertEquals(listOf("Season 10", "Season 2", "b.mkv", "a.mp4", "c.avi"), names)

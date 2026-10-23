@@ -19,10 +19,15 @@ fun arrange(entries: List<MediaEntry>, settings: BrowserSettings): List<MediaEnt
     return entries.filter { it.isShown(settings) }.sortedWith(comparator)
 }
 
-/** Whether the browser lists [this] under [settings]' file filters. */
+/**
+ * Whether the browser lists [this] under [settings]' file filters. Font files
+ * always show: opening one makes it the subtitle font, the only way to add one
+ * on a TV.
+ */
 fun MediaEntry.isShown(settings: BrowserSettings): Boolean = when {
     name.startsWith('.') -> settings.showHiddenFiles
     kind == MediaKind.SUBTITLE -> settings.showSubtitleFiles
+    kind == MediaKind.OTHER && SubtitleFontStore.isFontFile(name) -> true
     kind == MediaKind.OTHER -> settings.showOtherFiles
     else -> true
 }

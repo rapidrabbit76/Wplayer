@@ -258,8 +258,8 @@
     <string name="settings_subtitle_font">Subtitle font</string>
     <string name="settings_subtitle_font_default">System font</string>
     <string name="settings_subtitle_font_add">Add font file</string>
-    <string name="settings_subtitle_font_hint">Add TrueType or OpenType files (.ttf, .otf). In the browser, with other files shown, long-pressing a font file adds it too.</string>
-    <string name="settings_subtitle_font_no_picker">This device has no file picker. Show other files in the browser settings, then long-press a font file to add it.</string>
+    <string name="settings_subtitle_font_hint">Add TrueType or OpenType files (.ttf, .otf). Opening a font file in the browser, or long-pressing it, adds it too.</string>
+    <string name="settings_subtitle_font_no_picker">This device has no file picker. Open a font file in the browser to add it.</string>
     <string name="subtitle_font_invalid">That file is not a font.</string>
     <string name="browser_use_as_subtitle_font">Use as subtitle font</string>
     <string name="message_subtitle_font_failed">Could not copy the font file.</string>
