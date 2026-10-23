@@ -7,7 +7,8 @@
 #   ./build.sh clean      remove build outputs (sources are kept)
 #   ABIS=armeabi-v7a ./build.sh ...   only for the given ABIs
 #
-# Versions live in versions.env. Requires: Android NDK (ANDROID_NDK_HOME),
+# Versions live in versions.env; patches/<component>/*.patch are applied to the
+# fetched sources (rebuild the component after adding one). Requires: Android NDK (ANDROID_NDK_HOME),
 # meson, ninja, pkg-config, git. Runs on macOS and Linux hosts.
 set -euo pipefail
 
@@ -69,6 +70,19 @@ fetch_all() {
     fetch libass https://github.com/libass/libass.git "$LIBASS_VERSION"
     fetch libplacebo https://code.videolan.org/videolan/libplacebo.git "$LIBPLACEBO_VERSION" --recursive
     fetch mpv https://github.com/mpv-player/mpv.git "$MPV_VERSION"
+}
+
+apply_patches() { # applies patches/<component>/*.patch once each
+    local dir patch name
+    for dir in "$ROOT"/patches/*/; do
+        [[ -d "$dir" ]] || continue
+        name=$(basename "$dir")
+        for patch in "$dir"*.patch; do
+            git -C "$SRC/$name" apply --reverse --check "$patch" 2>/dev/null && continue
+            log "patching $name: $(basename "$patch")"
+            git -C "$SRC/$name" apply "$patch"
+        done
+    done
 }
 
 write_cross_file() {
@@ -205,6 +219,7 @@ main() {
         return
     fi
     fetch_all
+    apply_patches
     local targets=("$@")
     [[ ${#targets[@]} -eq 0 ]] && targets=("${COMPONENTS[@]}")
     local abi name
