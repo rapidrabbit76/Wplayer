@@ -30,8 +30,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -64,6 +62,7 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.ui.common.RowAction
+import dev.wplayer.app.ui.common.RowActionMenu
 import dev.wplayer.app.ui.common.Thumbnail
 import dev.wplayer.app.ui.player.PlaybackRequest
 import dev.wplayer.app.ui.player.formatTime
@@ -265,17 +264,7 @@ private fun ContinueCard(
                 )
             }
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            menu.forEach { action ->
-                DropdownMenuItem(
-                    text = { Text(action.label) },
-                    onClick = {
-                        menuOpen = false
-                        action.onClick()
-                    },
-                )
-            }
-        }
+        RowActionMenu(expanded = menuOpen, onDismiss = { menuOpen = false }, actions = menu)
     }
 }
 
