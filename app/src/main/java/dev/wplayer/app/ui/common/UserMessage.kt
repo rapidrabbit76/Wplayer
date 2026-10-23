@@ -11,4 +11,7 @@ enum class UserMessage(@StringRes val text: Int) {
     REFRESH_FAILED(R.string.message_refresh_failed),
     FOLDER_LOCKED(R.string.message_folder_locked),
     NO_SCREEN_LOCK(R.string.message_no_screen_lock),
+    SUBTITLE_FONT_SET(R.string.message_subtitle_font_set),
+    NOT_A_FONT(R.string.subtitle_font_invalid),
+    SUBTITLE_FONT_FAILED(R.string.message_subtitle_font_failed),
 }

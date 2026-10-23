@@ -253,6 +253,15 @@
     <string name="settings_subtitle_ass">Keep ASS/SSA styles</string>
     <string name="settings_subtitle_ass_hint">When off, ASS subtitles also use the font, color and size above.</string>
     <string name="settings_subtitle_embedded_fonts">Use fonts embedded in the video</string>
+    <string name="settings_subtitle_font">Subtitle font</string>
+    <string name="settings_subtitle_font_default">System font</string>
+    <string name="settings_subtitle_font_add">Add font file</string>
+    <string name="settings_subtitle_font_hint">Add TrueType or OpenType files (.ttf, .otf). In the browser, with other files shown, long-pressing a font file adds it too.</string>
+    <string name="settings_subtitle_font_no_picker">This device has no file picker. Show other files in the browser settings, then long-press a font file to add it.</string>
+    <string name="subtitle_font_invalid">That file is not a font.</string>
+    <string name="browser_use_as_subtitle_font">Use as subtitle font</string>
+    <string name="message_subtitle_font_failed">Could not copy the font file.</string>
+    <string name="message_subtitle_font_set">Subtitles now use this font.</string>
     <string name="settings_audio">Audio</string>
     <string name="settings_audio_boost">Volume boost</string>
     <string name="settings_audio_language">Preferred audio language</string>

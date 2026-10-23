@@ -248,6 +248,15 @@
     <string name="settings_subtitle_ass">ASS/SSA 스타일 그대로</string>
     <string name="settings_subtitle_ass_hint">끄면 ASS 자막도 위의 글꼴·색·크기로 표시합니다.</string>
     <string name="settings_subtitle_embedded_fonts">영상에 포함된 글꼴 사용</string>
+    <string name="settings_subtitle_font">자막 글꼴</string>
+    <string name="settings_subtitle_font_default">기본 글꼴</string>
+    <string name="settings_subtitle_font_add">글꼴 파일 추가</string>
+    <string name="settings_subtitle_font_hint">TTF, OTF 글꼴 파일을 추가할 수 있습니다. 탐색 화면에서 기타 파일을 표시하고 글꼴 파일을 길게 눌러도 추가됩니다.</string>
+    <string name="settings_subtitle_font_no_picker">이 기기에는 파일 선택기가 없습니다. 탐색 설정에서 기타 파일 표시를 켠 뒤 글꼴 파일을 길게 눌러 추가하세요.</string>
+    <string name="subtitle_font_invalid">글꼴 파일이 아닙니다.</string>
+    <string name="browser_use_as_subtitle_font">자막 글꼴로 사용</string>
+    <string name="message_subtitle_font_failed">글꼴 파일을 가져오지 못했습니다.</string>
+    <string name="message_subtitle_font_set">자막 글꼴을 바꿨습니다.</string>
     <string name="settings_audio">오디오</string>
     <string name="settings_audio_boost">볼륨 증폭</string>
     <string name="settings_audio_language">우선 음성 언어</string>

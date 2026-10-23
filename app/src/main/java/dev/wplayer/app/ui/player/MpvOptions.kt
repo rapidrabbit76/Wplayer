@@ -31,6 +31,7 @@ fun mpvOptions(
     put("sub-visibility", yesNo(subtitle.showByDefault))
     put("sub-scale", (subtitle.sizePercent / 100.0).toString())
     put("sub-color", "#%06X".format(subtitle.color.argb and 0xFFFFFF))
+    put("sub-font", subtitle.font?.family ?: DEFAULT_SUBTITLE_FONT)
     put("sub-bold", yesNo(subtitle.bold))
     if (subtitle.background) {
         put("sub-border-style", "background-box")
@@ -63,6 +64,9 @@ fun mpvOptions(
 
 /** Upper bound for [dev.wplayer.app.data.model.AudioSettings.boostPercent]; set once at start. */
 const val MAX_VOLUME_PERCENT = 200
+
+/** The system's Korean font, which SubtitleFontStore links into mpv's font folder. */
+private const val DEFAULT_SUBTITLE_FONT = "Noto Sans CJK KR"
 
 private const val MIN_DEMUXER_MEGABYTES = 8L
 

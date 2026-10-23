@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui
 
 import android.app.Application
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import dev.wplayer.app.data.model.Playlist
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
+import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.WatchProgress
 import dev.wplayer.app.data.model.WhisperModel
 import dev.wplayer.app.ui.browser.BrowserContent
@@ -443,4 +445,7 @@ private object NoOpMaintenance : SettingsMaintenance {
     override fun downloadWhisperModel(model: WhisperModel) = Unit
     override fun cancelWhisperModel(model: WhisperModel) = Unit
     override fun deleteWhisperModel(model: WhisperModel) = Unit
+    override fun add(uri: Uri) = Unit
+    override fun delete(font: SubtitleFont) = Unit
+    override fun dismissFailure() = Unit
 }

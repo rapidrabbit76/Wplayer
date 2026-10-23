@@ -443,7 +443,8 @@ fun PlayerScreen(
             )
         }
         if (state.directOutput && state.subtitlesVisible) {
-            DirectSubtitles(state.playback.subtitleText, settings.subtitle, subtitlePlacement, Modifier.fillMaxSize())
+            val fontFile = remember(settings.subtitle.font) { settings.subtitle.font?.let(viewModel::subtitleFontFile) }
+            DirectSubtitles(state.playback.subtitleText, settings.subtitle, subtitlePlacement, fontFile, Modifier.fillMaxSize())
         }
 
         // Overlay content is drawn straight over video, outside any Surface: default to white.
