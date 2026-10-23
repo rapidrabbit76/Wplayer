@@ -557,7 +557,13 @@ private fun Track.label(externalLabel: String): String = listOfNotNull(
  * Changes apply at once, as on the settings screen.
  */
 @Composable
-fun PlayerSettingsSheet(settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings) -> Unit, onDismiss: () -> Unit) =
+fun PlayerSettingsSheet(
+    settings: AppSettings,
+    onUpdate: ((AppSettings) -> AppSettings) -> Unit,
+    onDismiss: () -> Unit,
+    /** The subtitle font row, which needs the font files; none in previews. */
+    subtitleFont: (@Composable () -> Unit)? = null,
+) =
     PlayerPanel(onDismiss, width = 480.dp, scrollable = false) {
         var category by rememberSaveable { mutableStateOf(PLAYER_SETTINGS_CATEGORIES.first()) }
         PrimaryScrollableTabRow(
@@ -569,7 +575,7 @@ fun PlayerSettingsSheet(settings: AppSettings, onUpdate: ((AppSettings) -> AppSe
                 Tab(selected = item == category, onClick = { category = item }, text = { Text(stringResource(item.title)) })
             }
         }
-        LazyColumn(Modifier.fillMaxWidth()) { categoryRows(category, settings, onUpdate) }
+        LazyColumn(Modifier.fillMaxWidth()) { categoryRows(category, settings, onUpdate, subtitleFont) }
     }
 
 internal val ScaleMode.label: Int

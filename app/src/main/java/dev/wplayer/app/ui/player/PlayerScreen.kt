@@ -66,6 +66,7 @@ import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
 import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.VerticalSwipeAction
 import dev.wplayer.app.ui.common.message
+import dev.wplayer.app.ui.settings.SubtitleFontRow
 import dev.wplayer.core.ffi.TrackKind
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -639,7 +640,14 @@ private fun PlayerSheets(
             },
             onDismiss = onDismiss,
         )
-        PlayerSheet.SETTINGS -> PlayerSettingsSheet(settings, viewModel::updateSettings, onDismiss)
+        PlayerSheet.SETTINGS -> {
+            val subtitleFonts by viewModel.subtitleFonts.collectAsStateWithLifecycle()
+            PlayerSettingsSheet(settings, viewModel::updateSettings, onDismiss) {
+                SubtitleFontRow(settings.subtitle.font, subtitleFonts, viewModel.subtitleFontActions) { font ->
+                    viewModel.updateSettings { it.copy(subtitle = it.subtitle.copy(font = font)) }
+                }
+            }
+        }
         PlayerSheet.NONE -> Unit
     }
 }

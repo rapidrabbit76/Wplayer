@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -154,13 +156,16 @@ private fun hasDocumentPicker(packageManager: PackageManager): Boolean {
     return !picker.packageName.endsWith(".frameworkpackagestubs")
 }
 
+/** A font to choose; [trailing] sits beside the row, not inside it, so a remote can reach it. */
 @Composable
 private fun FontOption(label: String, selected: Boolean, onClick: () -> Unit, trailing: (@Composable () -> Unit)? = null) {
-    ListItem(
-        headlineContent = { Text(label) },
-        leadingContent = { RadioButton(selected = selected, onClick = null) },
-        trailingContent = trailing,
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        ListItem(
+            headlineContent = { Text(label) },
+            leadingContent = { RadioButton(selected = selected, onClick = null) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier.weight(1f).selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        )
+        trailing?.invoke()
+    }
 }

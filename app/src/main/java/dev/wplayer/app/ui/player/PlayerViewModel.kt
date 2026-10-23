@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui.player
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
@@ -14,10 +15,9 @@ import dev.wplayer.app.data.ExternalUriResolver
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SettingsRepository
-import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.SourceRepository
+import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.model.AppSettings
-import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.MediaButtonAction
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
@@ -27,17 +27,21 @@ import dev.wplayer.app.data.model.ResumeMode
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
 import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.SeekPrecision
+import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.transcription.TranscriptionRepository
 import dev.wplayer.app.data.transcription.WhisperModelStore
 import dev.wplayer.app.di.ApplicationScope
 import dev.wplayer.app.ui.browser.parentPath
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
+import dev.wplayer.app.ui.settings.SubtitleFontActions
+import dev.wplayer.app.ui.settings.SubtitleFontsState
 import dev.wplayer.core.ffi.CoreException
 import dev.wplayer.core.ffi.TrackKind
 import dev.wplayer.core.player.MpvEngine
 import dev.wplayer.core.player.PlaybackState
 import java.io.File
+import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.log2
 import kotlin.math.roundToInt
@@ -117,14 +121,42 @@ class PlayerViewModel @Inject constructor(
     private val whisperModels: WhisperModelStore,
     private val sessions: MediaSessionHolder,
     private val audioFocus: AudioFocusController,
-    private val subtitleFonts: SubtitleFontStore,
+    private val subtitleFontStore: SubtitleFontStore,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> =
         settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
     /** The file of the added subtitle font, for subtitles drawn without mpv. */
-    fun subtitleFontFile(font: SubtitleFont): File? = subtitleFonts.fileOf(font)
+    fun subtitleFontFile(font: SubtitleFont): File? = subtitleFontStore.fileOf(font)
+
+    private val subtitleFontFailed = MutableStateFlow(false)
+
+    /** The added subtitle fonts, for choosing one in the player's settings. */
+    val subtitleFonts: StateFlow<SubtitleFontsState> = combine(subtitleFontStore.fonts, subtitleFontFailed, ::SubtitleFontsState)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SubtitleFontsState())
+
+    val subtitleFontActions = object : SubtitleFontActions {
+        override fun add(uri: Uri) {
+            viewModelScope.launch {
+                subtitleFontFailed.value = try {
+                    subtitleFontStore.add(uri)
+                    false
+                } catch (e: IOException) {
+                    Log.w(TAG, "cannot add subtitle font $uri", e)
+                    true
+                }
+            }
+        }
+
+        override fun delete(font: SubtitleFont) {
+            viewModelScope.launch { subtitleFontStore.delete(font) }
+        }
+
+        override fun dismissFailure() {
+            subtitleFontFailed.value = false
+        }
+    }
 
     /** The engine in use, and how its video reaches the screen. Replaced, never mutated. */
     private class EngineSlot(val engine: MpvEngine, val generation: Int, val path: VideoPath)
