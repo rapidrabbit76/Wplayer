@@ -40,6 +40,15 @@
         android:name="android.hardware.wifi"
         android:required="false" />
 
+    <queries>
+        <!-- The subtitle font setting checks that a file picker exists; Android TV has a stub. -->
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <category android:name="android.intent.category.OPENABLE" />
+            <data android:mimeType="*/*" />
+        </intent>
+    </queries>
+
     <application
         android:name=".WplayerApplication"
         android:allowBackup="false"
