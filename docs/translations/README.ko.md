@@ -4,7 +4,6 @@
 
 # Wplayer
 
-[![CI](https://github.com/rapidrabbit76/Wplayer/actions/workflows/ci.yml/badge.svg)](https://github.com/rapidrabbit76/Wplayer/actions/workflows/ci.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 [![GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](../../LICENSE)
 
@@ -57,7 +56,7 @@ JDK 21, Android SDK 플랫폼 37, NDK `30.0.16248370`, stable Rust, `cargo-ndk`�
 Rust 타깃은 `aarch64-linux-android`와 `armv7-linux-androideabi`를 추가하세요.
 
 네이티브 라이브러리 빌드에는 `meson`, `ninja`, `cmake`, `nasm`, `pkg-config`, `git`, `libclang`이 필요합니다.
-Ubuntu 환경 구성은 [CI](../../.github/workflows/ci.yml)를 참고하세요.
+Ubuntu에서는 `sudo apt-get install ninja-build nasm pkg-config cmake libclang-dev`와 `pipx install meson`으로 설치합니다.
 
 ```sh
 source ./env.sh

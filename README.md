@@ -4,7 +4,6 @@
 
 # Wplayer
 
-[![CI](https://github.com/rapidrabbit76/Wplayer/actions/workflows/ci.yml/badge.svg)](https://github.com/rapidrabbit76/Wplayer/actions/workflows/ci.yml)
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84)
 [![GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
 
@@ -57,7 +56,7 @@ You need JDK 21, Android SDK platform 37, NDK `30.0.16248370`, stable Rust and `
 Add the Rust targets `aarch64-linux-android` and `armv7-linux-androideabi`.
 
 The native libraries need `meson`, `ninja`, `cmake`, `nasm`, `pkg-config`, `git` and `libclang`.
-See [CI](.github/workflows/ci.yml) for the Ubuntu setup.
+On Ubuntu: `sudo apt-get install ninja-build nasm pkg-config cmake libclang-dev` and `pipx install meson`.
 
 ```sh
 source ./env.sh

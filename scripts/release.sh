@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Publishes a release: bumps the version tag, builds and checks the signed
-# APK, pushes the tag and attaches the APK and latest.json to a GitHub
-# release, where the app looks for updates.
+# Publishes a release: bumps the version tag, runs the Rust and Android checks,
+# builds and checks the signed APK, pushes the tag and attaches the APK and
+# latest.json to a GitHub release, where the app looks for updates.
 #
 #   scripts/release.sh            # 0.1.0 -> 0.1.1
 #   scripts/release.sh minor      # 0.1.1 -> 0.2.0
@@ -65,13 +65,27 @@ cleanup() { [[ $published == true ]] || git tag -d "$tag" >/dev/null; }
 trap cleanup EXIT
 
 source ./env.sh
-./gradlew --console=plain :app:testDebugUnitTest :app:lintRelease :app:assembleRelease
+# There is no CI: these are the checks a release has to pass.
+(
+    cd rust
+    cargo fmt --check -p wplayer-core -p uniffi-bindgen
+    cargo clippy -p wplayer-core --all-targets -- -D warnings
+    cargo test -p wplayer-core
+)
+./gradlew --console=plain :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease :app:assembleRelease
 
 apk=app/build/outputs/apk/release/app-release.apk
 build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
 # Captured first: `tool | grep -q` would fail under pipefail when grep stops reading early.
 badging=$("$build_tools/aapt2" dump badging "$apk")
 [[ $badging == *"versionName='$next'"* ]] || fail "the APK does not carry version $next"
+# Gradle leaves libmpv out without complaint when native/out is missing (native/build.sh not run).
+contents=$(unzip -l "$apk")
+for abi in arm64-v8a armeabi-v7a; do
+    for lib in libmpv.so libc++_shared.so libwplayer_core.so; do
+        [[ $contents == *"lib/$abi/$lib"* ]] || fail "the APK lacks lib/$abi/$lib; run native/build.sh"
+    done
+done
 certs=$("$build_tools/apksigner" verify --print-certs "$apk")
 [[ $certs == *"CN=Wplayer"* ]] || fail "the APK is not signed with the personal key"
 
