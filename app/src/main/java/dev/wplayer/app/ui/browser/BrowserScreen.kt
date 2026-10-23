@@ -117,6 +117,7 @@ import dev.wplayer.app.ui.common.RowAction
 import dev.wplayer.app.ui.common.ThumbnailSizeButton
 import dev.wplayer.app.ui.common.UserMessage
 import dev.wplayer.app.ui.common.ViewModeToggle
+import dev.wplayer.app.ui.common.rememberRemoteTextField
 import dev.wplayer.app.ui.common.mediaGridCellMinWidth
 import dev.wplayer.app.ui.common.message
 import dev.wplayer.app.ui.common.rememberDeviceAuthentication
@@ -599,9 +600,11 @@ private fun SearchTopBar(
             }
         },
         title = {
+            val remote = rememberRemoteTextField()
             TextField(
                 value = search.query,
                 onValueChange = onQueryChange,
+                readOnly = remote.readOnly,
                 placeholder = { Text(stringResource(R.string.browser_search_hint)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -619,7 +622,7 @@ private fun SearchTopBar(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                 ),
-                modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                modifier = Modifier.fillMaxWidth().focusRequester(focus).then(remote.modifier),
             )
         },
         actions = {

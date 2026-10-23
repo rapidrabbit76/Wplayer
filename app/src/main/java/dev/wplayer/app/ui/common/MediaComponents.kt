@@ -331,14 +331,16 @@ fun AddToPlaylistDialog(
                     }
                 }
                 if (playlists.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                val remote = rememberRemoteTextField()
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
+                    readOnly = remote.readOnly,
                     label = { Text(stringResource(R.string.playlist_new_name)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { create() }),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().then(remote.modifier),
                 )
             }
         },
@@ -364,14 +366,16 @@ fun PlaylistNameDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
+            val remote = rememberRemoteTextField()
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
+                readOnly = remote.readOnly,
                 label = { Text(stringResource(R.string.playlist_name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onConfirm(name.trim()) }),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().then(remote.modifier),
             )
         },
         confirmButton = {
