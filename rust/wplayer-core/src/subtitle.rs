@@ -3,6 +3,8 @@
 //! Korean SMI/SRT files are frequently CP949 (EUC-KR); libmpv is built
 //! without uchardet, so detection happens here with `chardetng`.
 
+pub(crate) mod sami;
+
 use chardetng::{EncodingDetector, Iso2022JpDetection, Utf8Detection};
 use encoding_rs::Encoding;
 

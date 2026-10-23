@@ -82,7 +82,17 @@ fn open_subtitle_uri(uri: &str) -> CoreResult<Box<StreamCookie>> {
         filled += n;
     }
     bytes.truncate(filled);
-    Ok(cookie_for(Box::new(MemoryReader(subtitle::to_utf8(&bytes)))))
+    let text = subtitle::to_utf8(&bytes);
+    // FFmpeg's SAMI demuxer shows every language of a file at once; hand libmpv
+    // SubRip with the Korean lines instead. A file that is not SAMI stays as it is.
+    let text = match path.rsplit('.').next().map(str::to_ascii_lowercase).as_deref() {
+        Some("smi" | "sami") => std::str::from_utf8(&text)
+            .ok()
+            .and_then(subtitle::sami::to_srt)
+            .map_or(text, String::into_bytes),
+        _ => text,
+    };
+    Ok(cookie_for(Box::new(MemoryReader(text))))
 }
 
 unsafe extern "C" fn open_media(user_data: *mut c_void, uri: *mut c_char, info: *mut mpv_stream_cb_info) -> c_int {
