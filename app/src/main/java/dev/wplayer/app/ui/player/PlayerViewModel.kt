@@ -10,7 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.CacheStorage
 import dev.wplayer.app.data.ExternalUriResolver
-import dev.wplayer.app.data.NetworkMonitor
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SettingsRepository
@@ -109,7 +108,6 @@ class PlayerViewModel @Inject constructor(
     private val externalUris: ExternalUriResolver,
     private val history: PlaybackHistoryRepository,
     private val settingsRepository: SettingsRepository,
-    private val network: NetworkMonitor,
     private val cacheStorage: CacheStorage,
     private val mpvEnvironment: MpvEnvironment,
     private val transcriptions: TranscriptionRepository,
@@ -356,13 +354,9 @@ class PlayerViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             catchingFailures {
                 val appSettings = savedSettings()
-                if (isBlockedOnCellular(request, appSettings)) {
-                    session.update { it.copy(openFailure = UserError(UserError.Reason.CELLULAR_BLOCKED)) }
-                    return@catchingFailures
-                }
                 val from = start ?: startPosition(request, appSettings)
                 val uri = resolveUri(request)
-                previewUri = uri.takeIf { request.allowsSeekPreview(appSettings) }
+                previewUri = uri.takeIf { request.allowsSeekPreview }
                 // Local files are already on flash: copying them into the disk cache would only wear it.
                 val cache = if (request.isLocal) "no" else mpvEnvironment.options(appSettings).getValue("cache")
                 target.engine.setProperty("cache", cache)
@@ -383,24 +377,14 @@ class PlayerViewModel @Inject constructor(
 
     /**
      * The stored settings. [settings] starts out as the defaults until the store has
-     * been read, and a player opened right away must not decide on those (mobile data
-     * is off by default, so playback was refused even with it allowed).
+     * been read, and a player opened right away must not decide on those (the resume
+     * choice, kept speed and cache of the first video).
      */
     private suspend fun savedSettings(): AppSettings = settingsRepository.settings.first()
 
-    private fun isBlockedOnCellular(request: PlaybackRequest, appSettings: AppSettings): Boolean {
-        if (appSettings.network.allowCellular) return false
-        return !request.isLocal && network.isOnCellular()
-    }
-
-    /**
-     * Previews open the file a second time: not possible for a content URI's
-     * single file descriptor, and not wanted over mobile data unless allowed.
-     */
-    private fun PlaybackRequest.allowsSeekPreview(appSettings: AppSettings): Boolean {
-        if (this is PlaybackRequest.FromUri && uri.scheme != "http" && uri.scheme != "https") return false
-        return isLocal || appSettings.network.thumbnailsOnCellular || !network.isOnCellular()
-    }
+    /** Previews open the file a second time, which a content URI's single file descriptor does not allow. */
+    private val PlaybackRequest.allowsSeekPreview: Boolean
+        get() = this !is PlaybackRequest.FromUri || uri.scheme == "http" || uri.scheme == "https"
 
     /** Media on this device: device storage, or a file or content URI from another app. */
     private val PlaybackRequest.isLocal: Boolean

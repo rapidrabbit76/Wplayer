@@ -576,16 +576,6 @@ private fun LazyListScope.networkSection(settings: AppSettings, onUpdate: ((AppS
             supporting = R.string.settings_cache_hint,
         ) { megabytes -> onUpdate { it.copy(network = it.network.copy(cacheMegabytes = megabytes)) } }
     }
-    item {
-        SwitchRow(R.string.settings_cellular, network.allowCellular, R.string.settings_cellular_hint) { on ->
-            onUpdate { it.copy(network = it.network.copy(allowCellular = on)) }
-        }
-    }
-    item {
-        SwitchRow(R.string.settings_cellular_thumbnails, network.thumbnailsOnCellular) { on ->
-            onUpdate { it.copy(network = it.network.copy(thumbnailsOnCellular = on)) }
-        }
-    }
 }
 
 private fun LazyListScope.browserSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings) -> Unit) {

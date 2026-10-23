@@ -198,10 +198,6 @@ data class NetworkSettings(
     val bufferSeconds: Int = 5,
     /** Network read-ahead cache, kept on disk; 0 turns the cache off. */
     val cacheMegabytes: Int = 1024,
-    /** Play and download network sources over mobile data. */
-    val allowCellular: Boolean = false,
-    /** Render thumbnails of network files over mobile data. */
-    val thumbnailsOnCellular: Boolean = false,
 )
 
 @Serializable

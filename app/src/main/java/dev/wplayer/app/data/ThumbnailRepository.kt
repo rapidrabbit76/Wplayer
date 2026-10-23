@@ -17,7 +17,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -25,14 +24,12 @@ import kotlinx.coroutines.withContext
 /**
  * Video thumbnails, rendered once by the native core and kept as small JPEGs
  * in the app cache. Rendering opens the file over the network for remote
- * sources, so few run at a time and none run on mobile data unless allowed.
+ * sources, so few run at a time.
  */
 @Singleton
 class ThumbnailRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val sources: SourceRepository,
-    private val settings: SettingsRepository,
-    private val network: NetworkMonitor,
     private val lockedFolders: LockedFolders,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) {
@@ -50,7 +47,6 @@ class ThumbnailRepository @Inject constructor(
         if (key in failed) return null
         val file = File(dir, "$key.jpg")
         withContext(io) { decode(file) }?.let { return it.also { memory.put(key, it) } }
-        if (!mayRender(ref)) return null
 
         return renders.withPermit {
             // Another caller may have rendered it while this one waited.
@@ -62,11 +58,6 @@ class ThumbnailRepository @Inject constructor(
         memory.evictAll()
         failed.clear()
         withContext(io) { dir.deleteRecursively() }
-    }
-
-    private suspend fun mayRender(ref: MediaRef): Boolean {
-        if (ref.sourceKey == SourceRepository.LOCAL_KEY) return true
-        return settings.settings.first().network.thumbnailsOnCellular || !network.isOnCellular()
     }
 
     private suspend fun render(ref: MediaRef, file: File, key: String): Bitmap? {
