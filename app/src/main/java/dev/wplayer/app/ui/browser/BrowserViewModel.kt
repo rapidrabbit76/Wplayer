@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui.browser
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -10,11 +11,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.DownloadRepository
 import dev.wplayer.app.data.LockedFolders
+import dev.wplayer.app.data.NotAFontException
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SearchProgress
 import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.SourceRepository
+import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.ThumbnailRepository
 import dev.wplayer.app.data.arrange
 import dev.wplayer.app.data.model.BrowserSettings
@@ -29,7 +32,13 @@ import dev.wplayer.app.data.nameMatches
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.UserMessage
 import dev.wplayer.app.ui.common.catchingFailures
+import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.app.ui.navigation.BrowserRoute
+import dev.wplayer.core.ffi.CoreException
+import dev.wplayer.core.ffi.TransferListener
+import dev.wplayer.core.ffi.downloadFile
+import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -46,6 +55,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class BrowserUiState(
     val source: Source? = null,
@@ -96,6 +106,8 @@ class BrowserViewModel @AssistedInject constructor(
     private val thumbnails: ThumbnailRepository,
     private val downloads: DownloadRepository,
     private val locks: LockedFolders,
+    private val subtitleFonts: SubtitleFontStore,
+    @IoDispatcher private val io: CoroutineDispatcher,
 ) : ViewModel() {
     /** The folder as listed, before filtering and sorting. */
     // Starts from this session's cached listing, if any, so a reopened folder shows on the first frame.
@@ -248,6 +260,27 @@ class BrowserViewModel @AssistedInject constructor(
         }
     }
 
+    /** Copies a font file from this source and makes it the subtitle font. */
+    fun useAsSubtitleFont(entry: MediaEntry) {
+        viewModelScope.launch {
+            message.value = try {
+                sourceRepository.ensureConnected(route.sourceKey)
+                subtitleFonts.add(entry.name) { target ->
+                    withContext(io) { downloadFile(route.sourceKey, entry.path, target.absolutePath, CopyWholeFile) }
+                }
+                UserMessage.SUBTITLE_FONT_SET
+            } catch (e: NotAFontException) {
+                UserMessage.NOT_A_FONT
+            } catch (e: CoreException) {
+                Log.w(TAG, "cannot copy font ${entry.path}", e)
+                UserMessage.SUBTITLE_FONT_FAILED
+            } catch (e: IOException) {
+                Log.w(TAG, "cannot copy font ${entry.path}", e)
+                UserMessage.SUBTITLE_FONT_FAILED
+            }
+        }
+    }
+
     fun lockFolder(entry: MediaEntry) {
         viewModelScope.launch {
             locks.lock(route.sourceKey, entry.path)
@@ -292,7 +325,13 @@ class BrowserViewModel @AssistedInject constructor(
         )
     }
 
+    /** Copies a font file in one go: small, and not worth reporting progress for. */
+    private object CopyWholeFile : TransferListener {
+        override fun onProgress(copied: ULong, total: ULong?): Boolean = true
+    }
+
     private companion object {
+        const val TAG = "BrowserViewModel"
         const val SEARCH_DEBOUNCE_MS = 300L
     }
 

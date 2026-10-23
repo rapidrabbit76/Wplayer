@@ -175,7 +175,13 @@ data class SubtitleSettings(
     /** Render ASS/SSA with the file's own styles rather than the settings above. */
     val assFullStyling: Boolean = true,
     val embeddedFonts: Boolean = true,
+    /** A font file the user added; null for the system's Korean font. */
+    val font: SubtitleFont? = null,
 )
+
+/** A font file added for subtitles, in the subtitle font folder; [family] is the name mpv asks libass for. */
+@Serializable
+data class SubtitleFont(val file: String, val family: String)
 
 @Serializable
 data class AudioSettings(

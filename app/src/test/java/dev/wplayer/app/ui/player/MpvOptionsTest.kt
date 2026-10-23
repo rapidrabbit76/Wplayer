@@ -6,6 +6,7 @@ import dev.wplayer.app.data.model.PlaybackSettings
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.ScreenSettings
 import dev.wplayer.app.data.model.SubtitleColor
+import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.SubtitleSettings
 import dev.wplayer.app.data.model.VideoEnhancement
 import org.junit.Assert.assertEquals
@@ -50,6 +51,13 @@ class MpvOptionsTest {
         assertEquals("#FFE066", options["sub-color"])
         assertEquals("background-box", options["sub-border-style"])
         assertEquals("force", options["sub-ass-override"])
+    }
+
+    @Test
+    fun `subtitles use the added font, or the system's Korean font`() {
+        assertEquals("Noto Sans CJK KR", mpvOptions(AppSettings())["sub-font"])
+        val font = SubtitleFont("DX영화자막Medium.ttf", "DX영화자막 Medium")
+        assertEquals("DX영화자막 Medium", mpvOptions(AppSettings(subtitle = SubtitleSettings(font = font)))["sub-font"])
     }
 
     @Test

@@ -14,8 +14,10 @@ import dev.wplayer.app.data.NetworkMonitor
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SettingsRepository
+import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.SourceRepository
 import dev.wplayer.app.data.model.AppSettings
+import dev.wplayer.app.data.model.SubtitleFont
 import androidx.media3.common.C
 import dev.wplayer.app.data.model.MediaButtonAction
 import dev.wplayer.app.data.model.MediaRef
@@ -33,6 +35,7 @@ import dev.wplayer.core.ffi.CoreException
 import dev.wplayer.core.ffi.TrackKind
 import dev.wplayer.core.player.MpvEngine
 import dev.wplayer.core.player.PlaybackState
+import java.io.File
 import javax.inject.Inject
 import kotlin.math.log2
 import kotlin.math.roundToInt
@@ -113,10 +116,14 @@ class PlayerViewModel @Inject constructor(
     private val whisperModels: WhisperModelStore,
     private val sessions: MediaSessionHolder,
     private val audioFocus: AudioFocusController,
+    private val subtitleFonts: SubtitleFontStore,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> =
         settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
+
+    /** The file of the added subtitle font, for subtitles drawn without mpv. */
+    fun subtitleFontFile(font: SubtitleFont): File? = subtitleFonts.fileOf(font)
 
     /** The engine in use, and how its video reaches the screen. Replaced, never mutated. */
     private class EngineSlot(val engine: MpvEngine, val generation: Int, val path: VideoPath)

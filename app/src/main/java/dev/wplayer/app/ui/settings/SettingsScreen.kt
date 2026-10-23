@@ -1,5 +1,6 @@
 package dev.wplayer.app.ui.settings
 
+import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -60,6 +61,7 @@ import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.ScreenSettings
 import dev.wplayer.app.data.model.SeekPrecision
 import dev.wplayer.app.data.model.SubtitleColor
+import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.SubtitleSettings
 import dev.wplayer.app.data.model.ThemeMode
 import dev.wplayer.app.data.model.TranscriptionSettings
@@ -138,6 +140,7 @@ fun SettingsCategoryScreen(category: SettingsCategory, onBack: (() -> Unit)?, vi
     }
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val modelStatus by viewModel.whisperModelStatus.collectAsStateWithLifecycle()
+    val subtitleFonts by viewModel.subtitleFonts.collectAsStateWithLifecycle()
     val maintenance = remember(viewModel) {
         object : SettingsMaintenance {
             override fun clearHistory() = viewModel.clearHistory()
@@ -146,9 +149,12 @@ fun SettingsCategoryScreen(category: SettingsCategory, onBack: (() -> Unit)?, vi
             override fun downloadWhisperModel(model: WhisperModel) = viewModel.downloadWhisperModel(model)
             override fun cancelWhisperModel(model: WhisperModel) = viewModel.cancelWhisperModel(model)
             override fun deleteWhisperModel(model: WhisperModel) = viewModel.deleteWhisperModel(model)
+            override fun add(uri: Uri) = viewModel.addSubtitleFont(uri)
+            override fun delete(font: SubtitleFont) = viewModel.deleteSubtitleFont(font)
+            override fun dismissFailure() = viewModel.dismissSubtitleFontFailure()
         }
     }
-    SettingsCategoryContent(category, settings, onBack, viewModel::update, maintenance, modelStatus)
+    SettingsCategoryContent(category, settings, onBack, viewModel::update, maintenance, modelStatus, subtitleFonts)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -161,6 +167,7 @@ internal fun SettingsCategoryContent(
     maintenance: SettingsMaintenance,
     /** Of the whisper model chosen in [settings]. */
     whisperModelStatus: ModelStatus = ModelStatus.NotInstalled,
+    subtitleFonts: SubtitleFontsState = SubtitleFontsState(),
 ) {
     var confirmingClear by remember { mutableStateOf(false) }
     Scaffold(
@@ -214,7 +221,11 @@ internal fun SettingsCategoryContent(
                     }
                 }
                 SettingsCategory.SUBTITLES -> {
-                    categoryRows(category, settings, onUpdate)
+                    categoryRows(category, settings, onUpdate) {
+                        SubtitleFontRow(settings.subtitle.font, subtitleFonts, maintenance) { font ->
+                            onUpdate { it.copy(subtitle = it.subtitle.copy(font = font)) }
+                        }
+                    }
                     item { SectionHeader(R.string.ai_subtitles) }
                     aiSubtitleSection(settings, onUpdate, whisperModelStatus, maintenance)
                 }
@@ -239,8 +250,8 @@ internal fun SettingsCategoryContent(
     }
 }
 
-/** The settings screen's clean-up actions. */
-interface SettingsMaintenance {
+/** The settings screen's clean-up actions, and adding subtitle fonts. */
+interface SettingsMaintenance : SubtitleFontActions {
     /** Forgets every resume position and the recently played list. */
     fun clearHistory()
     fun clearThumbnails()
@@ -259,8 +270,16 @@ val PLAYER_SETTINGS_CATEGORIES = listOf(
     SettingsCategory.GESTURES,
 )
 
-/** The rows of [category]; General's history and developer actions only live on the settings screen. */
-fun LazyListScope.categoryRows(category: SettingsCategory, settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings) -> Unit) {
+/**
+ * The rows of [category]; General's history and developer actions only live on the settings screen,
+ * as does [subtitleFont], the subtitle font row, which adds font files.
+ */
+fun LazyListScope.categoryRows(
+    category: SettingsCategory,
+    settings: AppSettings,
+    onUpdate: ((AppSettings) -> AppSettings) -> Unit,
+    subtitleFont: (@Composable () -> Unit)? = null,
+) {
     when (category) {
         SettingsCategory.GENERAL -> {
             appearanceSection(settings, onUpdate)
@@ -268,7 +287,7 @@ fun LazyListScope.categoryRows(category: SettingsCategory, settings: AppSettings
         }
         SettingsCategory.PLAYBACK -> playbackSection(settings, onUpdate)
         SettingsCategory.SCREEN -> screenSection(settings, onUpdate)
-        SettingsCategory.SUBTITLES -> subtitleSection(settings, onUpdate)
+        SettingsCategory.SUBTITLES -> subtitleSection(settings, onUpdate, subtitleFont)
         SettingsCategory.AUDIO -> audioSection(settings, onUpdate)
         SettingsCategory.GESTURES -> gestureSection(settings, onUpdate)
         SettingsCategory.NETWORK -> networkSection(settings, onUpdate)
@@ -468,7 +487,11 @@ private fun LazyListScope.screenSection(settings: AppSettings, onUpdate: ((AppSe
     }
 }
 
-private fun LazyListScope.subtitleSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings) -> Unit) {
+private fun LazyListScope.subtitleSection(
+    settings: AppSettings,
+    onUpdate: ((AppSettings) -> AppSettings) -> Unit,
+    fontRow: (@Composable () -> Unit)?,
+) {
     val subtitle = settings.subtitle
     fun update(transform: (SubtitleSettings) -> SubtitleSettings) =
         onUpdate { it.copy(subtitle = transform(it.subtitle)) }
@@ -495,6 +518,7 @@ private fun LazyListScope.subtitleSection(settings: AppSettings, onUpdate: ((App
             update { it.copy(color = color) }
         }
     }
+    fontRow?.let { item { it() } }
     item { SwitchRow(R.string.settings_subtitle_bold, subtitle.bold) { on -> update { it.copy(bold = on) } } }
     item { SwitchRow(R.string.settings_subtitle_outline, subtitle.outline) { on -> update { it.copy(outline = on) } } }
     item { SwitchRow(R.string.settings_subtitle_shadow, subtitle.shadow) { on -> update { it.copy(shadow = on) } } }

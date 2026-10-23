@@ -102,6 +102,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.MAX_SEARCH_DEPTH
 import dev.wplayer.app.data.MAX_SEARCH_RESULTS
+import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.BrowserViewMode
 import dev.wplayer.app.data.model.MediaEntry
@@ -164,6 +165,8 @@ fun BrowserScreen(
             } else {
                 onOpenFolder(entry.path)
             }
+        } else if (SubtitleFontStore.isFontFile(entry.name)) {
+            viewModel.useAsSubtitleFont(entry)
         } else {
             onPlay(PlaybackRequest.FromSource(viewModel.sourceKey, entry.path, entry.name))
         }
@@ -191,6 +194,7 @@ fun BrowserScreen(
     val downloadLabel = stringResource(R.string.download_action)
     val lockFolderLabel = stringResource(R.string.browser_lock_folder)
     val showInFolderLabel = stringResource(R.string.show_in_folder)
+    val useAsFontLabel = stringResource(R.string.browser_use_as_subtitle_font)
     val isRemote = state.source?.protocol != SourceProtocol.LOCAL
     val inSearch = state.search != null
     val entryActions: (MediaEntry) -> List<RowAction> = { entry ->
@@ -207,7 +211,11 @@ fun BrowserScreen(
                     },
                 )
             }
-            add(RowAction(addLabel) { addingToPlaylist = entry })
+            if (SubtitleFontStore.isFontFile(entry.name)) {
+                add(RowAction(useAsFontLabel) { viewModel.useAsSubtitleFont(entry) })
+            } else {
+                add(RowAction(addLabel) { addingToPlaylist = entry })
+            }
             if (isRemote && entry.isPlayable) add(RowAction(downloadLabel) { startDownload(entry) })
             if (entry.path in state.progress) add(RowAction(forgetLabel) { viewModel.forgetHistory(entry) })
             if (entry.kind == MediaKind.DIRECTORY) {
