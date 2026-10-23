@@ -116,6 +116,16 @@ fn ftp_with_cp949_names_lists_and_reads() {
 }
 
 #[test]
+#[ignore = "needs WPLAYER_TEST_OMV_FTP (ProFTPD set up like openmediavault)"]
+fn ftp_on_openmediavault_lists_and_reads() {
+    // openmediavault serves each shared folder as a mod_vroot alias under an empty root.
+    let address = std::env::var("WPLAYER_TEST_OMV_FTP").expect("WPLAYER_TEST_OMV_FTP");
+    let mut config = config(Protocol::Ftp, &address, Some("tester"), Some("secret"));
+    config.root_path = "/Videos".to_owned();
+    exercise(config);
+}
+
+#[test]
 #[ignore = "needs WPLAYER_TEST_WEBDAV"]
 fn webdav_lists_and_reads() {
     let address = std::env::var("WPLAYER_TEST_WEBDAV").expect("WPLAYER_TEST_WEBDAV");
@@ -137,6 +147,15 @@ fn smb_with_small_reads_lists_and_reads() {
     let address = std::env::var("WPLAYER_TEST_SMB_SMALL_READS").expect("WPLAYER_TEST_SMB_SMALL_READS");
     let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
     config.root_path = "/share".to_owned();
+    exercise(config);
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_OMV_SMB (Samba set up like openmediavault)"]
+fn smb_on_openmediavault_lists_and_reads() {
+    let address = std::env::var("WPLAYER_TEST_OMV_SMB").expect("WPLAYER_TEST_OMV_SMB");
+    let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
+    config.root_path = "/Videos".to_owned();
     exercise(config);
 }
 
