@@ -1,6 +1,9 @@
 package dev.wplayer.app.ui.player
 
+import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.PlaybackSettings
+import dev.wplayer.app.data.model.ScreenSettings
+import dev.wplayer.app.data.model.VideoEnhancement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,9 +39,14 @@ class FrozenVideoDetectorTest {
 
     @Test
     fun `settings choose the video path`() {
-        assertEquals(VideoPath.ZERO_COPY, VideoPath.from(PlaybackSettings()))
-        assertEquals(VideoPath.DIRECT, VideoPath.from(PlaybackSettings(directVideoOutput = true)))
-        assertEquals(VideoPath.COPY, VideoPath.from(PlaybackSettings(zeroCopyFroze = true)))
-        assertEquals(VideoPath.SOFTWARE, VideoPath.from(PlaybackSettings(hardwareDecoding = false, directVideoOutput = true)))
+        fun path(playback: PlaybackSettings, enhancement: VideoEnhancement = VideoEnhancement.OFF) =
+            VideoPath.from(AppSettings(playback = playback, screen = ScreenSettings(enhancement = enhancement)))
+        assertEquals(VideoPath.ZERO_COPY, path(PlaybackSettings()))
+        assertEquals(VideoPath.DIRECT, path(PlaybackSettings(directVideoOutput = true)))
+        assertEquals(VideoPath.COPY, path(PlaybackSettings(zeroCopyFroze = true)))
+        assertEquals(VideoPath.SOFTWARE, path(PlaybackSettings(hardwareDecoding = false, directVideoOutput = true)))
+        // Zero-copy frames arrive as RGB, without the planes the enhancement shaders work on.
+        assertEquals(VideoPath.COPY, path(PlaybackSettings(), VideoEnhancement.SHARP))
+        assertEquals(VideoPath.DIRECT, path(PlaybackSettings(directVideoOutput = true), VideoEnhancement.SHARP))
     }
 }

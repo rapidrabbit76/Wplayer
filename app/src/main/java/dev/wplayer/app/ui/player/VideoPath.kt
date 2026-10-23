@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui.player
 
-import dev.wplayer.app.data.model.PlaybackSettings
+import dev.wplayer.app.data.model.AppSettings
+import dev.wplayer.app.data.model.VideoEnhancement
 
 /**
  * How decoded video reaches the screen: mpv's `hwdec` and `vo` values.
@@ -14,7 +15,8 @@ enum class VideoPath(val hwdec: String, val videoOutput: String) {
     /**
      * MediaCodec frames are copied to memory first. Slower, but works with
      * decoders whose frames never arrive on the zero-copy path (10-bit HEVC on
-     * some MStar TVs).
+     * some MStar TVs), and keeps the luma and chroma planes apart, which the
+     * picture enhancement shaders work on: zero-copy frames arrive as RGB.
      */
     COPY("mediacodec-copy", "gpu-next"),
 
@@ -32,11 +34,14 @@ enum class VideoPath(val hwdec: String, val videoOutput: String) {
 
     companion object {
         /** The path the settings ask for. */
-        fun from(playback: PlaybackSettings): VideoPath = when {
-            !playback.hardwareDecoding -> SOFTWARE
-            playback.directVideoOutput -> DIRECT
-            playback.zeroCopyFroze -> COPY
-            else -> ZERO_COPY
+        fun from(settings: AppSettings): VideoPath {
+            val playback = settings.playback
+            return when {
+                !playback.hardwareDecoding -> SOFTWARE
+                playback.directVideoOutput -> DIRECT
+                playback.zeroCopyFroze || settings.screen.enhancement != VideoEnhancement.OFF -> COPY
+                else -> ZERO_COPY
+            }
         }
     }
 }

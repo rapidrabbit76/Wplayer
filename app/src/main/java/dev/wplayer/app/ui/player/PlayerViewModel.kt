@@ -177,7 +177,7 @@ class PlayerViewModel @Inject constructor(
     )
 
     private val engineError = MutableStateFlow<String?>(null)
-    private val slot = MutableStateFlow(createSlot(VideoPath.from(settings.value.playback), generation = 0))
+    private val slot = MutableStateFlow(createSlot(VideoPath.from(settings.value), generation = 0))
     private val engine: MpvEngine? get() = slot.value?.engine
     private val session = MutableStateFlow(Session())
 
@@ -288,8 +288,8 @@ class PlayerViewModel @Inject constructor(
         }
         viewModelScope.launch {
             // Also applies the stored settings once they load: the first engine starts before them.
-            var previous = VideoPath.from(settings.value.playback)
-            settings.map { VideoPath.from(it.playback) }.distinctUntilChanged().collect { path ->
+            var previous = VideoPath.from(settings.value)
+            settings.map { VideoPath.from(it) }.distinctUntilChanged().collect { path ->
                 // Remembering a freeze must not undo the software fallback chosen for that freeze.
                 val freezeRemembered = previous == VideoPath.ZERO_COPY && path == VideoPath.COPY
                 previous = path
@@ -875,7 +875,7 @@ class PlayerViewModel @Inject constructor(
 
     /** Switches between the hardware and software decoder for this session. */
     fun setHardwareDecoding(enabled: Boolean) {
-        val hardware = VideoPath.from(settings.value.playback.copy(hardwareDecoding = true))
+        val hardware = VideoPath.from(settings.value.let { it.copy(playback = it.playback.copy(hardwareDecoding = true)) })
         switchVideoPath(if (enabled) hardware else VideoPath.SOFTWARE)
     }
 
