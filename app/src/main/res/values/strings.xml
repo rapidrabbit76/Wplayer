@@ -361,7 +361,7 @@
     <string name="settings_combine_seeks_hint">Pressing ←/→ quickly several times shows only the target time, then jumps once you let go.</string>
     <string name="settings_step_seek_time">Show the time in the center when skipping</string>
     <string name="settings_step_seek_time_hint">When skipping with a remote, keyboard or double-tap, shows the time you will land on in the center of the screen. The skip amount at the side always shows.</string>
-    <string name="settings_enhancement">Upscaling enhancement</string>
+    <string name="settings_enhancement">Picture enhancement</string>
     <string name="enhancement_off">Off</string>
     <string name="enhancement_sharp">Sharp · FSR</string>
     <string name="enhancement_detail">Detail · FSRCNNX</string>

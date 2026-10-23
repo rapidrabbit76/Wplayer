@@ -1,0 +1,14 @@
+{
+  "uniqueId": "shader:cas",
+  "name": "AMD FidelityFX CAS (mpv port)",
+  "description": "Contrast adaptive sharpening shader.",
+  "website": "https://gist.github.com/agyild/bbb4e58298b2f86aa24da3032a0d2ee6",
+  "developers": [
+    {
+      "name": "Advanced Micro Devices, agyild"
+    }
+  ],
+  "licenses": [
+    "MIT"
+  ]
+}

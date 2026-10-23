@@ -1,0 +1,14 @@
+{
+  "uniqueId": "shader:cfl",
+  "name": "Chroma from Luma prediction",
+  "description": "Chroma upscaling shader.",
+  "website": "https://github.com/Artoriuz/glsl-chroma-from-luma-prediction",
+  "developers": [
+    {
+      "name": "João Chrisóstomo (Artoriuz)"
+    }
+  ],
+  "licenses": [
+    "MIT"
+  ]
+}
