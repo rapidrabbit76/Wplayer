@@ -198,7 +198,6 @@
     <string name="player_resume_question">%1$s부터 이어서 재생할까요?</string>
     <string name="player_resume_restart">처음부터</string>
     <string name="player_resume_continue">이어서 재생</string>
-    <string name="error_cellular_blocked">모바일 데이터에서는 네트워크 파일을 재생하지 않도록 설정되어 있습니다. 설정 → 네트워크에서 바꿀 수 있습니다.</string>
 
     <!-- Settings -->
     <string name="settings_appearance">모양</string>
@@ -272,8 +271,6 @@
     <string name="settings_cache_hint">미리 읽은 내용을 저장 공간에 둡니다(메모리 아님). 남은 공간보다 크면 남은 만큼만 씁니다.</string>
     <string name="settings_cache_none">없음</string>
     <string name="settings_megabytes">%1$dMB</string>
-    <string name="settings_cellular">모바일 데이터 사용</string>
-    <string name="settings_cellular_hint">끄면 Wi-Fi가 아닐 때 네트워크 파일을 재생하거나 다운로드하지 않습니다.</string>
     <string name="settings_browser">파일 목록</string>
     <string name="settings_column_view">3단 보기</string>
     <string name="settings_column_view_hint">넓은 화면에서 상위 폴더를 현재 폴더 옆에 함께 보여 줍니다.</string>
@@ -294,7 +291,6 @@
     <string name="settings_read_ahead_hint">재생 위치보다 이만큼 앞까지 미리 받아 둡니다.</string>
     <string name="settings_read_ahead_max">캐시만큼</string>
     <string name="settings_gigabytes">%1$dGB</string>
-    <string name="settings_cellular_thumbnails">모바일 데이터에서 섬네일 만들기</string>
     <string name="settings_show_thumbnails">섬네일 표시</string>
     <string name="settings_clear_thumbnails">섬네일 캐시 지우기</string>
     <string name="settings_clear_thumbnails_hint">저장된 섬네일을 지웁니다. 다시 볼 때 새로 만듭니다.</string>
@@ -305,7 +301,7 @@
     <string name="settings_subtitles_summary">크기, 위치, 색, 테두리, 우선 언어</string>
     <string name="settings_audio_summary">볼륨 증폭, 우선 언어</string>
     <string name="settings_gestures_summary">스와이프, 더블탭, 핀치, 자막 제스처</string>
-    <string name="settings_network_summary">미리 읽기, 캐시, 모바일 데이터</string>
+    <string name="settings_network_summary">미리 읽기, 캐시</string>
     <string name="settings_updates">업데이트</string>
     <string name="settings_updates_summary">새 버전 확인·설치</string>
     <string name="settings_about">정보</string>

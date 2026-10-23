@@ -9,7 +9,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /** A failure reduced to what the user can act on; rendered with [message]. */
 data class UserError(val reason: Reason, val detail: String? = null) {
-    enum class Reason { AUTHENTICATION, NOT_FOUND, PERMISSION, CONNECTION, UNSUPPORTED, CELLULAR_BLOCKED, OTHER }
+    enum class Reason { AUTHENTICATION, NOT_FOUND, PERMISSION, CONNECTION, UNSUPPORTED, OTHER }
 
     companion object {
         fun from(error: Throwable): UserError = when (error) {
@@ -31,7 +31,6 @@ fun UserError.message(): String {
         UserError.Reason.PERMISSION -> stringResource(R.string.error_permission)
         UserError.Reason.CONNECTION -> stringResource(R.string.error_connection)
         UserError.Reason.UNSUPPORTED -> stringResource(R.string.error_unsupported)
-        UserError.Reason.CELLULAR_BLOCKED -> stringResource(R.string.error_cellular_blocked)
         UserError.Reason.OTHER -> stringResource(R.string.error_other)
     }
     return detail?.let { "$text ($it)" } ?: text

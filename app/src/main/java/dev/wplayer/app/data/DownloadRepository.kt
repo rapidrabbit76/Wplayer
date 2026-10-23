@@ -21,7 +21,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -33,7 +32,6 @@ import kotlinx.coroutines.withContext
 class DownloadRepository @Inject constructor(
     private val dao: DownloadDao,
     private val workManager: WorkManager,
-    private val settings: SettingsRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) {
     val downloads: Flow<List<Download>> = dao.observeAll().map { rows -> rows.map { it.toModel() } }
@@ -87,12 +85,11 @@ class DownloadRepository @Inject constructor(
     suspend fun clearFinished() = dao.deleteWithStatus(DownloadStatus.DONE.name)
 
     private suspend fun schedule(id: Long) {
-        val overCellular = settings.settings.first().network.allowCellular
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
             .setInputData(workDataOf(DownloadWorker.KEY_DOWNLOAD_ID to id))
             .setConstraints(
                 Constraints.Builder()
-                    .setRequiredNetworkType(if (overCellular) NetworkType.CONNECTED else NetworkType.UNMETERED)
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
                     .setRequiresStorageNotLow(true)
                     .build(),
             )
