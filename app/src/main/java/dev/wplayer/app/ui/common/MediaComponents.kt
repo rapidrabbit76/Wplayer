@@ -53,6 +53,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -67,6 +73,39 @@ import dev.wplayer.app.data.model.WatchProgress
 
 /** An entry of a long-press menu. */
 data class RowAction(val label: String, val onClick: () -> Unit)
+
+/**
+ * The long-press menu of a row, tile or card. A remote's select key, still held
+ * when the menu opens, keeps repeating into the menu, and its release would pick
+ * the first item; select presses only count once one starts inside the menu.
+ */
+@Composable
+fun RowActionMenu(expanded: Boolean, onDismiss: () -> Unit, actions: List<RowAction>) {
+    var selectArmed by remember(expanded) { mutableStateOf(false) }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        modifier = Modifier.onPreviewKeyEvent { event ->
+            if (!event.isSelect) return@onPreviewKeyEvent false
+            if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.repeatCount == 0) selectArmed = true
+            !selectArmed
+        },
+    ) {
+        actions.forEach { action ->
+            DropdownMenuItem(
+                text = { Text(action.label) },
+                onClick = {
+                    onDismiss()
+                    action.onClick()
+                },
+            )
+        }
+    }
+}
+
+/** The keys Compose's clickable treats as a press: a remote's center, Enter and the keypad's Enter. */
+private val KeyEvent.isSelect: Boolean
+    get() = key == Key.DirectionCenter || key == Key.Enter || key == Key.NumPadEnter
 
 /**
  * A file or folder row: icon, name, a supporting line, watch progress, and a
@@ -129,17 +168,7 @@ fun MediaRow(
                 onLongClickLabel = stringResource(R.string.action_more),
             ),
         )
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            actions.forEach { action ->
-                DropdownMenuItem(
-                    text = { Text(action.label) },
-                    onClick = {
-                        menuOpen = false
-                        action.onClick()
-                    },
-                )
-            }
-        }
+        RowActionMenu(expanded = menuOpen, onDismiss = { menuOpen = false }, actions = actions)
     }
 }
 
@@ -202,17 +231,7 @@ fun MediaCard(
                 )
             }
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            actions.forEach { action ->
-                DropdownMenuItem(
-                    text = { Text(action.label) },
-                    onClick = {
-                        menuOpen = false
-                        action.onClick()
-                    },
-                )
-            }
-        }
+        RowActionMenu(expanded = menuOpen, onDismiss = { menuOpen = false }, actions = actions)
     }
 }
 
