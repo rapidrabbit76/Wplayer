@@ -356,7 +356,7 @@
     <string name="settings_combine_seeks_hint">←/→를 빠르게 여러 번 누르면 목표 시간만 보여 주다가 손을 뗀 뒤 한 번에 이동합니다.</string>
     <string name="settings_step_seek_time">이동할 때 가운데 시간 표시</string>
     <string name="settings_step_seek_time_hint">리모컨·키보드나 두 번 탭으로 이동할 때 화면 가운데에 도착할 시간을 띄웁니다. 옆에 쌓이는 이동 표시는 항상 나옵니다.</string>
-    <string name="settings_enhancement">화질 향상 (확대할 때)</string>
+    <string name="settings_enhancement">화질 향상</string>
     <string name="enhancement_off">끄기</string>
     <string name="enhancement_sharp">선명 · FSR</string>
     <string name="enhancement_detail">디테일 · FSRCNNX</string>

@@ -120,20 +120,26 @@ data class ScreenSettings(
     val smoothMotion: Boolean = false,
 )
 
-/** Picture enhancement presets, each a chain of mpv user shaders bundled in assets/shaders. */
+/**
+ * Picture enhancement presets, each a chain of mpv user shaders bundled in assets/shaders.
+ * Each shader decides by itself whether it runs: the upscalers only when the picture is
+ * shown larger than it is, CAS only at its own size. Every preset also upscales chroma,
+ * which most video stores at half size, so it improves the picture at any size.
+ */
 @Serializable
 enum class VideoEnhancement(val shaders: List<String>) {
     OFF(emptyList()),
 
-    /** AMD FidelityFX Super Resolution 1: edge-aware upscale and sharpening. Light. */
-    SHARP(listOf("FSR.glsl")),
+    /** AMD FidelityFX Super Resolution 1 when enlarged, AMD CAS sharpening at the video's own size. Light. */
+    SHARP(listOf(CHROMA_FROM_LUMA, "FSR.glsl", CONTRAST_ADAPTIVE_SHARPENING)),
 
-    /** FSRCNNX: a small CNN that doubles luma detail. Heavier. */
-    DETAIL(listOf("FSRCNNX_x2_8-0-4-1.glsl")),
+    /** FSRCNNX, a small CNN that doubles luma detail, when enlarged; CAS at the video's own size. Heavier. */
+    DETAIL(listOf(CHROMA_FROM_LUMA, "FSRCNNX_x2_8-0-4-1.glsl", CONTRAST_ADAPTIVE_SHARPENING)),
 
-    /** Anime4K mode A with the small networks: line restoration and upscaling for animation. */
+    /** Anime4K mode A with the small networks: line restoration (at any size) and upscaling for animation. */
     ANIME(
         listOf(
+            CHROMA_FROM_LUMA,
             "Anime4K_Clamp_Highlights.glsl",
             "Anime4K_Restore_CNN_S.glsl",
             "Anime4K_Upscale_CNN_x2_S.glsl",
@@ -143,6 +149,12 @@ enum class VideoEnhancement(val shaders: List<String>) {
         ),
     ),
 }
+
+/** Chroma upscaling that predicts color edges from luma (CfL), for half-size chroma (4:2:0). */
+private const val CHROMA_FROM_LUMA = "CfL_Prediction_Lite.glsl"
+
+/** AMD FidelityFX Contrast Adaptive Sharpening; runs only when the video is shown at its own size. */
+private const val CONTRAST_ADAPTIVE_SHARPENING = "CAS.glsl"
 
 @Serializable
 enum class SubtitleColor(val argb: Long) {
