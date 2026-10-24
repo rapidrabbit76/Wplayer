@@ -74,6 +74,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -488,10 +489,11 @@ private fun OverflowMenu(items: List<TopBarAction>) {
 @Composable
 private fun Clock(modifier: Modifier, style: TextStyle) {
     val context = LocalContext.current
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
+    val wallClock = LocalWallClock.current
+    var now by remember { mutableLongStateOf(wallClock()) }
+    LaunchedEffect(wallClock) {
         while (true) {
-            now = System.currentTimeMillis()
+            now = wallClock()
             delay(CLOCK_TICK_MS - now % CLOCK_TICK_MS)
         }
     }
@@ -499,6 +501,9 @@ private fun Clock(modifier: Modifier, style: TextStyle) {
 }
 
 private const val CLOCK_TICK_MS = 60_000L
+
+/** The time the top bar shows; screenshot tests pin it. */
+internal val LocalWallClock = staticCompositionLocalOf<() -> Long> { System::currentTimeMillis }
 
 @Composable
 private fun DecoderBadge(codec: String?, hardwareDecoder: String?) {
