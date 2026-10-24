@@ -58,6 +58,8 @@ data class ImageViewerUiState(
     /** By [ImagePage.path]; pages not asked for yet are missing. */
     val images: Map<String, PageImage> = emptyMap(),
     val slideshowSeconds: Int = PictureSettings().slideshowSeconds,
+    /** The first page is on the right and the next one to its left, as in Japanese manga. */
+    val rightToLeft: Boolean = false,
 ) {
     /** Where the pager starts: the opened picture, or the first when it is gone. */
     val startPage: Int get() = pages.orEmpty().indexOfFirst { it.path == startPath }.coerceAtLeast(0)
