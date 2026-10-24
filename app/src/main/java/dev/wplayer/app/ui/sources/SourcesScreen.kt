@@ -144,7 +144,7 @@ internal fun SourcesContent(
                 sectionTitle(R.string.continue_watching)
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(continueWatching, key = { it.ref.sourceKey + it.ref.path }) { item ->
+                        items(continueWatching, key = { it.ref.mediaKey }) { item ->
                             ContinueCard(
                                 item = item,
                                 onClick = { onResume(item.ref) },

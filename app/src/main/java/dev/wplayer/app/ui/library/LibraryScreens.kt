@@ -163,7 +163,7 @@ fun RecentScreen(
             val showInFolder = stringResource(R.string.show_in_folder)
             val addLabel = stringResource(R.string.playlist_add_title)
             val forgetLabel = stringResource(R.string.browser_forget_history)
-            MediaCollection(state.viewMode, state.items, key = { it.ref.sourceKey + it.ref.path }) { recent, grid ->
+            MediaCollection(state.viewMode, state.items, key = { it.ref.mediaKey }) { recent, grid ->
                 val ref = recent.ref
                 MediaItem(
                     grid = grid,
