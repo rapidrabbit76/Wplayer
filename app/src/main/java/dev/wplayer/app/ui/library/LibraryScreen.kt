@@ -36,6 +36,7 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.model.BrowserViewMode
 import dev.wplayer.app.data.model.Playlist
 import dev.wplayer.app.ui.common.CollectionCard
+import dev.wplayer.app.ui.common.FAB_CLEARANCE
 import dev.wplayer.app.ui.common.PlaylistNameDialog
 import dev.wplayer.app.ui.common.ViewModeToggle
 import dev.wplayer.app.ui.common.mediaGridCellMinWidth
@@ -89,8 +90,7 @@ internal fun LibraryContent(
             )
         },
     ) { padding ->
-        // Extra bottom space keeps the last row clear of the FAB.
-        val bottom = padding.calculateBottomPadding() + 88.dp
+        val bottom = padding.calculateBottomPadding() + FAB_CLEARANCE
         val recentTitle = stringResource(R.string.recent_title)
         if (viewMode == BrowserViewMode.GRID) {
             LazyVerticalGrid(
