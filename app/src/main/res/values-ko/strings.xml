@@ -426,4 +426,9 @@
     <string name="image_viewer_slideshow_stop">슬라이드쇼 중지</string>
     <string name="settings_pictures">사진</string>
     <string name="settings_slideshow_interval">슬라이드쇼 간격</string>
+    <string name="settings_comic_direction">만화 넘김 방향</string>
+    <string name="comic_direction_right_to_left">오른쪽에서 왼쪽</string>
+    <string name="comic_direction_left_to_right">왼쪽에서 오른쪽</string>
+    <string name="image_viewer_archive_empty">이 압축 파일에는 그림이 없습니다</string>
+    <string name="error_unsupported_archive">암호가 걸린 압축 파일, 솔리드 RAR4 압축 파일, 64MB가 넘는 그림은 열 수 없습니다.</string>
 </resources>

@@ -261,10 +261,16 @@ enum class FolderNavigation {
     val showsParentRow: Boolean get() = this != PATH_BAR
 }
 
+/** Which way the pages of a comic book turn. */
+@Serializable
+enum class ComicDirection { RIGHT_TO_LEFT, LEFT_TO_RIGHT }
+
 @Serializable
 data class PictureSettings(
     /** How long each picture stays on screen in a slideshow. */
     val slideshowSeconds: Int = 3,
+    /** For pictures in archives; a folder's pictures always go left to right. Right to left suits Japanese manga. */
+    val comicDirection: ComicDirection = ComicDirection.RIGHT_TO_LEFT,
 )
 
 /** How the app looks for new versions (see UpdateRepository). */

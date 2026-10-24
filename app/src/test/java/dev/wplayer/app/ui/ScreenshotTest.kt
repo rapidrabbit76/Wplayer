@@ -549,6 +549,7 @@ private object NoOpViewerActions : ImageViewerActions {
     override fun back() = Unit
     override fun show(page: ImagePage) = Unit
     override fun hide(page: ImagePage) = Unit
+    override fun settle(page: ImagePage) = Unit
     override fun retry(page: ImagePage) = Unit
     override fun unreadable(page: ImagePage) = Unit
     override fun reload() = Unit

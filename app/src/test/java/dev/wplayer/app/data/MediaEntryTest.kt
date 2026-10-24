@@ -37,6 +37,16 @@ class MediaEntryTest {
     }
 
     @Test
+    fun `zip, 7z and RAR archives and their comic names are archives, not playable`() {
+        listOf("a.zip", "a.cbz", "a.7z", "a.cb7", "a.rar", "a.CBR").forEach { name ->
+            val entry = MediaEntry(name, "/$name", MediaEntry.kindOf(name, isDirectory = false), size = 1, modifiedAtMillis = null)
+            assertEquals(name, MediaKind.ARCHIVE, entry.kind)
+            assertFalse(name, entry.isPlayable)
+        }
+        assertEquals(MediaKind.OTHER, MediaEntry.kindOf("a.tar", isDirectory = false))
+    }
+
+    @Test
     fun `directories win over extensions`() {
         assertEquals(MediaKind.DIRECTORY, MediaEntry.kindOf("Season.1.mkv", isDirectory = true))
     }

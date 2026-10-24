@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Image
@@ -297,6 +298,7 @@ val MediaKind.icon: ImageVector
         MediaKind.DIRECTORY -> Icons.Outlined.Folder
         MediaKind.AUDIO -> Icons.Outlined.MusicNote
         MediaKind.IMAGE -> Icons.Outlined.Image
+        MediaKind.ARCHIVE -> Icons.AutoMirrored.Outlined.MenuBook
         else -> Icons.Outlined.Movie
     }
 

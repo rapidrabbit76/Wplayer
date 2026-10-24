@@ -12,6 +12,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.wplayer.app.data.ImagePage
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,14 +27,14 @@ class ImageViewerDirectionTest {
 
     private val pages = listOf("001.jpg", "002.jpg", "003.jpg").map { ImagePage(it, "/book/$it") }
 
-    private fun show(rightToLeft: Boolean) {
+    private fun show(rightToLeft: Boolean, actions: ImageViewerActions = NoActions) {
         val state = ImageViewerUiState(
             pages = pages,
             startPath = pages.first().path,
             images = pages.associate { it.path to PageImage.Unreadable },
             rightToLeft = rightToLeft,
         )
-        compose.setContent { ImageViewerContent(state, NoActions) }
+        compose.setContent { ImageViewerContent(state, actions) }
         compose.onNodeWithText("1 / 3").assertExists()
     }
 
@@ -65,10 +66,24 @@ class ImageViewerDirectionTest {
         compose.onNodeWithText("2 / 3").assertExists()
     }
 
+    @Test
+    fun thePageTurnedToIsReportedOnceThePagerRests() {
+        val settled = mutableListOf<String>()
+        show(rightToLeft = true, actions = object : ImageViewerActions by NoActions {
+            override fun settle(page: ImagePage) {
+                settled += page.name
+            }
+        })
+        compose.onRoot().performTouchInput { swipeRight() }
+        compose.waitForIdle()
+        assertEquals(listOf("001.jpg", "002.jpg"), settled)
+    }
+
     private object NoActions : ImageViewerActions {
         override fun back() = Unit
         override fun show(page: ImagePage) = Unit
         override fun hide(page: ImagePage) = Unit
+        override fun settle(page: ImagePage) = Unit
         override fun retry(page: ImagePage) = Unit
         override fun unreadable(page: ImagePage) = Unit
         override fun reload() = Unit

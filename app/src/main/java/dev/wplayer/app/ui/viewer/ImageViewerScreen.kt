@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -69,6 +70,7 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.ImagePage
 import dev.wplayer.app.ui.browser.LockedFolderMessage
 import dev.wplayer.app.ui.common.CenteredMessage
+import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.message
 import dev.wplayer.app.ui.common.rememberDeviceAuthentication
 import dev.wplayer.app.ui.theme.WplayerTheme
@@ -88,6 +90,9 @@ interface ImageViewerActions {
 
     /** A page moved away. */
     fun hide(page: ImagePage)
+
+    /** The pager came to rest on a page. */
+    fun settle(page: ImagePage)
 
     fun retry(page: ImagePage)
 
@@ -109,6 +114,7 @@ fun ImageViewerScreen(viewModel: ImageViewerViewModel, onBack: () -> Unit) {
             override fun back() = onBack()
             override fun show(page: ImagePage) = viewModel.show(page)
             override fun hide(page: ImagePage) = viewModel.hide(page)
+            override fun settle(page: ImagePage) = viewModel.settle(page)
             override fun retry(page: ImagePage) = viewModel.retry(page)
             override fun unreadable(page: ImagePage) = viewModel.unreadable(page)
             override fun reload() = viewModel.load()
@@ -131,13 +137,20 @@ internal fun ImageViewerContent(state: ImageViewerUiState, actions: ImageViewerA
                 Box(Modifier.fillMaxSize()) {
                     when {
                         state.hiddenByLock -> LockedFolderMessage(onOpen = actions::unlock)
-                        state.error != null -> CenteredMessage(stringResource(R.string.browser_error, state.error.message())) {
-                            Button(onClick = actions::reload) { Text(stringResource(R.string.action_retry)) }
-                        }
+                        state.error != null -> CenteredMessage(
+                            text = stringResource(R.string.browser_error, state.error.message()),
+                            // Trying an encrypted or unreadable archive again would only fail again.
+                            action = if (state.error.reason == UserError.Reason.UNSUPPORTED_ARCHIVE) {
+                                null
+                            } else {
+                                { Button(onClick = actions::reload) { Text(stringResource(R.string.action_retry)) } }
+                            },
+                        )
                         state.pages == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        state.book != null -> CenteredMessage(stringResource(R.string.image_viewer_archive_empty))
                         else -> CenteredMessage(stringResource(R.string.image_viewer_empty))
                     }
-                    ViewerTopBar(title = null, position = null, slideshow = null, onBack = actions::back, onSlideshowChange = {})
+                    ViewerTopBar(title = state.book, position = null, slideshow = null, onBack = actions::back, onSlideshowChange = {})
                 }
             }
         }
@@ -176,6 +189,10 @@ private fun ImagePager(state: ImageViewerUiState, pages: List<ImagePage>, action
     KeepScreenOn(slideshow)
     HideSystemBars(!overlay)
     LaunchedEffect(Unit) { focus.requestFocus() }
+    val currentPages by rememberUpdatedState(pages)
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { index -> currentPages.getOrNull(index)?.let(actions::settle) }
+    }
 
     Box(
         Modifier
@@ -219,7 +236,7 @@ private fun ImagePager(state: ImageViewerUiState, pages: List<ImagePage>, action
         }
         AnimatedVisibility(visible = overlay, enter = fadeIn(), exit = fadeOut()) {
             ViewerTopBar(
-                title = pages.getOrNull(pagerState.currentPage)?.name,
+                title = state.book ?: pages.getOrNull(pagerState.currentPage)?.name,
                 position = stringResource(R.string.image_viewer_position, pagerState.currentPage + 1, pages.size),
                 slideshow = slideshow,
                 onBack = actions::back,

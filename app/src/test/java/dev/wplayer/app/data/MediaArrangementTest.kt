@@ -43,6 +43,12 @@ class MediaArrangementTest {
     }
 
     @Test
+    fun `comic archives show like media while other files stay hidden`() {
+        val files = listOf(entry("원피스 01권.cbz"), entry("backup.tar"), entry("나루토 01.ZIP"), entry("Vol.2.cbr"), entry("Vol.3.7z"))
+        assertEquals(setOf("원피스 01권.cbz", "나루토 01.ZIP", "Vol.2.cbr", "Vol.3.7z"), arrange(files, BrowserSettings()).map { it.name }.toSet())
+    }
+
+    @Test
     fun `descending size keeps folders on top`() {
         val names = arrange(listing, BrowserSettings(sortField = SortField.SIZE, ascending = false)).map { it.name }
         assertEquals(listOf("Season 10", "Season 2", "b.mkv", "a.mp4", "c.avi"), names)

@@ -1,6 +1,16 @@
 package dev.wplayer.app.data.model
 
-enum class MediaKind { DIRECTORY, VIDEO, AUDIO, IMAGE, SUBTITLE, OTHER }
+enum class MediaKind {
+    DIRECTORY,
+    VIDEO,
+    AUDIO,
+    IMAGE,
+
+    /** Zip, 7z and RAR archives, opened as books of the pictures inside. */
+    ARCHIVE,
+    SUBTITLE,
+    OTHER,
+}
 
 data class MediaEntry(
     val name: String,
@@ -28,6 +38,8 @@ data class MediaEntry(
             "arw", "avif", "bmp", "cr2", "dng", "gif", "heic", "heif", "ico", "jpe", "jpeg", "jpg", "nef",
             "nrw", "orf", "pef", "png", "raf", "rw2", "srw", "webp",
         )
+        /** What libarchive reads, with the comic book names of each. */
+        private val ARCHIVE = setOf("7z", "cb7", "cbr", "cbz", "rar", "zip")
         private val SUBTITLE = setOf("ass", "idx", "sami", "smi", "srt", "ssa", "sub", "sup", "vtt")
 
         fun kindOf(name: String, isDirectory: Boolean): MediaKind {
@@ -36,6 +48,7 @@ data class MediaEntry(
                 in VIDEO -> MediaKind.VIDEO
                 in AUDIO -> MediaKind.AUDIO
                 in IMAGE -> MediaKind.IMAGE
+                in ARCHIVE -> MediaKind.ARCHIVE
                 in SUBTITLE -> MediaKind.SUBTITLE
                 else -> MediaKind.OTHER
             }

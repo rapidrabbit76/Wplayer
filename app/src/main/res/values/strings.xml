@@ -433,4 +433,9 @@
     <string name="image_viewer_slideshow_stop">Stop slideshow</string>
     <string name="settings_pictures">Pictures</string>
     <string name="settings_slideshow_interval">Slideshow interval</string>
+    <string name="settings_comic_direction">Comic page direction</string>
+    <string name="comic_direction_right_to_left">Right to left</string>
+    <string name="comic_direction_left_to_right">Left to right</string>
+    <string name="image_viewer_archive_empty">No pictures in this archive</string>
+    <string name="error_unsupported_archive">Encrypted archives, solid RAR4 archives and pictures over 64 MB cannot be opened.</string>
 </resources>

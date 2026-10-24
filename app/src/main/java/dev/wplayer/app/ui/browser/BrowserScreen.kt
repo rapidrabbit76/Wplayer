@@ -211,10 +211,12 @@ fun BrowserScreen(
             }
             when {
                 SubtitleFontStore.isFontFile(entry.name) -> add(RowAction(useAsFontLabel) { viewModel.useAsSubtitleFont(entry) })
-                // Playlists hold what the player plays; pictures open in the viewer instead.
-                entry.kind != MediaKind.IMAGE -> add(RowAction(addLabel) { addingToPlaylist = entry })
+                // Playlists hold what the player plays; pictures and archives open in the viewer instead.
+                entry.kind != MediaKind.IMAGE && entry.kind != MediaKind.ARCHIVE -> add(RowAction(addLabel) { addingToPlaylist = entry })
             }
-            if (isRemote && (entry.isPlayable || entry.kind == MediaKind.IMAGE)) add(RowAction(downloadLabel) { startDownload(entry) })
+            if (isRemote && (entry.isPlayable || entry.kind == MediaKind.IMAGE || entry.kind == MediaKind.ARCHIVE)) {
+                add(RowAction(downloadLabel) { startDownload(entry) })
+            }
             if (entry.path in state.progress) add(RowAction(forgetLabel) { viewModel.forgetHistory(entry) })
             if (entry.kind == MediaKind.DIRECTORY) {
                 if (entry.path in state.lockedFolders) {

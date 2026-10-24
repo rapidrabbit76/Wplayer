@@ -135,13 +135,16 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
     val television = isTelevision()
     val wide = windowWidth >= WIDE_BAR_MIN_WIDTH
     val fullScreen = backStack.lastOrNull() is ImageViewerRoute
-    // Pictures open in the viewer, in this tab; everything else plays in the player.
+    // Pictures and archives open in the viewer, in this tab; everything else plays in the player.
     val openMedia: (PlaybackRequest) -> Unit = { request ->
-        if (request is PlaybackRequest.FromSource && MediaEntry.kindOf(request.path, isDirectory = false) == MediaKind.IMAGE) {
-            backStack.add(ImageViewerRoute(request.sourceKey, request.path))
-        } else {
-            onPlay(request)
+        val viewer = (request as? PlaybackRequest.FromSource)?.let { file ->
+            when (MediaEntry.kindOf(file.path, isDirectory = false)) {
+                MediaKind.IMAGE -> ImageViewerRoute.Folder(file.sourceKey, file.path)
+                MediaKind.ARCHIVE -> ImageViewerRoute.Archive(file.sourceKey, file.path)
+                else -> null
+            }
         }
+        if (viewer != null) backStack.add(viewer) else onPlay(request)
     }
     val onTabClick: (Tab) -> Unit = { item ->
         // Tapping the current tab again goes back to its first screen.
@@ -212,14 +215,8 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                             onBack = { backStack.closeFolder(route) },
                         )
                     }
-                    entry<ImageViewerRoute> { route ->
-                        ImageViewerScreen(
-                            viewModel = hiltViewModel<ImageViewerViewModel, ImageViewerViewModel.Factory>(
-                                creationCallback = { it.create(route) },
-                            ),
-                            onBack = { backStack.removeLastOrNull() },
-                        )
-                    }
+                    entry<ImageViewerRoute.Folder> { route -> ImageViewer(route, onBack = { backStack.removeLastOrNull() }) }
+                    entry<ImageViewerRoute.Archive> { route -> ImageViewer(route, onBack = { backStack.removeLastOrNull() }) }
                     entry<LibraryRoute> {
                         LibraryScreen(
                             onOpenRecent = { backStack.add(RecentRoute) },
@@ -258,6 +255,14 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun ImageViewer(route: ImageViewerRoute, onBack: () -> Unit) {
+    ImageViewerScreen(
+        viewModel = hiltViewModel<ImageViewerViewModel, ImageViewerViewModel.Factory>(creationCallback = { it.create(route) }),
+        onBack = onBack,
+    )
 }
 
 /**

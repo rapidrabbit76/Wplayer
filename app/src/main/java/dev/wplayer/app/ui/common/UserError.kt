@@ -9,7 +9,17 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /** A failure reduced to what the user can act on; rendered with [message]. */
 data class UserError(val reason: Reason, val detail: String? = null) {
-    enum class Reason { AUTHENTICATION, NOT_FOUND, PERMISSION, CONNECTION, UNSUPPORTED, OTHER }
+    enum class Reason {
+        AUTHENTICATION,
+        NOT_FOUND,
+        PERMISSION,
+        CONNECTION,
+        UNSUPPORTED,
+
+        /** An encrypted archive, a solid RAR4 one, or a page too large to take out. */
+        UNSUPPORTED_ARCHIVE,
+        OTHER,
+    }
 
     companion object {
         fun from(error: Throwable): UserError = when (error) {
@@ -20,6 +30,10 @@ data class UserError(val reason: Reason, val detail: String? = null) {
             is CoreException.Unsupported -> UserError(Reason.UNSUPPORTED, error.detail)
             else -> UserError(Reason.OTHER, error.message)
         }
+
+        /** Like [from], for reading a comic archive or a page inside it. */
+        fun fromArchive(error: Throwable): UserError =
+            from(error).let { if (it.reason == Reason.UNSUPPORTED) it.copy(reason = Reason.UNSUPPORTED_ARCHIVE) else it }
     }
 }
 
@@ -31,6 +45,7 @@ fun UserError.message(): String {
         UserError.Reason.PERMISSION -> stringResource(R.string.error_permission)
         UserError.Reason.CONNECTION -> stringResource(R.string.error_connection)
         UserError.Reason.UNSUPPORTED -> stringResource(R.string.error_unsupported)
+        UserError.Reason.UNSUPPORTED_ARCHIVE -> stringResource(R.string.error_unsupported_archive)
         UserError.Reason.OTHER -> stringResource(R.string.error_other)
     }
     return detail?.let { "$text ($it)" } ?: text
