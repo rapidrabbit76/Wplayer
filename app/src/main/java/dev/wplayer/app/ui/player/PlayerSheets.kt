@@ -87,7 +87,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
-import dev.wplayer.app.ui.browser.parentPath
+import dev.wplayer.app.data.parentPath
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
 import dev.wplayer.app.ui.common.message
