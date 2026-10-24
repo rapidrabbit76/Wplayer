@@ -29,6 +29,7 @@ import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
 import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.SeekPrecision
 import dev.wplayer.app.data.model.SubtitleFont
+import dev.wplayer.app.data.reason
 import dev.wplayer.app.data.transcription.TranscriptionRepository
 import dev.wplayer.app.data.transcription.WhisperModelStore
 import dev.wplayer.app.di.ApplicationScope
@@ -351,7 +352,7 @@ class PlayerViewModel @Inject constructor(
         runCatching { EngineSlot(engineFactory.create(path, settings.value), generation, path) }
             .onFailure {
                 Log.e(TAG, "libmpv failed to start", it)
-                engineError.value = it.message ?: it.javaClass.simpleName
+                engineError.value = it.reason()
             }
             .getOrNull()
 

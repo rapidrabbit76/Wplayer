@@ -17,6 +17,7 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.model.mediaKey
+import dev.wplayer.app.data.reason
 import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.core.ffi.CoreException
 import dev.wplayer.core.ffi.TranscriptionListener
@@ -128,7 +129,7 @@ class TranscriptionWorker @AssistedInject constructor(
         } catch (e: CoreException.Cancelled) {
             Result.failure()
         } catch (e: Exception) {
-            failure(e.message ?: e.javaClass.simpleName)
+            failure(e.reason())
         }
     }
 
