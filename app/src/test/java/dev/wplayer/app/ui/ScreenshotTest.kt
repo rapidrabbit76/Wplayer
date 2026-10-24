@@ -50,12 +50,15 @@ import dev.wplayer.app.ui.player.LocalWallClock
 import dev.wplayer.app.ui.player.LockedOverlay
 import dev.wplayer.app.ui.player.PlayerControlActions
 import dev.wplayer.app.ui.player.PlayerControls
+import dev.wplayer.app.ui.player.PlayerSettingsSheet
 import dev.wplayer.app.ui.player.PlayerSheet
 import dev.wplayer.app.ui.player.PlayerUiState
 import dev.wplayer.app.ui.player.QueueSheet
+import dev.wplayer.app.ui.player.ResumePrompt
 import dev.wplayer.app.ui.player.ScaleMode
 import dev.wplayer.app.ui.player.SubtitlePanelActions
 import dev.wplayer.app.ui.player.SubtitleSheet
+import dev.wplayer.app.ui.player.VideoSheet
 import dev.wplayer.app.ui.settings.SettingsCategory
 import dev.wplayer.app.ui.settings.SettingsCategoryContent
 import dev.wplayer.app.ui.settings.SettingsHomeContent
@@ -207,6 +210,34 @@ class ScreenshotTest {
                 onDismiss = {},
             )
         }
+    }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun settings_panel_tablet() = capture("player_settings_panel_tablet") {
+        VideoBackground { PlayerSettingsSheet(AppSettings(), onUpdate = {}, onDismiss = {}) }
+    }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun video_panel_tablet() = capture("player_video_panel_tablet") {
+        VideoBackground {
+            VideoSheet(
+                aspect = AspectRatio.DEFAULT,
+                scale = ScaleMode.FIT,
+                hardwareDecoding = true,
+                onAspectChange = {},
+                onScaleChange = {},
+                onHardwareDecodingChange = {},
+                onDismiss = {},
+            )
+        }
+    }
+
+    @Test
+    @Config(qualifiers = PHONE_LANDSCAPE)
+    fun resume_prompt_phone() = capture("player_resume_prompt_phone") {
+        VideoBackground { ResumePrompt(position = 1834.0, onAnswer = {}) }
     }
 
     @Test

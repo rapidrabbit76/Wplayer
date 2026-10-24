@@ -654,7 +654,7 @@ private fun PlayerSheets(
 
 /** Asks whether to continue from [position]; drawn in-window so the system bars stay hidden. */
 @Composable
-private fun ResumePrompt(position: Double, onAnswer: (Boolean) -> Unit) {
+internal fun ResumePrompt(position: Double, onAnswer: (Boolean) -> Unit) {
     BackHandler { onAnswer(false) }
     // Ready for the remote's OK, which continues.
     val continueFocus = remember { FocusRequester() }
