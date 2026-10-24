@@ -10,6 +10,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.wplayer.app.BuildConfig
 import dev.wplayer.app.data.SettingsRepository
+import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.ApplicationScope
 import dev.wplayer.app.di.IoDispatcher
 import java.io.File
@@ -158,7 +159,7 @@ class UpdateRepository @Inject constructor(
                 }
             }
         }
-        val actual = digest.digest().joinToString("") { "%02x".format(it) }
+        val actual = digest.digest().toHex()
         if (!actual.equals(release.sha256, ignoreCase = true)) {
             target.delete()
             throw IOException("downloaded file does not match its checksum")
