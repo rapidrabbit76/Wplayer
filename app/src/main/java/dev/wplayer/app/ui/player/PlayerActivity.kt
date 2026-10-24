@@ -74,14 +74,16 @@ class PlayerActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         hideSystemBars()
-        // The ViewModel survives recreation and keeps playing what it already opened.
-        if (savedInstanceState == null) handleIntent(intent)
         ContextCompat.registerReceiver(
             this,
             pipActionReceiver,
             IntentFilter(ACTION_TOGGLE_PAUSE),
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+        if (savedInstanceState == null) {
+            val request = PlaybackRequest.from(intent) ?: return finish()
+            viewModel.open(request)
+        }
 
         setContent {
             WplayerTheme(darkTheme = true) {

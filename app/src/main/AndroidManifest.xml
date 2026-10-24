@@ -88,12 +88,16 @@
         <activity
             android:name=".ui.player.PlayerActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density|uiMode"
-            android:exported="true"
+            android:exported="false"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
             android:taskAffinity="dev.wplayer.player"
-            android:theme="@style/Theme.Wplayer.Player">
+            android:theme="@style/Theme.Wplayer.Player" />
+        <activity-alias
+            android:name=".ui.player.OpenWithPlayer"
+            android:exported="true"
+            android:targetActivity=".ui.player.PlayerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -120,7 +124,7 @@
                 <data android:pathPattern=".*\\.webm" />
                 <data android:pathPattern=".*\\.ts" />
             </intent-filter>
-        </activity>
+        </activity-alias>
         <!-- Exported so system UI, Bluetooth and Android Auto controllers can bind (Media3 requirement). -->
         <service
             android:name=".ui.player.PlaybackService"

@@ -46,14 +46,16 @@ sealed interface PlaybackRequest {
             .putExtra(EXTRA_TITLE, title)
             .apply { if (queue is PlayQueue.Playlist) putExtra(EXTRA_PLAYLIST_ID, queue.playlistId) }
 
-        /**
-         * Parses an intent from this app or a `VIEW` intent from another app. A shared
-         * file is titled by its URI until the player asks its provider for the name.
-         */
+        /** What other apps may hand the player; mpv would also take its own protocols, such as `fdclose://`. */
+        private val SHAREABLE_SCHEMES = setOf("file", "content", "http", "https")
+
+        /** Only this app may name a file in a saved source: that skips the lock of locked folders. */
         fun from(intent: Intent): PlaybackRequest? {
+            // Other apps can only reach the player through its exported alias, whose name the intent then carries.
+            val fromThisApp = intent.component?.className == PlayerActivity::class.java.name
             val sourceKey = intent.getStringExtra(EXTRA_SOURCE_KEY)
             val path = intent.getStringExtra(EXTRA_PATH)
-            if (sourceKey != null && path != null) {
+            if (fromThisApp && sourceKey != null && path != null) {
                 val queue = if (intent.hasExtra(EXTRA_PLAYLIST_ID)) {
                     PlayQueue.Playlist(intent.getLongExtra(EXTRA_PLAYLIST_ID, 0))
                 } else {
@@ -61,7 +63,7 @@ sealed interface PlaybackRequest {
                 }
                 return FromSource(sourceKey, path, intent.getStringExtra(EXTRA_TITLE) ?: path.substringAfterLast('/'), queue)
             }
-            val uri = intent.data ?: return null
+            val uri = intent.data?.normalizeScheme()?.takeIf { it.scheme in SHAREABLE_SCHEMES } ?: return null
             return FromUri(uri, uri.lastPathSegment ?: uri.toString())
         }
     }
