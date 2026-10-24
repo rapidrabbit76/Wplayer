@@ -926,7 +926,7 @@ class PlayerViewModel @Inject constructor(
         applicationScope.launch(previewDispatcher) { previewSession?.close() }
         savePosition()
         sessions.release()
-        audioFocus.release()
+        audioFocus.close()
         engine?.close()
     }
 

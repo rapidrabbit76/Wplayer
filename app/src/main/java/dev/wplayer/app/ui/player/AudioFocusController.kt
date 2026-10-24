@@ -67,7 +67,18 @@ class AudioFocusController @Inject constructor(
 
     /** Call when the user pauses or playback ends. Kept during a short interruption so playback can resume. */
     fun release() {
-        if (!held || resumeOnGain) return
+        if (!resumeOnGain) abandon()
+    }
+
+    /** Call when the player closes: gives up focus even during a short interruption, and stops calling the listener. */
+    fun close() {
+        resumeOnGain = false
+        listener = null
+        abandon()
+    }
+
+    private fun abandon() {
+        if (!held) return
         held = false
         audio.abandonAudioFocusRequest(request)
         context.unregisterReceiver(noisyReceiver)
@@ -78,7 +89,7 @@ class AudioFocusController @Inject constructor(
             AudioManager.AUDIOFOCUS_LOSS -> {
                 resumeOnGain = false
                 listener?.onPause()
-                release()
+                abandon()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 resumeOnGain = true
