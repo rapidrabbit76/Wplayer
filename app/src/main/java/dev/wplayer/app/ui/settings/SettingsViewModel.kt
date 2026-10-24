@@ -38,11 +38,7 @@ class SettingsViewModel @Inject constructor(
     private val whisperModels: WhisperModelStore,
     private val subtitleFontStore: SubtitleFontStore,
 ) : ViewModel() {
-    val settings: StateFlow<AppSettings> = settingsRepository.settings.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AppSettings(),
-    )
+    val settings: StateFlow<AppSettings> = settingsRepository.current
 
     /** Download state of the whisper model chosen for AI subtitles. */
     val whisperModelStatus: StateFlow<ModelStatus> = settingsRepository.settings
