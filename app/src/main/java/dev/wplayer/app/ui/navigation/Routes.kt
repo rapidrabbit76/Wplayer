@@ -1,6 +1,7 @@
 package dev.wplayer.app.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
+import dev.wplayer.app.data.folderOf
 import dev.wplayer.app.ui.settings.SettingsCategory
 import kotlinx.serialization.Serializable
 
@@ -10,6 +11,12 @@ data object SourcesRoute : NavKey
 /** A folder of a source; [focusPath] is an entry to scroll to and highlight, when opened to show a file. */
 @Serializable
 data class BrowserRoute(val sourceKey: String, val path: String = "/", val focusPath: String? = null) : NavKey
+
+/** The pictures of [path]'s folder, opened at [path]. */
+@Serializable
+data class ImageViewerRoute(val sourceKey: String, val path: String) : NavKey {
+    val folder: String get() = folderOf(path)
+}
 
 /** Adds a source, or edits the one with [sourceKey]. */
 @Serializable

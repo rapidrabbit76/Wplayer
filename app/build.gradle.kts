@@ -312,6 +312,9 @@ dependencies {
     // Installs the bundled Baseline Profile on devices without Play Store profile delivery (sideloaded APKs).
     implementation(libs.profileinstaller)
     implementation(libs.aboutlibraries.compose.m3)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
+    implementation(libs.telephoto.zoomable.image.coil3)
     baselineProfile(project(":baselineprofile"))
 
     testImplementation(libs.junit)
