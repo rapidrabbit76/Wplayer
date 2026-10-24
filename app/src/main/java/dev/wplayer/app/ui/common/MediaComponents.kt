@@ -353,6 +353,16 @@ fun AddToPlaylistDialog(
     )
 }
 
+@Composable
+fun ConfirmDialog(text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { Text(text) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
 /** Asks for a playlist name; used for creating and renaming. */
 @Composable
 fun PlaylistNameDialog(

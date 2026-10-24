@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +36,7 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.mediaKey
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.BackTopAppBar
+import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.MediaCollection
 import dev.wplayer.app.ui.common.MediaItem
 import dev.wplayer.app.ui.common.PlaylistNameDialog
@@ -243,16 +242,6 @@ private fun EmptyMessage(text: String) {
             textAlign = TextAlign.Center,
         )
     }
-}
-
-@Composable
-private fun ConfirmDialog(text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = { Text(text) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_ok)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    )
 }
 
 /** The source's name; device storage has no stored name. */

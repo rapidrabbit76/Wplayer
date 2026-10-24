@@ -29,7 +29,6 @@ import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PhoneAndroid
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -41,7 +40,6 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +60,7 @@ import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
+import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.RowAction
 import dev.wplayer.app.ui.common.RowActionMenu
 import dev.wplayer.app.ui.common.SectionHeader
@@ -171,18 +170,13 @@ internal fun SourcesContent(
         }
     }
     if (confirmingClear && continueActions != null) {
-        AlertDialog(
-            onDismissRequest = { confirmingClear = false },
-            text = { Text(stringResource(R.string.recent_clear_confirm)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmingClear = false
-                        continueActions.onClearAll()
-                    },
-                ) { Text(stringResource(R.string.action_ok)) }
+        ConfirmDialog(
+            text = stringResource(R.string.recent_clear_confirm),
+            onConfirm = {
+                confirmingClear = false
+                continueActions.onClearAll()
             },
-            dismissButton = { TextButton(onClick = { confirmingClear = false }) { Text(stringResource(R.string.action_cancel)) } },
+            onDismiss = { confirmingClear = false },
         )
     }
 }
