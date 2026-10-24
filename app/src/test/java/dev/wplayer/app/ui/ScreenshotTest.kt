@@ -46,6 +46,7 @@ import dev.wplayer.app.ui.navigation.LocalColumnRole
 import dev.wplayer.app.ui.player.AiSubtitleStatus
 import dev.wplayer.app.ui.player.AspectRatio
 import dev.wplayer.app.ui.player.ControlsConfig
+import dev.wplayer.app.ui.player.LocalWallClock
 import dev.wplayer.app.ui.player.LockedOverlay
 import dev.wplayer.app.ui.player.PlayerControlActions
 import dev.wplayer.app.ui.player.PlayerControls
@@ -69,6 +70,8 @@ import dev.wplayer.app.ui.theme.WplayerTheme
 import dev.wplayer.core.ffi.Track
 import dev.wplayer.core.ffi.TrackKind
 import dev.wplayer.core.player.PlaybackState
+import java.time.LocalDateTime
+import java.time.ZoneId
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -227,7 +230,11 @@ class ScreenshotTest {
     /** Player screens use the dark theme, like PlayerActivity. */
     private fun capture(name: String, content: @Composable () -> Unit) {
         val dark = name.startsWith("player")
-        compose.setContent { WplayerTheme(darkTheme = dark) { content() } }
+        compose.setContent {
+            CompositionLocalProvider(LocalWallClock provides { FIXED_TIME }) {
+                WplayerTheme(darkTheme = dark) { content() }
+            }
+        }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
     }
 
@@ -360,6 +367,9 @@ class ScreenshotTest {
         const val PHONE = "w360dp-h800dp-port-xxhdpi"
         const val PHONE_LANDSCAPE = "w800dp-h360dp-land-xxhdpi"
         const val TABLET = "w1280dp-h800dp-land-xhdpi"
+
+        /** 21:30 in the machine's time zone, so the player clock reads the same on every run. */
+        val FIXED_TIME = LocalDateTime.of(2026, 1, 1, 21, 30).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         val server = Source(key = "source-1", name = "Home server", protocol = SourceProtocol.SMB, host = "192.168.0.10")
 
