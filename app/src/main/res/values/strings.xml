@@ -201,6 +201,8 @@
     <string name="player_decoder">Decoder</string>
     <string name="player_decoder_hw">Hardware (HW)</string>
     <string name="player_decoder_sw">Software (SW)</string>
+    <string name="player_decoder_hw_short">HW</string>
+    <string name="player_decoder_sw_short">SW</string>
     <string name="player_settings">Playback settings</string>
     <string name="player_resume_question">Resume from %1$s?</string>
     <string name="player_resume_restart">Start over</string>
