@@ -20,7 +20,8 @@ data class MediaEntry(
             "mpg", "mts", "ogv", "rm", "rmvb", "ts", "vob", "webm", "wmv",
         )
         private val AUDIO = setOf(
-            "aac", "alac", "ape", "dsf", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav", "wma",
+            "a52", "aac", "ac3", "aif", "aifc", "aiff", "alac", "amr", "ape", "dsf", "dts", "flac", "m4a", "m4b",
+            "mka", "mp1", "mp2", "mp3", "mpc", "oga", "ogg", "oma", "opus", "ra", "tta", "voc", "wav", "wma", "wv",
         )
         private val SUBTITLE = setOf("ass", "idx", "sami", "smi", "srt", "ssa", "sub", "sup", "vtt")
 
