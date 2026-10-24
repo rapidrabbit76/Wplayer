@@ -26,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -70,6 +69,7 @@ import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
+import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
 import kotlin.math.roundToInt
@@ -640,14 +640,7 @@ private fun SwitchRow(
     checked: Boolean,
     @StringRes supporting: Int? = null,
     onCheckedChange: (Boolean) -> Unit,
-) {
-    ListItem(
-        headlineContent = { Text(stringResource(title)) },
-        supportingContent = supporting?.let { { Text(stringResource(it)) } },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-        modifier = Modifier.clickable { onCheckedChange(!checked) },
-    )
-}
+) = SwitchRow(stringResource(title), checked, onCheckedChange, supporting?.let { stringResource(it) })
 
 /** The app's language; kept by the system rather than in [AppSettings] (see [AppLanguage]). */
 @Composable
