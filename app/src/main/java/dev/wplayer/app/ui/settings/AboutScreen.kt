@@ -1,14 +1,8 @@
 package dev.wplayer.app.ui.settings
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -18,6 +12,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.style.LibraryActionBadges
 import dev.wplayer.app.BuildConfig
 import dev.wplayer.app.R
+import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.readableWidth
 
 /**
@@ -25,23 +20,11 @@ import dev.wplayer.app.ui.common.readableWidth
  * libraries it contains with their licenses (collected at build time by
  * AboutLibraries; see app/build.gradle.kts).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: (() -> Unit)?) {
     val libraries by produceLibraries(R.raw.aboutlibraries)
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_about)) },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                        }
-                    }
-                },
-            )
-        },
+        topBar = { BackTopAppBar(stringResource(R.string.settings_about), onBack) },
     ) { padding ->
         LibrariesContainer(
             libraries = libraries,

@@ -6,13 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,6 +34,7 @@ import dev.wplayer.app.data.model.UpdateSettings
 import dev.wplayer.app.data.update.ReleaseManifest
 import dev.wplayer.app.data.update.UpdateRepository
 import dev.wplayer.app.data.update.UpdateState
+import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.readableWidth
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,24 +65,12 @@ class UpdateViewModel @Inject constructor(
 }
 
 /** Settings > Updates: the installed version, checking and installing. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateSettingsScreen(onBack: (() -> Unit)?, viewModel: UpdateViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val config by viewModel.config.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_updates)) },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                        }
-                    }
-                },
-            )
-        },
+        topBar = { BackTopAppBar(stringResource(R.string.settings_updates), onBack) },
     ) { padding ->
         LazyColumn(modifier = Modifier.readableWidth(), contentPadding = padding) {
             item {
