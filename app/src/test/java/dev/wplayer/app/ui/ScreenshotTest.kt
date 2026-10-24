@@ -1,6 +1,9 @@
 package dev.wplayer.app.ui
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,6 +20,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
 import com.github.takahirom.roborazzi.captureRoboImage
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.BrowserViewMode
@@ -32,6 +37,7 @@ import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.WatchProgress
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.ImagePage
 import dev.wplayer.app.data.pathSegments
 import dev.wplayer.app.ui.browser.BrowserContent
 import dev.wplayer.app.ui.browser.BrowserLayout
@@ -70,14 +76,21 @@ import dev.wplayer.app.ui.sources.SourceEditorContent
 import dev.wplayer.app.ui.sources.SourceEditorUiState
 import dev.wplayer.app.ui.sources.SourcesContent
 import dev.wplayer.app.ui.theme.WplayerTheme
+import dev.wplayer.app.ui.viewer.ImageViewerActions
+import dev.wplayer.app.ui.viewer.ImageViewerContent
+import dev.wplayer.app.ui.viewer.ImageViewerUiState
+import dev.wplayer.app.ui.viewer.PageImage
 import dev.wplayer.core.ffi.Track
 import dev.wplayer.core.ffi.TrackKind
 import dev.wplayer.core.player.PlaybackState
+import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import dev.wplayer.app.ui.player.SubtitleFileSheet
@@ -260,6 +273,43 @@ class ScreenshotTest {
     @Config(qualifiers = PHONE_LANDSCAPE)
     fun player_locked_phone() = capture("player_locked_phone") {
         VideoBackground { LockedOverlay(onUnlock = {}) }
+    }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun viewer_tablet() = captureViewer("viewer_tablet")
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun viewer_phone() = captureViewer("viewer_phone")
+
+    /** The viewer with its overlay, on the second of three pictures; decoding runs on the test's main thread. */
+    private fun captureViewer(name: String) {
+        val context = RuntimeEnvironment.getApplication()
+        SingletonImageLoader.setUnsafe(ImageLoader.Builder(context).coroutineContext(Dispatchers.Main.immediate).build())
+        try {
+            val picture = File(context.cacheDir, "picture.png").apply { writePicture(this) }
+            val pages = listOf("IMG_0001.jpg", "IMG_0002 바다.HEIC", "IMG_0003.png").map { ImagePage(it, "/사진/$it") }
+            val state = ImageViewerUiState(
+                pages = pages,
+                startPath = pages[1].path,
+                images = pages.associate { it.path to PageImage.Ready(picture) },
+            )
+            capture(name) { ImageViewerContent(state, NoOpViewerActions) }
+        } finally {
+            SingletonImageLoader.reset()
+        }
+    }
+
+    /** A landscape stand-in for a photo: sky, sea and a sun, in flat colors so every run draws the same. */
+    private fun writePicture(file: File) {
+        val bitmap = Bitmap.createBitmap(1200, 800, Bitmap.Config.ARGB_8888)
+        Canvas(bitmap).apply {
+            drawColor(0xFF6FA8DC.toInt())
+            drawRect(0f, 480f, 1200f, 800f, Paint().apply { color = 0xFF1C4E80.toInt() })
+            drawCircle(900f, 260f, 110f, Paint().apply { color = 0xFFFFD966.toInt() })
+        }
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     /** Player screens use the dark theme, like PlayerActivity. */
@@ -493,6 +543,16 @@ private object NoOpEditorActions : SourceEditorActions {
     override fun onSave() = Unit
     override fun onDelete() = Unit
     override fun onDone() = Unit
+}
+
+private object NoOpViewerActions : ImageViewerActions {
+    override fun back() = Unit
+    override fun show(page: ImagePage) = Unit
+    override fun hide(page: ImagePage) = Unit
+    override fun retry(page: ImagePage) = Unit
+    override fun unreadable(page: ImagePage) = Unit
+    override fun reload() = Unit
+    override fun unlock() = Unit
 }
 
 private object NoOpMaintenance : SettingsMaintenance {
