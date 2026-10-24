@@ -37,7 +37,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -92,7 +91,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -110,6 +108,7 @@ import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.SortField
 import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
+import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.CollectionCard
 import dev.wplayer.app.ui.common.MediaCard
 import dev.wplayer.app.ui.common.MediaRow
@@ -705,24 +704,6 @@ private fun folderLabel(state: BrowserUiState, path: String): String =
 
 private const val PARENT_NAME = ".."
 private val PATH_BAR_HEIGHT = 40.dp
-
-@Composable
-private fun CenteredMessage(text: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
-    // Scrollable so pull-to-refresh also works on error and empty states.
-    Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        action?.invoke()
-    }
-}
 
 /**
  * Opens the "All files access" toggle for this app. Some vendor ROMs lack the

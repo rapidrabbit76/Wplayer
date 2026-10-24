@@ -11,22 +11,17 @@ import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.SourceRepository
@@ -36,6 +31,7 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.mediaKey
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.BackTopAppBar
+import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.MediaCollection
 import dev.wplayer.app.ui.common.MediaItem
@@ -81,7 +77,7 @@ fun PlaylistScreen(
         },
     ) {
         if (state.items.isEmpty()) {
-            EmptyMessage(stringResource(R.string.playlist_empty))
+            CenteredMessage(stringResource(R.string.playlist_empty))
         } else {
             val showInFolder = stringResource(R.string.show_in_folder)
             val moveUp = stringResource(R.string.playlist_move_up)
@@ -164,7 +160,7 @@ fun RecentScreen(
         },
     ) {
         if (state.items.isEmpty()) {
-            EmptyMessage(stringResource(R.string.recent_empty))
+            CenteredMessage(stringResource(R.string.recent_empty))
         } else {
             val showInFolder = stringResource(R.string.show_in_folder)
             val addLabel = stringResource(R.string.playlist_add_title)
@@ -229,18 +225,6 @@ private fun LibraryLayout(
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) { content() }
-    }
-}
-
-@Composable
-private fun EmptyMessage(text: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

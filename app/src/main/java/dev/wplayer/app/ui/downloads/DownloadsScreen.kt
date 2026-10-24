@@ -11,19 +11,15 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
@@ -32,6 +28,7 @@ import dev.wplayer.app.data.model.Download
 import dev.wplayer.app.data.model.DownloadStatus
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.WatchProgress
+import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.MediaCollection
 import dev.wplayer.app.ui.common.MediaItem
 import dev.wplayer.app.ui.common.RowAction
@@ -85,13 +82,7 @@ internal fun DownloadsContent(downloads: List<Download>, viewMode: BrowserViewMo
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (downloads.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.downloads_empty, folderLabel),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
-                )
+                CenteredMessage(stringResource(R.string.downloads_empty, folderLabel))
             } else {
                 MediaCollection(viewMode, downloads, key = { it.id }) { download, grid -> DownloadItem(download, grid, actions) }
             }
