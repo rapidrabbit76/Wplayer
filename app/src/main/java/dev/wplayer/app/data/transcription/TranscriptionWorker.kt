@@ -53,10 +53,7 @@ class TranscriptionWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     private val notifications = context.getSystemService(NotificationManager::class.java)
 
-    override suspend fun doWork(): Result = turn.withLock {
-        setProgress(workDataOf(KEY_DONE_SECONDS to 0.0, KEY_LINES to 0))
-        transcribe()
-    }
+    override suspend fun doWork(): Result = turn.withLock { transcribe() }
 
     private suspend fun transcribe(): Result {
         val sourceKey = inputData.getString(KEY_SOURCE) ?: return Result.failure()
@@ -65,13 +62,14 @@ class TranscriptionWorker @AssistedInject constructor(
         val start = inputData.getDouble(KEY_START, 0.0)
         val duration = inputData.getDouble(KEY_DURATION, 0.0)
         val audioTrack = inputData.getLong(KEY_AUDIO_TRACK, -1).takeIf { it >= 0 }
-        val config = settings.settings.first().transcription
-        if (!models.isInstalled(config.model)) return failure(applicationContext.getString(R.string.ai_model_missing))
-
-        setForeground(foregroundInfo(title, null))
         val lines = AtomicInteger()
         val done = AtomicReference(0.0)
         return try {
+            // Tells this file from those still waiting for their turn.
+            setProgress(workDataOf(KEY_DONE_SECONDS to 0.0, KEY_LINES to 0))
+            val config = settings.settings.first().transcription
+            if (!models.isInstalled(config.model)) return failure(applicationContext.getString(R.string.ai_model_missing))
+            setForeground(foregroundInfo(title, null))
             val uri = browser.playbackUri(sourceKey, path)
             val workDir = File(applicationContext.cacheDir, "transcription").apply {
                 deleteRecursively()
@@ -129,7 +127,7 @@ class TranscriptionWorker @AssistedInject constructor(
             throw e
         } catch (e: CoreException.Cancelled) {
             Result.failure()
-        } catch (e: CoreException) {
+        } catch (e: Exception) {
             failure(e.message ?: e.javaClass.simpleName)
         }
     }
