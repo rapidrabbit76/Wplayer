@@ -14,6 +14,7 @@ import dev.wplayer.core.ffi.Track
 import dev.wplayer.core.ffi.TrackKind
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,11 +48,15 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
     /** Must be called on the thread that owns [surface] (the main thread). */
     fun attachSurface(surface: Surface) {
         val reference = SurfaceBridge.acquire(surface)
-        post {
-            detachCurrentSurface()
-            surfaceRef = reference
+        val accepted = offer {
+            try {
+                detachCurrentSurface()
+            } finally {
+                surfaceRef = reference
+            }
             player.attachSurface(reference)
         }
+        if (!accepted) SurfaceBridge.release(reference)
     }
 
     fun setSurfaceSize(width: Int, height: Int) = post { player.setSurfaceSize(width.toUInt(), height.toUInt()) }
@@ -121,16 +126,24 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
      */
     override fun close() {
         post {
-            detachCurrentSurface()
-            player.shutdown()
-            player.close()
+            player.use {
+                try {
+                    detachCurrentSurface()
+                } finally {
+                    it.shutdown()
+                }
+            }
         }
         commands.shutdown()
     }
 
     /** Queues [block]; failures are logged, since nothing upstream awaits them. */
     private fun post(block: () -> Unit) {
-        if (commands.isShutdown) return
+        offer(block)
+    }
+
+    /** Like [post]; false when the engine is closed and [block] will never run. */
+    private fun offer(block: () -> Unit): Boolean = try {
         commands.execute {
             try {
                 block()
@@ -138,6 +151,9 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
                 Log.w(TAG, "mpv command failed", e)
             }
         }
+        true
+    } catch (e: RejectedExecutionException) {
+        false
     }
 
     private inner class Listener : PlayerListener {
