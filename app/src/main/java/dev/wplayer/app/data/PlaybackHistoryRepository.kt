@@ -2,6 +2,8 @@ package dev.wplayer.app.data
 
 import dev.wplayer.app.data.local.PlaybackPositionDao
 import dev.wplayer.app.data.local.PlaybackPositionEntity
+import dev.wplayer.app.data.local.ReadingPositionDao
+import dev.wplayer.app.data.local.ReadingPositionEntity
 import dev.wplayer.app.data.local.RecentMediaDao
 import dev.wplayer.app.data.local.RecentMediaEntity
 import dev.wplayer.app.data.local.SubtitleChoiceDao
@@ -15,10 +17,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-/** Resume positions, the recently played list and subtitle files picked for a video. */
+/** Resume positions, the pages comic archives were left on, the recently played list and subtitle files picked for a video. */
 @Singleton
 class PlaybackHistoryRepository @Inject constructor(
     private val positions: PlaybackPositionDao,
+    private val readingPositions: ReadingPositionDao,
     private val recents: RecentMediaDao,
     private val subtitleChoices: SubtitleChoiceDao,
     private val lockedFolders: LockedFolders,
@@ -34,6 +37,14 @@ class PlaybackHistoryRepository @Inject constructor(
         } else {
             positions.upsert(PlaybackPositionEntity(mediaKey, positionSeconds, durationSeconds, System.currentTimeMillis()))
         }
+    }
+
+    /** The path of the page the archive [mediaKey] was left on, or null when it is new. */
+    suspend fun readingPage(mediaKey: String): String? = readingPositions.get(mediaKey)?.pagePath
+
+    suspend fun saveReadingPage(mediaKey: String, pagePath: String) {
+        readingPositions.upsert(ReadingPositionEntity(mediaKey, pagePath, System.currentTimeMillis()))
+        readingPositions.trim(READING_POSITION_LIMIT)
     }
 
     /** Watch progress of unfinished files, by media key. */
@@ -58,6 +69,7 @@ class PlaybackHistoryRepository @Inject constructor(
     /** Forgets where [ref] was left and removes it from the recent list. */
     suspend fun forget(ref: MediaRef) {
         positions.delete(ref.mediaKey)
+        readingPositions.delete(ref.mediaKey)
         recents.delete(ref.sourceKey, ref.path)
     }
 
@@ -71,6 +83,7 @@ class PlaybackHistoryRepository @Inject constructor(
 
     suspend fun clearAll() {
         positions.clear()
+        readingPositions.clear()
         recents.clear()
     }
 
@@ -78,5 +91,6 @@ class PlaybackHistoryRepository @Inject constructor(
         const val FINISHED_MARGIN_SECONDS = 15.0
         const val RECENT_LIMIT = 50
         const val SUBTITLE_CHOICE_LIMIT = 500
+        const val READING_POSITION_LIMIT = 500
     }
 }
