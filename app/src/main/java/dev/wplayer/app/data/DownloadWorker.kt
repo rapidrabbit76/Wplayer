@@ -23,6 +23,7 @@ import dev.wplayer.core.ffi.downloadFile
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -87,16 +88,15 @@ class DownloadWorker @AssistedInject constructor(
             dao.setStatus(id, DownloadStatus.DONE.name, null)
             Result.success()
         } catch (e: CoreException.Cancelled) {
-            stoppedEarly(id)
+            continueLater(id)
         } catch (e: CancellationException) {
-            stoppedEarly(id)
+            continueLater(id)
             throw e
         } catch (e: CoreException) {
             // Wi-Fi dropping or the server restarting: wait (for the network constraint) and continue.
             val transient = e is CoreException.Connection || e is CoreException.Io
             if (transient && runAttemptCount < MAX_RETRIES) {
-                dao.setStatus(id, DownloadStatus.QUEUED.name, null)
-                Result.retry()
+                continueLater(id)
             } else {
                 fail(id, e.detailOrName())
             }
@@ -106,7 +106,7 @@ class DownloadWorker @AssistedInject constructor(
     }
 
     private suspend fun fail(id: Long, reason: String): Result {
-        dao.setStatus(id, DownloadStatus.FAILED.name, reason)
+        withContext(NonCancellable) { dao.setStatus(id, DownloadStatus.FAILED.name, reason) }
         return Result.failure()
     }
 
@@ -118,9 +118,11 @@ class DownloadWorker @AssistedInject constructor(
         else -> javaClass.simpleName
     }
 
-    /** Cancelled by the user (already marked) or stopped by the system: waits to continue later. */
-    private suspend fun stoppedEarly(id: Long): Result {
-        if (dao.get(id)?.status == DownloadStatus.RUNNING.name) dao.setStatus(id, DownloadStatus.QUEUED.name, null)
+    /** Stopping cancels this coroutine, and the row must still leave RUNNING. */
+    private suspend fun continueLater(id: Long): Result {
+        withContext(NonCancellable) {
+            if (dao.get(id)?.status == DownloadStatus.RUNNING.name) dao.setStatus(id, DownloadStatus.QUEUED.name, null)
+        }
         return Result.retry()
     }
 
