@@ -3,6 +3,7 @@ package dev.wplayer.app.data
 import android.content.Context
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.provider.OpenableColumns
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.wplayer.app.di.IoDispatcher
 import java.io.FileNotFoundException
@@ -40,5 +41,16 @@ class ExternalUriResolver @Inject constructor(
             throw e
         }
         return opened ?: throw FileNotFoundException(uri.toString())
+    }
+
+    /** The provider's name for a `content://` file, when it offers one; providers may refuse or return null. */
+    suspend fun displayName(uri: Uri): String? {
+        if (uri.scheme != "content") return null
+        return withContext(io) {
+            runCatching {
+                context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+            }.getOrNull()
+        }
     }
 }
