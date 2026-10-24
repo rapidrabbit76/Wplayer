@@ -13,7 +13,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import dev.wplayer.app.data.update.ReleaseManifest
 import dev.wplayer.app.data.update.UpdateRepository
 import dev.wplayer.app.data.update.UpdateState
 import dev.wplayer.app.ui.common.BackTopAppBar
+import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.readableWidth
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -81,10 +81,11 @@ fun UpdateSettingsScreen(onBack: (() -> Unit)?, viewModel: UpdateViewModel = hil
             }
             item { UpdateStatus(state, viewModel) }
             item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.update_auto_check)) },
-                    supportingContent = { Text(stringResource(R.string.update_auto_check_hint)) },
-                    trailingContent = { Switch(checked = config.autoCheck, onCheckedChange = viewModel::setAutoCheck) },
+                SwitchRow(
+                    title = stringResource(R.string.update_auto_check),
+                    checked = config.autoCheck,
+                    onCheckedChange = viewModel::setAutoCheck,
+                    supporting = stringResource(R.string.update_auto_check_hint),
                 )
             }
         }

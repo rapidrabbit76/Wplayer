@@ -38,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,6 +66,7 @@ import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
+import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
@@ -176,7 +176,7 @@ fun SubtitleSheet(
 ) = PlayerPanel(onDismiss) {
     val external = stringResource(R.string.player_track_external)
     val aiTrack = stringResource(R.string.ai_subtitle_track)
-    SwitchLine(stringResource(R.string.player_subtitles_show), visible, actions::onVisibleChange)
+    SwitchRow(stringResource(R.string.player_subtitles_show), visible, actions::onVisibleChange, colors = ListItemDefaults.colors(containerColor = Color.Transparent))
     SectionTitle(stringResource(R.string.player_subtitles))
     val subtitles = tracks.filter { it.kind == TrackKind.SUBTITLE }
     TrackRow(stringResource(R.string.player_subtitles_off), subtitles.none { it.selected }) { actions.onSelectTrack(null) }
@@ -391,7 +391,7 @@ fun QueueSheet(
             FilterChip(selected = mode == repeat, onClick = { onRepeatChange(mode) }, label = { Text(stringResource(mode.label)) })
         }
     }
-    SwitchLine(stringResource(R.string.player_shuffle), shuffle, onShuffleChange)
+    SwitchRow(stringResource(R.string.player_shuffle), shuffle, onShuffleChange, colors = ListItemDefaults.colors(containerColor = Color.Transparent))
     SectionTitle(stringResource(R.string.player_queue))
     if (queue.isEmpty()) PickerMessage(stringResource(R.string.player_queue_empty))
     queue.forEach { ref ->
@@ -421,16 +421,6 @@ private fun ChipRow(content: @Composable () -> Unit) {
 @Composable
 private fun SectionTitle(text: String) =
     SectionHeader(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
-
-@Composable
-private fun SwitchLine(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    ListItem(
-        headlineContent = { Text(text) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.clickable { onCheckedChange(!checked) },
-    )
-}
 
 /** − value + with a reset, for sync offsets. */
 @Composable
