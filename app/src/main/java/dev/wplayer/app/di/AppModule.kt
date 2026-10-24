@@ -1,6 +1,7 @@
 package dev.wplayer.app.di
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
@@ -25,6 +26,7 @@ import dev.wplayer.app.data.model.AppSettings
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -92,5 +94,10 @@ object AppModule {
     @Provides
     @Singleton
     @ApplicationScope
-    fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + logFailures)
+
+    /** Work launched here is not awaited, so a failure (a full disk while saving) is logged instead of crashing the app. */
+    private val logFailures = CoroutineExceptionHandler { _, error -> Log.w(TAG, "background work failed", error) }
+
+    private const val TAG = "ApplicationScope"
 }
