@@ -16,6 +16,14 @@ class MediaEntryTest {
     }
 
     @Test
+    fun `lists the audio formats nPlayer played`() {
+        val nPlayerAudio = "a52 aac ac3 aif aifc aiff amr ape dts flac m4a mka mp1 mp2 mp3 m4b mpc oga ogg oma ra tta voc wav wma wv"
+        nPlayerAudio.split(' ').forEach { extension ->
+            assertEquals(extension, MediaKind.AUDIO, MediaEntry.kindOf("track.$extension", isDirectory = false))
+        }
+    }
+
+    @Test
     fun `directories win over extensions`() {
         assertEquals(MediaKind.DIRECTORY, MediaEntry.kindOf("Season.1.mkv", isDirectory = true))
     }
