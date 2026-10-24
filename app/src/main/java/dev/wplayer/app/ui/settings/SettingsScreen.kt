@@ -672,7 +672,6 @@ private fun SwitchRow(
     )
 }
 
-/** Segmented buttons, for up to four short options. */
 /** The app's language; kept by the system rather than in [AppSettings] (see [AppLanguage]). */
 @Composable
 private fun LanguageRow() {
@@ -688,6 +687,7 @@ private fun LanguageRow() {
     }
 }
 
+/** Segmented buttons, for up to four short options. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> ChoiceRow(

@@ -70,8 +70,6 @@ class PlaybackHistoryRepository @Inject constructor(
         subtitleChoices.trim(SUBTITLE_CHOICE_LIMIT)
     }
 
-    suspend fun forgetSubtitle(mediaKey: String) = subtitleChoices.delete(mediaKey)
-
     suspend fun clearAll() {
         positions.clear()
         recents.clear()

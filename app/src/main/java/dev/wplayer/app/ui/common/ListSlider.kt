@@ -10,12 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import dev.wplayer.app.ui.theme.FOCUS_HIGHLIGHT_ALPHA
 
@@ -46,14 +40,6 @@ fun ListSlider(
         interactionSource = interaction,
         modifier = modifier
             .then(if (focused) Modifier.background(highlight, RoundedCornerShape(percent = 50)) else Modifier)
-            .onPreviewKeyEvent { event ->
-                val direction = when (event.key) {
-                    Key.DirectionUp -> FocusDirection.Up
-                    Key.DirectionDown -> FocusDirection.Down
-                    else -> return@onPreviewKeyEvent false
-                }
-                if (event.type == KeyEventType.KeyDown) focusManager.moveFocus(direction)
-                true
-            },
+            .leaveOnVerticalKeys(focusManager),
     )
 }

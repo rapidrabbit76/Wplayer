@@ -30,7 +30,4 @@ interface SubtitleChoiceDao {
         """,
     )
     suspend fun trim(keep: Int)
-
-    @Query("DELETE FROM subtitle_choices WHERE mediaKey = :mediaKey")
-    suspend fun delete(mediaKey: String)
 }
