@@ -1,6 +1,6 @@
 package dev.wplayer.app.data.model
 
-enum class MediaKind { DIRECTORY, VIDEO, AUDIO, SUBTITLE, OTHER }
+enum class MediaKind { DIRECTORY, VIDEO, AUDIO, IMAGE, SUBTITLE, OTHER }
 
 data class MediaEntry(
     val name: String,
@@ -23,6 +23,11 @@ data class MediaEntry(
             "a52", "aac", "ac3", "aif", "aifc", "aiff", "alac", "amr", "ape", "dsf", "dts", "flac", "m4a", "m4b",
             "mka", "mp1", "mp2", "mp3", "mpc", "oga", "ogg", "oma", "opus", "ra", "tta", "voc", "wav", "wma", "wv",
         )
+        /** What Android's ImageDecoder reads, camera raw files included. */
+        private val IMAGE = setOf(
+            "arw", "avif", "bmp", "cr2", "dng", "gif", "heic", "heif", "ico", "jpe", "jpeg", "jpg", "nef",
+            "nrw", "orf", "pef", "png", "raf", "rw2", "srw", "webp",
+        )
         private val SUBTITLE = setOf("ass", "idx", "sami", "smi", "srt", "ssa", "sub", "sup", "vtt")
 
         fun kindOf(name: String, isDirectory: Boolean): MediaKind {
@@ -30,6 +35,7 @@ data class MediaEntry(
             return when (name.substringAfterLast('.', "").lowercase()) {
                 in VIDEO -> MediaKind.VIDEO
                 in AUDIO -> MediaKind.AUDIO
+                in IMAGE -> MediaKind.IMAGE
                 in SUBTITLE -> MediaKind.SUBTITLE
                 else -> MediaKind.OTHER
             }
