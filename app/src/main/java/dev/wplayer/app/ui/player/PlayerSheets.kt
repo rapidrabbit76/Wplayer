@@ -33,7 +33,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryScrollableTabRow
@@ -67,6 +66,7 @@ import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.rememberReleaseSliderState
+import dev.wplayer.app.ui.common.transparentRowColors
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
@@ -176,7 +176,7 @@ fun SubtitleSheet(
 ) = PlayerPanel(onDismiss) {
     val external = stringResource(R.string.player_track_external)
     val aiTrack = stringResource(R.string.ai_subtitle_track)
-    SwitchRow(stringResource(R.string.player_subtitles_show), visible, actions::onVisibleChange, colors = ListItemDefaults.colors(containerColor = Color.Transparent))
+    SwitchRow(stringResource(R.string.player_subtitles_show), visible, actions::onVisibleChange)
     SectionTitle(stringResource(R.string.player_subtitles))
     val subtitles = tracks.filter { it.kind == TrackKind.SUBTITLE }
     TrackRow(stringResource(R.string.player_subtitles_off), subtitles.none { it.selected }) { actions.onSelectTrack(null) }
@@ -291,7 +291,7 @@ private fun PickerRow(text: String, icon: ImageVector, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(text, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         leadingContent = { Icon(icon, contentDescription = null) },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = transparentRowColors(),
         modifier = Modifier.clickable(onClick = onClick),
     )
 }
@@ -391,7 +391,7 @@ fun QueueSheet(
             FilterChip(selected = mode == repeat, onClick = { onRepeatChange(mode) }, label = { Text(stringResource(mode.label)) })
         }
     }
-    SwitchRow(stringResource(R.string.player_shuffle), shuffle, onShuffleChange, colors = ListItemDefaults.colors(containerColor = Color.Transparent))
+    SwitchRow(stringResource(R.string.player_shuffle), shuffle, onShuffleChange)
     SectionTitle(stringResource(R.string.player_queue))
     if (queue.isEmpty()) PickerMessage(stringResource(R.string.player_queue_empty))
     queue.forEach { ref ->
@@ -403,7 +403,7 @@ fun QueueSheet(
             } else {
                 null
             },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            colors = transparentRowColors(),
             modifier = Modifier.clickable(enabled = !current) { onPlay(ref) },
         )
     }
@@ -468,7 +468,7 @@ private fun TrackRow(label: String, selected: Boolean, onClick: () -> Unit) {
         } else {
             null
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = transparentRowColors(),
         modifier = Modifier.clickable(onClick = onClick),
     )
 }

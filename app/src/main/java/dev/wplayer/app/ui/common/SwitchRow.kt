@@ -2,8 +2,6 @@ package dev.wplayer.app.ui.common
 
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemColors
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -18,7 +16,6 @@ fun SwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     supporting: String? = null,
-    colors: ListItemColors = ListItemDefaults.colors(),
 ) {
     ListItem(
         headlineContent = { Text(title) },
@@ -27,7 +24,7 @@ fun SwitchRow(
             // A switch without its own handler drops the touch-target size, which would shift it in taller rows.
             Switch(checked = checked, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
         },
-        colors = colors,
+        colors = transparentRowColors(),
         modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
     )
 }
