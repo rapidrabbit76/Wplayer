@@ -1,13 +1,15 @@
 //! Wplayer native core.
 //!
-//! Exposes three boundaries to Kotlin:
+//! Exposes these boundaries to Kotlin:
 //! - [`browser`]: directory listing for local and network sources (UniFFI).
+//! - `archive`: the images inside comic archives, read in place (UniFFI).
 //! - [`player`]: libmpv-backed playback control (UniFFI).
 //! - `transcription`: speech to subtitle lines with whisper.cpp (UniFFI).
 //! - `android`: raw JNI entry points that UniFFI cannot express (JavaVM, Surface).
 
 uniffi::setup_scaffolding!();
 
+mod archive;
 pub mod browser;
 mod error;
 mod logging;
