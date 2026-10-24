@@ -362,6 +362,7 @@
     <string name="settings_enhancement">화질 향상</string>
     <string name="enhancement_off">끄기</string>
     <string name="enhancement_sharp">선명 · FSR</string>
+    <string name="enhancement_light_detail">가벼운 디테일 · RAVU</string>
     <string name="enhancement_detail">디테일 · FSRCNNX</string>
     <string name="enhancement_anime">애니 · Anime4K</string>
     <string name="settings_deband">디밴딩</string>

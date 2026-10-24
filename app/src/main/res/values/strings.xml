@@ -367,6 +367,7 @@
     <string name="settings_enhancement">Picture enhancement</string>
     <string name="enhancement_off">Off</string>
     <string name="enhancement_sharp">Sharp · FSR</string>
+    <string name="enhancement_light_detail">Light detail · RAVU</string>
     <string name="enhancement_detail">Detail · FSRCNNX</string>
     <string name="enhancement_anime">Anime · Anime4K</string>
     <string name="settings_deband">Debanding</string>

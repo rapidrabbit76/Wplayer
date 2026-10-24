@@ -45,7 +45,7 @@ Video: [Cyberpunk: Edgerunners — Official Trailer](https://www.youtube.com/wat
 - Frame previews while seeking.
 - ASS, SRT and SMI subtitles, with encoding detection, styling and delay adjustment.
 - On-device subtitle generation with whisper.cpp.
-- HDR tone mapping, FSR, FSRCNNX and Anime4K upscaling.
+- HDR tone mapping, FSR, RAVU, FSRCNNX and Anime4K upscaling.
 - Background audio, picture-in-picture, headset controls and TV remote support.
 - Network cache, resumable downloads and folder locking with device authentication.
 - English and Korean. Dark, pure-black and wallpaper-color themes.
