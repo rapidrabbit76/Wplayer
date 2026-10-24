@@ -62,10 +62,9 @@ import androidx.compose.ui.unit.dp
 import dev.wplayer.app.R
 import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.data.model.AppSettings
-import dev.wplayer.app.ui.common.ListSlider
+import dev.wplayer.app.ui.common.PercentSliderRow
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
-import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.ui.common.transparentRowColors
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
@@ -75,7 +74,6 @@ import dev.wplayer.app.ui.settings.PLAYER_SETTINGS_CATEGORIES
 import dev.wplayer.app.ui.settings.categoryRows
 import dev.wplayer.core.ffi.Track
 import dev.wplayer.core.ffi.TrackKind
-import kotlin.math.roundToInt
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.DriveFolderUpload
 import androidx.compose.material.icons.outlined.FileOpen
@@ -196,13 +194,13 @@ fun SubtitleSheet(
         onIncrease = { actions.onDelayChange(delay + SYNC_STEP_SECONDS) },
         onReset = { actions.onDelayChange(0.0) },
     )
-    PercentSlider(
+    PercentSliderRow(
         title = stringResource(R.string.player_subtitle_size),
         value = sizePercent,
         range = SUBTITLE_SIZE_RANGE,
         onChange = actions::onSizeChange,
     )
-    PercentSlider(
+    PercentSliderRow(
         title = stringResource(R.string.player_subtitle_position),
         value = position,
         range = SUBTITLE_POSITION_RANGE,
@@ -321,7 +319,7 @@ fun AudioSheet(
     tracks.filter { it.kind == TrackKind.AUDIO }.forEach { track ->
         TrackRow(track.label(external), track.selected) { onSelectTrack(track.id) }
     }
-    PercentSlider(
+    PercentSliderRow(
         title = stringResource(R.string.player_audio_boost),
         value = boostPercent,
         range = 100..MAX_VOLUME_PERCENT,
@@ -434,28 +432,6 @@ private fun StepperRow(value: String, onDecrease: () -> Unit, onIncrease: () -> 
         Text(value, style = MaterialTheme.typography.titleMedium, modifier = Modifier.widthIn(min = 72.dp))
         OutlinedButton(onClick = onIncrease) { Text("+") }
         TextButton(onClick = onReset) { Text(stringResource(R.string.player_reset)) }
-    }
-}
-
-/** A slider that previews while dragged and saves when released. */
-@Composable
-private fun PercentSlider(title: String, value: Int, range: IntRange, onChange: (Int, Boolean) -> Unit) {
-    val slider = rememberReleaseSliderState()
-    val shown = slider.shown(value)
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(Modifier.fillMaxWidth()) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
-            Text("${shown.roundToInt()}%", style = MaterialTheme.typography.titleSmall)
-        }
-        ListSlider(
-            value = shown,
-            onValueChange = {
-                slider.drag(it)
-                onChange(it.roundToInt(), false)
-            },
-            onValueChangeFinished = { slider.release()?.let { onChange(it, true) } },
-            valueRange = range.first.toFloat()..range.last.toFloat(),
-        )
     }
 }
 
