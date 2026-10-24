@@ -4,8 +4,10 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PlayQueueNavigationTest {
@@ -35,5 +37,18 @@ class PlayQueueNavigationTest {
     @Test
     fun `a single file has nothing next even when shuffling`() {
         assertNull(nextInQueue(queue.take(1), "/1.mkv", RepeatMode.OFF, shuffle = true))
+    }
+
+    @Test
+    fun `a forward seek that reaches the end finishes the file`() {
+        assertTrue(seeksPastEnd(position = 1415.0, duration = 1420.0, seconds = 10.0))
+        assertTrue(seeksPastEnd(position = 1410.0, duration = 1420.0, seconds = 10.0))
+        assertFalse(seeksPastEnd(position = 1400.0, duration = 1420.0, seconds = 10.0))
+    }
+
+    @Test
+    fun `backward seeks and streams without a length never finish the file`() {
+        assertFalse(seeksPastEnd(position = 1415.0, duration = 1420.0, seconds = -10.0))
+        assertFalse(seeksPastEnd(position = 30.0, duration = 0.0, seconds = 10.0))
     }
 }
