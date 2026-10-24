@@ -170,6 +170,10 @@ class ScreenshotTest {
     fun settings_general_phone() = capture("settings_general_phone") { SettingsPage(SettingsCategory.GENERAL) }
 
     @Test
+    @Config(qualifiers = PHONE)
+    fun settings_screen_phone() = capture("settings_screen_phone") { SettingsPage(SettingsCategory.SCREEN) }
+
+    @Test
     @Config(qualifiers = TABLET)
     fun downloads_tablet() = capture("downloads_tablet") { Downloads(BrowserViewMode.GRID) }
 
