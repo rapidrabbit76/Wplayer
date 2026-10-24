@@ -43,8 +43,8 @@ class ModelDownloadWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         val model = inputData.getString(KEY_MODEL)?.let { name -> WhisperModel.entries.firstOrNull { it.name == name } }
             ?: return Result.failure()
-        setForeground(foregroundInfo(model, null))
         return try {
+            setForeground(foregroundInfo(model, null))
             withContext(io) {
                 store.directory.mkdirs()
                 if (store.vadFile.length() != WhisperModelStore.VAD_SIZE_BYTES) {
@@ -59,9 +59,13 @@ class ModelDownloadWorker @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
-            if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure(workDataOf(KEY_ERROR to (e.message ?: "I/O error")))
+            if (runAttemptCount < MAX_RETRIES) Result.retry() else failure(e.message ?: "I/O error")
+        } catch (e: Exception) {
+            failure(e.message ?: e.javaClass.simpleName)
         }
     }
+
+    private fun failure(reason: String) = Result.failure(workDataOf(KEY_ERROR to reason))
 
     /** Downloads [url] to [target] via a partial file, continuing an earlier attempt. */
     private suspend fun fetch(url: String, target: File, size: Long, sha256: String, onProgress: suspend (Float) -> Unit) {
