@@ -79,7 +79,7 @@ class SubtitleFontStore @Inject constructor(
      * given, and makes it the subtitle font. A font of the same name is replaced.
      */
     suspend fun add(name: String, write: suspend (File) -> Unit): SubtitleFont {
-        val fileName = safeFileName(name)
+        val fileName = fontFileName(name)
         val staged = File(context.cacheDir, "font-$fileName")
         val font = try {
             // A copy left by an earlier attempt would be continued rather than replaced.
@@ -131,10 +131,9 @@ class SubtitleFontStore @Inject constructor(
             "/system/fonts/NotoSansKR-Regular.otf",
         )
 
-        /** [name] without folders or characters a file name cannot have, keeping a font extension. */
-        internal fun safeFileName(name: String): String {
-            val base = name.substringAfterLast('/').replace(Regex("[\\\\:*?\"<>|\\u0000-\\u001F]"), "_").trim().ifEmpty { DEFAULT_NAME }
-            return if (base.substringAfterLast('.', "").lowercase() in FONT_EXTENSIONS) base else "$base.ttf"
+        internal fun fontFileName(name: String): String {
+            val base = safeFileName(name, DEFAULT_NAME)
+            return if (isFontFile(base)) base else "$base.ttf"
         }
 
         fun isFontFile(name: String): Boolean = name.substringAfterLast('.', "").lowercase() in FONT_EXTENSIONS

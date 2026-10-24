@@ -51,9 +51,10 @@ class FontNamesTest {
 
     @Test
     fun `font file names keep a font extension and lose folders`() {
-        assertEquals("DX영화자막Medium.ttf", SubtitleFontStore.safeFileName("DX영화자막Medium.ttf"))
-        assertEquals("a_b.otf", SubtitleFontStore.safeFileName("fonts/a:b.otf"))
-        assertEquals("subtitle.ttf", SubtitleFontStore.safeFileName("subtitle"))
+        assertEquals("DX영화자막Medium.ttf", SubtitleFontStore.fontFileName("DX영화자막Medium.ttf"))
+        assertEquals("a_b.otf", SubtitleFontStore.fontFileName("fonts/a:b.otf"))
+        assertEquals("subtitle.ttf", SubtitleFontStore.fontFileName("subtitle"))
+        assertEquals("font.ttf", SubtitleFontStore.fontFileName(".."))
     }
 
     private data class NameRecord(val platform: Int, val language: Int, val nameId: Int, val text: String)

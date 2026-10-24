@@ -99,15 +99,17 @@ class DownloadRepository @Inject constructor(
         workManager.enqueueUniqueWork(workName(id), ExistingWorkPolicy.REPLACE, request)
     }
 
-    /** `name`, or `name (2)` and so on when a file or another download already uses it. */
     private suspend fun uniqueDestination(name: String): File {
         val dir = folder.apply { mkdirs() }
+        val canonicalDir = dir.canonicalFile
         val taken = dao.destPaths().toSet()
-        val base = name.substringBeforeLast('.')
-        val extension = name.substringAfterLast('.', "").let { if (it.isEmpty()) "" else ".$it" }
+        val fileName = safeFileName(name, DEFAULT_FILE_NAME)
+        val base = fileName.substringBeforeLast('.')
+        val extension = fileName.substringAfterLast('.', "").let { if (it.isEmpty()) "" else ".$it" }
         return generateSequence(1) { it + 1 }
-            .map { n -> File(dir, if (n == 1) name else "$base ($n)$extension") }
-            .first { !it.exists() && it.absolutePath !in taken }
+            .map { n -> File(dir, if (n == 1) fileName else "$base ($n)$extension") }
+            // A link left in the folder may point outside it.
+            .first { !it.exists() && it.absolutePath !in taken && it.canonicalFile.parentFile == canonicalDir }
     }
 
     private fun DownloadEntity.toModel() = Download(
@@ -122,6 +124,7 @@ class DownloadRepository @Inject constructor(
 
     companion object {
         const val FOLDER_NAME = "Wplayer"
+        private const val DEFAULT_FILE_NAME = "download"
         private const val RETRY_DELAY_SECONDS = 15L
 
         internal fun workName(id: Long) = "download-$id"
