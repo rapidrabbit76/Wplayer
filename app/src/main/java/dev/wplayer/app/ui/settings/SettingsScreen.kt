@@ -76,6 +76,7 @@ import dev.wplayer.app.ui.player.formatSpeed
 private val TWO_PANE_MIN_WIDTH = 840.dp
 private val CATEGORY_PANE_WIDTH = 360.dp
 
+private val SLIDESHOW_SECONDS = listOf(2, 3, 5, 10)
 private val SEEK_STEPS = listOf(1, 2, 3, 5, 10, 15, 20, 30, 60, 90, 120, 180, 300)
 private val BOOST_SPEEDS = listOf(1.5, 2.0, 3.0)
 private val READ_AHEAD_SECONDS = listOf(10, 30, 60, 120, 180, 300, 0)
@@ -178,6 +179,15 @@ internal fun SettingsCategoryContent(
                     appearanceSection(settings, onUpdate)
                     item { SectionHeader(R.string.settings_browser) }
                     browserSection(settings, onUpdate)
+                    item { SectionHeader(R.string.settings_pictures) }
+                    item {
+                        ChoiceRow(
+                            R.string.settings_slideshow_interval,
+                            SLIDESHOW_SECONDS,
+                            settings.pictures.slideshowSeconds,
+                            { stringResource(R.string.settings_seconds, it) },
+                        ) { seconds -> onUpdate { it.copy(pictures = it.pictures.copy(slideshowSeconds = seconds)) } }
+                    }
                     item { SectionHeader(R.string.settings_history) }
                     item {
                         ListItem(

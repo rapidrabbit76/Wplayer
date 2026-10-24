@@ -431,4 +431,6 @@
     <string name="image_viewer_unreadable">This picture cannot be shown.</string>
     <string name="image_viewer_slideshow_start">Start slideshow</string>
     <string name="image_viewer_slideshow_stop">Stop slideshow</string>
+    <string name="settings_pictures">Pictures</string>
+    <string name="settings_slideshow_interval">Slideshow interval</string>
 </resources>

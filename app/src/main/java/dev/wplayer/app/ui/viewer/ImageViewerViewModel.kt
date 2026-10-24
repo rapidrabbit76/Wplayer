@@ -16,6 +16,7 @@ import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.imagePages
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.MediaEntry
+import dev.wplayer.app.data.model.PictureSettings
 import dev.wplayer.app.di.ApplicationScope
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
@@ -56,13 +57,11 @@ data class ImageViewerUiState(
     val hiddenByLock: Boolean = false,
     /** By [ImagePage.path]; pages not asked for yet are missing. */
     val images: Map<String, PageImage> = emptyMap(),
-    val slideshowSeconds: Int = DEFAULT_SLIDESHOW_SECONDS,
+    val slideshowSeconds: Int = PictureSettings().slideshowSeconds,
 ) {
     /** Where the pager starts: the opened picture, or the first when it is gone. */
     val startPage: Int get() = pages.orEmpty().indexOfFirst { it.path == startPath }.coerceAtLeast(0)
 }
-
-const val DEFAULT_SLIDESHOW_SECONDS = 3
 
 /**
  * The image viewer: the pictures of one folder, each fetched as a local file
@@ -115,6 +114,7 @@ class ImageViewerViewModel @AssistedInject constructor(
         error = error,
         hiddenByLock = lockState.isHidden(route.sourceKey, route.folder),
         images = images,
+        slideshowSeconds = settings.pictures.slideshowSeconds,
     )
 
     fun load() {

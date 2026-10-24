@@ -261,6 +261,12 @@ enum class FolderNavigation {
     val showsParentRow: Boolean get() = this != PATH_BAR
 }
 
+@Serializable
+data class PictureSettings(
+    /** How long each picture stays on screen in a slideshow. */
+    val slideshowSeconds: Int = 3,
+)
+
 /** How the app looks for new versions (see UpdateRepository). */
 @Serializable
 data class UpdateSettings(
@@ -298,6 +304,7 @@ data class AppSettings(
     val audio: AudioSettings = AudioSettings(),
     val network: NetworkSettings = NetworkSettings(),
     val browser: BrowserSettings = BrowserSettings(),
+    val pictures: PictureSettings = PictureSettings(),
     val gestures: GestureSettings = GestureSettings(),
     val transcription: TranscriptionSettings = TranscriptionSettings(),
     val update: UpdateSettings = UpdateSettings(),
