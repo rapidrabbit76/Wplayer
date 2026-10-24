@@ -3,9 +3,13 @@ package dev.wplayer.app.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -70,5 +74,32 @@ fun ListSlider(
         modifier = modifier
             .then(if (focused) Modifier.background(highlight, RoundedCornerShape(percent = 50)) else Modifier)
             .leaveOnVerticalKeys(focusManager),
+    )
+}
+
+/** [onChange] gets each value while dragging (save false), then the released value (save true). */
+@Composable
+fun PercentSliderRow(title: String, value: Int, range: IntRange, onChange: (percent: Int, save: Boolean) -> Unit) {
+    val slider = rememberReleaseSliderState()
+    val shown = slider.shown(value)
+    ListItem(
+        headlineContent = {
+            Row {
+                Text(title, modifier = Modifier.weight(1f))
+                Text("${shown.roundToInt()}%", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        supportingContent = {
+            ListSlider(
+                value = shown,
+                onValueChange = {
+                    slider.drag(it)
+                    onChange(it.roundToInt(), false)
+                },
+                onValueChangeFinished = { slider.release()?.let { onChange(it, true) } },
+                valueRange = range.first.toFloat()..range.last.toFloat(),
+            )
+        },
+        colors = transparentRowColors(),
     )
 }

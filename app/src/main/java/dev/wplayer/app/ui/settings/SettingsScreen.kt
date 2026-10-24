@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -66,15 +65,13 @@ import dev.wplayer.app.data.model.WhisperModel
 import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.ConfirmDialog
-import dev.wplayer.app.ui.common.ListSlider
+import dev.wplayer.app.ui.common.PercentSliderRow
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
-import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.common.transparentRowColors
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
 import dev.wplayer.app.ui.player.formatSpeed
-import kotlin.math.roundToInt
 
 private val TWO_PANE_MIN_WIDTH = 840.dp
 private val CATEGORY_PANE_WIDTH = 360.dp
@@ -724,29 +721,8 @@ private fun <T> PickerRow(
 
 /** A percentage slider that saves when released, not on every step. */
 @Composable
-private fun SliderRow(@StringRes title: Int, value: Int, range: IntRange, onChange: (Int) -> Unit) {
-    val slider = rememberReleaseSliderState()
-    val shown = slider.shown(value)
-    ListItem(
-        headlineContent = {
-            Row {
-                Text(stringResource(title), modifier = Modifier.weight(1f))
-                Text("${shown.roundToInt()}%", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-            }
-        },
-        supportingContent = {
-            Column {
-                ListSlider(
-                    value = shown,
-                    onValueChange = slider::drag,
-                    onValueChangeFinished = { slider.release()?.let(onChange) },
-                    valueRange = range.first.toFloat()..range.last.toFloat(),
-                )
-            }
-        },
-        colors = transparentRowColors(),
-    )
-}
+private fun SliderRow(@StringRes title: Int, value: Int, range: IntRange, onChange: (Int) -> Unit) =
+    PercentSliderRow(stringResource(title), value, range) { percent, save -> if (save) onChange(percent) }
 
 @Composable
 private fun cacheLabel(megabytes: Int): String = when {
