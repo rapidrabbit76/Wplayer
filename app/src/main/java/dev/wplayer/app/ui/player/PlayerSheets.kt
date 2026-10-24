@@ -44,7 +44,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,6 +66,7 @@ import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
+import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
@@ -440,8 +440,8 @@ private fun StepperRow(value: String, onDecrease: () -> Unit, onIncrease: () -> 
 /** A slider that previews while dragged and saves when released. */
 @Composable
 private fun PercentSlider(title: String, value: Int, range: IntRange, onChange: (Int, Boolean) -> Unit) {
-    var dragging by remember { mutableFloatStateOf(Float.NaN) }
-    val shown = if (dragging.isNaN()) value.toFloat() else dragging
+    val slider = rememberReleaseSliderState()
+    val shown = slider.shown(value)
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
@@ -450,14 +450,10 @@ private fun PercentSlider(title: String, value: Int, range: IntRange, onChange: 
         ListSlider(
             value = shown,
             onValueChange = {
-                dragging = it
+                slider.drag(it)
                 onChange(it.roundToInt(), false)
             },
-            onValueChangeFinished = {
-                // A key press can finish without a change (at either end of the range).
-                if (!dragging.isNaN()) onChange(dragging.roundToInt(), true)
-                dragging = Float.NaN
-            },
+            onValueChangeFinished = { slider.release()?.let { onChange(it, true) } },
             valueRange = range.first.toFloat()..range.last.toFloat(),
         )
     }

@@ -7,11 +7,40 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import dev.wplayer.app.ui.theme.FOCUS_HIGHLIGHT_ALPHA
+import kotlin.math.roundToInt
+
+/**
+ * A slider's value while it is dragged, so a setting is saved once on release
+ * rather than on every step.
+ */
+@Stable
+class ReleaseSliderState internal constructor() {
+    private var dragging by mutableFloatStateOf(Float.NaN)
+
+    fun shown(saved: Int): Float = if (dragging.isNaN()) saved.toFloat() else dragging
+
+    fun drag(to: Float) {
+        dragging = to
+    }
+
+    /** The released value; null when a key press finished without a change (at either end of the range). */
+    fun release(): Int? {
+        val released = dragging.takeUnless { it.isNaN() }?.roundToInt()
+        dragging = Float.NaN
+        return released
+    }
+}
+
+@Composable
+fun rememberReleaseSliderState(): ReleaseSliderState = remember { ReleaseSliderState() }
 
 /**
  * A [Slider] among the rows of a list, usable with a remote: left and right
