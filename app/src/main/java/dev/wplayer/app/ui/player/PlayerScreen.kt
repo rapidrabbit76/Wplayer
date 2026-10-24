@@ -766,7 +766,7 @@ private fun FeedbackPill(feedback: GestureFeedback, duration: Double, modifier: 
         is GestureFeedback.SubtitleSize -> stringResource(R.string.player_subtitle_size_value, feedback.percent)
         is GestureFeedback.SubtitlePosition -> stringResource(R.string.player_subtitle_position_value, feedback.position)
         is GestureFeedback.Zoom -> stringResource(R.string.player_zoom, (feedback.scale * 100).roundToInt())
-        is GestureFeedback.Speed -> stringResource(R.string.player_speed_value, feedback.speed)
+        is GestureFeedback.Speed -> formatSpeed(feedback.speed)
     }
     Text(
         text = text,
