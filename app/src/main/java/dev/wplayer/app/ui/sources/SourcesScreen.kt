@@ -60,6 +60,7 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.ui.common.ConfirmDialog
+import dev.wplayer.app.ui.common.FAB_CLEARANCE
 import dev.wplayer.app.ui.common.RowAction
 import dev.wplayer.app.ui.common.RowActionMenu
 import dev.wplayer.app.ui.common.SectionHeader
@@ -129,12 +130,11 @@ internal fun SourcesContent(
     ) { padding ->
         LazyVerticalGrid(
             columns = GridCells.Adaptive(SOURCE_CARD_MIN_WIDTH),
-            // Extra bottom space keeps the last cards clear of the FAB.
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
                 top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 96.dp,
+                bottom = padding.calculateBottomPadding() + FAB_CLEARANCE,
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

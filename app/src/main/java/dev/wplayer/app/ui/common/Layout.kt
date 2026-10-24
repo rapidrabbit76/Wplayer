@@ -32,6 +32,12 @@ import dev.wplayer.app.R
 /** Centers a list at a readable width on wide screens instead of stretching rows edge to edge. */
 fun Modifier.readableWidth(): Modifier = fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 720.dp)
 
+/**
+ * Space after the last item of a list with a floating action button: the 56dp
+ * button, its 16dp margin, and 16dp more so the last row stops clear of it.
+ */
+val FAB_CLEARANCE = 88.dp
+
 /** A top app bar with a back arrow, left out when [onBack] is null. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
