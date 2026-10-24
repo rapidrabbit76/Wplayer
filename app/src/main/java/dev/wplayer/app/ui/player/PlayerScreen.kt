@@ -666,7 +666,7 @@ internal fun ResumePrompt(position: Double, onAnswer: (Boolean) -> Unit) {
             .blockTouches(),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Column(Modifier.widthIn(max = 360.dp).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(stringResource(R.string.player_resume_question, formatTime(position)), style = MaterialTheme.typography.titleMedium)
                 Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
