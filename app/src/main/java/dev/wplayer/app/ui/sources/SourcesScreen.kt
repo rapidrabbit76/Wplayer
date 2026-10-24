@@ -64,6 +64,7 @@ import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.ui.common.RowAction
 import dev.wplayer.app.ui.common.RowActionMenu
+import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.Thumbnail
 import dev.wplayer.app.ui.player.PlaybackRequest
 import dev.wplayer.app.ui.player.formatTime
@@ -187,14 +188,7 @@ internal fun SourcesContent(
 }
 
 private fun LazyGridScope.sectionTitle(title: Int) {
-    item(span = { GridItemSpan(maxLineSpan) }) {
-        Text(
-            text = stringResource(title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-    }
+    item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader(stringResource(title), Modifier.padding(top = 12.dp)) }
 }
 
 /**
