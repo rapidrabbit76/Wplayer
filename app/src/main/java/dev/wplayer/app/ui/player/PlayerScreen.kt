@@ -511,7 +511,7 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 120.dp, start = 24.dp, end = 24.dp)
-                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                                .background(OverlayColors.textBackdrop, RoundedCornerShape(12.dp))
                                 .padding(horizontal = 16.dp, vertical = 10.dp),
                         )
                     }
@@ -774,7 +774,7 @@ private fun FeedbackPill(feedback: GestureFeedback, duration: Double, modifier: 
         color = Color.White,
         textAlign = TextAlign.Center,
         modifier = modifier
-            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+            .background(OverlayColors.textBackdrop, RoundedCornerShape(12.dp))
             .padding(horizontal = 20.dp, vertical = 12.dp),
     )
 }

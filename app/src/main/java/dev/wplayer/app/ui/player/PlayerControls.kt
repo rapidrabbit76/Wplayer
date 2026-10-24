@@ -170,7 +170,7 @@ fun PlayerControls(
             actions = actions,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)))
+                .background(Brush.verticalGradient(listOf(OverlayColors.scrim, Color.Transparent)))
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
         )
 
@@ -235,7 +235,7 @@ fun PlayerControls(
         Column(
             Modifier
                 .align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))))
+                .background(Brush.verticalGradient(listOf(Color.Transparent, OverlayColors.scrim)))
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
         ) {
             if (!quickBesidePlay) {
@@ -628,7 +628,7 @@ fun SeekPreviewImage(frame: SeekPreviewFrame, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier
                 .padding(top = 4.dp)
-                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                .background(OverlayColors.textBackdrop, RoundedCornerShape(4.dp))
                 .padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
@@ -678,10 +678,16 @@ private val SEEK_PREVIEW_BOTTOM = 88.dp
  * Fixed colors for controls drawn over video: theme (and dynamic) colors are
  * tuned for app surfaces and can vanish against dark footage.
  */
-private object OverlayColors {
+internal object OverlayColors {
     val accent = Color(0xFFFFC857)
     val track = Color.White
     val inactiveTrack = Color.White.copy(alpha = 0.3f)
+
+    /** Behind the control bars at the top and bottom, fading to clear. */
+    val scrim = Color.Black.copy(alpha = 0.7f)
+
+    /** Behind a short text label, so it stays legible on bright frames. */
+    val textBackdrop = Color.Black.copy(alpha = 0.6f)
 }
 
 /** `H:MM:SS` or `M:SS`. */
