@@ -1,0 +1,14 @@
+{
+  "uniqueId": "shader:ravu",
+  "name": "RAVU-Lite-AR",
+  "description": "Light detail upscaling shader (ravu-lite-ar-r4).",
+  "website": "https://github.com/bjin/mpv-prescalers",
+  "developers": [
+    {
+      "name": "bjin"
+    }
+  ],
+  "licenses": [
+    "LGPL-3.0-or-later"
+  ]
+}

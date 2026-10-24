@@ -785,6 +785,7 @@ private val VideoEnhancement.label: Int
     get() = when (this) {
         VideoEnhancement.OFF -> R.string.enhancement_off
         VideoEnhancement.SHARP -> R.string.enhancement_sharp
+        VideoEnhancement.LIGHT_DETAIL -> R.string.enhancement_light_detail
         VideoEnhancement.DETAIL -> R.string.enhancement_detail
         VideoEnhancement.ANIME -> R.string.enhancement_anime
     }

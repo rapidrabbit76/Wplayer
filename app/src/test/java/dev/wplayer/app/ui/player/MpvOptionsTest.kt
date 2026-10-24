@@ -70,6 +70,8 @@ class MpvOptionsTest {
     fun `enhancement presets become shader paths and smooth motion needs the display rate`() {
         val sharp = mpvOptions(AppSettings(screen = ScreenSettings(enhancement = VideoEnhancement.SHARP)), shaderDirectory = "/s")
         assertEquals("/s/CfL_Prediction_Lite.glsl:/s/FSR.glsl:/s/CAS.glsl", sharp["glsl-shaders"])
+        val light = mpvOptions(AppSettings(screen = ScreenSettings(enhancement = VideoEnhancement.LIGHT_DETAIL)), shaderDirectory = "/s")
+        assertEquals("/s/CfL_Prediction_Lite.glsl:/s/ravu-lite-ar-r4.hook:/s/CAS.glsl", light["glsl-shaders"])
         val anime = mpvOptions(AppSettings(screen = ScreenSettings(enhancement = VideoEnhancement.ANIME)), shaderDirectory = "/s")
         assertEquals(7, anime.getValue("glsl-shaders").split(':').size)
         assertEquals("", mpvOptions(AppSettings())["glsl-shaders"])

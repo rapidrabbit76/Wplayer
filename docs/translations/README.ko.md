@@ -45,7 +45,7 @@ Android TV에서는 `adb install`이나 사이드로딩 앱으로 설치할 수 
 - 탐색 중 프레임 미리보기
 - ASS·SRT·SMI 자막, 인코딩 감지, 자막 모양과 싱크 조절
 - whisper.cpp를 이용한 기기 내 자막 생성
-- HDR 톤 매핑, FSR·FSRCNNX·Anime4K 업스케일링
+- HDR 톤 매핑, FSR·RAVU·FSRCNNX·Anime4K 업스케일링
 - 백그라운드 오디오, 화면 속 화면, 헤드셋 버튼, TV 리모컨
 - 네트워크 캐시, 다운로드 이어받기, 기기 인증으로 폴더 잠금
 - 한국어·영어, 다크·완전한 검정·배경화면 색상 테마

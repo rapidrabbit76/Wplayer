@@ -133,6 +133,9 @@ enum class VideoEnhancement(val shaders: List<String>) {
     /** AMD FidelityFX Super Resolution 1 when enlarged, AMD CAS sharpening at the video's own size. Light. */
     SHARP(listOf(CHROMA_FROM_LUMA, "FSR.glsl", CONTRAST_ADAPTIVE_SHARPENING)),
 
+    /** RAVU-Lite-AR, a learned luma doubler lighter than FSRCNNX, when enlarged; CAS at the video's own size. */
+    LIGHT_DETAIL(listOf(CHROMA_FROM_LUMA, "ravu-lite-ar-r4.hook", CONTRAST_ADAPTIVE_SHARPENING)),
+
     /** FSRCNNX, a small CNN that doubles luma detail, when enlarged; CAS at the video's own size. Heavier. */
     DETAIL(listOf(CHROMA_FROM_LUMA, "FSRCNNX_x2_8-0-4-1.glsl", CONTRAST_ADAPTIVE_SHARPENING)),
 

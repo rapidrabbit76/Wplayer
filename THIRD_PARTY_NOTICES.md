@@ -24,6 +24,7 @@ compatible with GPL-3.0; the GPL is required because mpv is built with its GPL p
 |---|---|---|
 | AMD FidelityFX FSR 1, mpv port by agyild (FSR.glsl) | MIT | https://github.com/GPUOpen-Effects/FidelityFX-FSR |
 | FSRCNNX (FSRCNNX_x2_8-0-4-1.glsl) | LGPL-3.0-or-later | https://github.com/igv/FSRCNN-TensorFlow |
+| RAVU-Lite-AR (ravu-lite-ar-r4.hook) | LGPL-3.0-or-later | https://github.com/bjin/mpv-prescalers |
 | Anime4K (Anime4K_*.glsl) | MIT; AutoDownscalePre: Unlicense | https://github.com/bloc97/Anime4K |
 | AMD FidelityFX CAS, mpv port by agyild (CAS.glsl) | MIT | https://gist.github.com/agyild/bbb4e58298b2f86aa24da3032a0d2ee6 |
 | Chroma from Luma prediction (CfL_Prediction_Lite.glsl) | MIT | https://github.com/Artoriuz/glsl-chroma-from-luma-prediction |
