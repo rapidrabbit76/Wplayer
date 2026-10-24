@@ -425,4 +425,10 @@
     <string name="continue_remaining">%1$s left</string>
     <string name="source_local_summary">This device</string>
     <string name="settings_developer">Developer</string>
+    <string name="image_viewer_position">%1$d / %2$d</string>
+    <string name="image_viewer_empty">No pictures to show</string>
+    <string name="image_viewer_failed">Could not open this picture: %1$s</string>
+    <string name="image_viewer_unreadable">This picture cannot be shown.</string>
+    <string name="image_viewer_slideshow_start">Start slideshow</string>
+    <string name="image_viewer_slideshow_stop">Stop slideshow</string>
 </resources>

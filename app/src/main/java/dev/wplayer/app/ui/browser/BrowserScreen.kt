@@ -498,7 +498,7 @@ internal fun BrowserContent(
 
 /** In place of a locked folder's contents until the device authenticates the user. */
 @Composable
-private fun LockedFolderMessage(onOpen: () -> Unit) {
+internal fun LockedFolderMessage(onOpen: () -> Unit) {
     CenteredMessage(stringResource(R.string.locked_folder_message)) {
         Button(onClick = onOpen) {
             Icon(Icons.Outlined.Lock, contentDescription = null, modifier = Modifier.padding(end = 8.dp).size(18.dp))

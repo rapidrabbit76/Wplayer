@@ -25,6 +25,8 @@ roborazzi = "1.76.0"
 benchmark = "1.5.0"
 profileinstaller = "1.4.1"
 aboutlibraries = "15.3.0"
+coil = "3.6.3"
+telephoto = "0.19.0"
 uiautomator = "2.4.0"
 
 [libraries]
@@ -72,6 +74,9 @@ jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 junit = { module = "junit:junit", version.ref = "junit" }
 profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
+telephoto-zoomable-image-coil3 = { module = "me.saket.telephoto:zoomable-image-coil3", version.ref = "telephoto" }
 benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }

@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.material3.ShortNavigationBarArrangement
 import androidx.compose.material3.ShortNavigationBarItem
@@ -67,6 +68,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.wplayer.app.R
 import dev.wplayer.app.data.folderOf
+import dev.wplayer.app.data.model.MediaEntry
+import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.ui.browser.BrowserScreen
 import dev.wplayer.app.ui.browser.BrowserViewModel
@@ -79,6 +82,7 @@ import dev.wplayer.app.ui.library.RecentScreen
 import dev.wplayer.app.ui.navigation.BrowserRoute
 import dev.wplayer.app.ui.navigation.ColumnSceneStrategy
 import dev.wplayer.app.ui.navigation.DownloadsRoute
+import dev.wplayer.app.ui.navigation.ImageViewerRoute
 import dev.wplayer.app.ui.navigation.LibraryRoute
 import dev.wplayer.app.ui.navigation.PlaylistRoute
 import dev.wplayer.app.ui.navigation.RecentRoute
@@ -92,6 +96,8 @@ import dev.wplayer.app.ui.settings.SettingsScreen
 import dev.wplayer.app.ui.sources.SourceEditorScreen
 import dev.wplayer.app.ui.sources.SourceEditorViewModel
 import dev.wplayer.app.ui.sources.SourcesScreen
+import dev.wplayer.app.ui.viewer.ImageViewerScreen
+import dev.wplayer.app.ui.viewer.ImageViewerViewModel
 
 /** The bottom bar's tabs, each with its own back stack. */
 private enum class Tab(val root: NavKey, @StringRes val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
@@ -125,16 +131,26 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
     BackHandler(enabled = tab != Tab.SOURCES && backStack.size == 1) { tab = Tab.SOURCES }
 
     // TVs get a rail on the left, the remote's way in; tablets a slim bar with inline labels;
-    // phones the standard short bar (icon above label).
+    // phones the standard short bar (icon above label). The image viewer covers the whole screen.
     val television = isTelevision()
     val wide = windowWidth >= WIDE_BAR_MIN_WIDTH
+    val fullScreen = backStack.lastOrNull() is ImageViewerRoute
+    // Pictures open in the viewer, in this tab; everything else plays in the player.
+    val openMedia: (PlaybackRequest) -> Unit = { request ->
+        if (request is PlaybackRequest.FromSource && MediaEntry.kindOf(request.path, isDirectory = false) == MediaKind.IMAGE) {
+            backStack.add(ImageViewerRoute(request.sourceKey, request.path))
+        } else {
+            onPlay(request)
+        }
+    }
     val onTabClick: (Tab) -> Unit = { item ->
         // Tapping the current tab again goes back to its first screen.
         if (item == tab) stacks.getValue(item).popToRoot() else tab = item
     }
     Scaffold(
+        contentWindowInsets = if (fullScreen) WindowInsets(0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            if (television) {
+            if (television || fullScreen) {
                 Unit
             } else if (wide) {
                 SlimTabBar(selected = tab, onClick = onTabClick)
@@ -154,7 +170,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
         },
     ) { padding ->
         Row(Modifier.padding(padding).consumeWindowInsets(padding)) {
-            if (television) TabRail(selected = tab, onClick = onTabClick)
+            if (television && !fullScreen) TabRail(selected = tab, onClick = onTabClick)
             NavDisplay(
                 backStack = backStack,
                 onBack = { backStack.removeLastOrNull() },
@@ -171,7 +187,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                             onShowInFolder = backStack::showInFolder,
                             onAddSource = { backStack.add(SourceEditorRoute()) },
                             onEditSource = { key -> backStack.add(SourceEditorRoute(key)) },
-                            onPlay = onPlay,
+                            onPlay = openMedia,
                         )
                     }
                     entry<SourceEditorRoute> { route ->
@@ -192,8 +208,16 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                             onOpenFolder = { path -> backStack.openFolder(from = route, path = path) },
                             onShowInFolder = { path -> backStack.openFolder(from = route, path = folderOf(path), focusPath = path) },
                             onNavigateTo = { path -> backStack.goToFolder(from = route, path = path) },
-                            onPlay = onPlay,
+                            onPlay = openMedia,
                             onBack = { backStack.closeFolder(route) },
+                        )
+                    }
+                    entry<ImageViewerRoute> { route ->
+                        ImageViewerScreen(
+                            viewModel = hiltViewModel<ImageViewerViewModel, ImageViewerViewModel.Factory>(
+                                creationCallback = { it.create(route) },
+                            ),
+                            onBack = { backStack.removeLastOrNull() },
                         )
                     }
                     entry<LibraryRoute> {
@@ -207,7 +231,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                             viewModel = hiltViewModel<PlaylistViewModel, PlaylistViewModel.Factory>(
                                 creationCallback = { it.create(route.playlistId) },
                             ),
-                            onPlay = onPlay,
+                            onPlay = openMedia,
                             onOpenFolder = { sourceKey, path -> backStack.add(BrowserRoute(sourceKey, path)) },
                             onShowInFolder = backStack::showInFolder,
                             onBack = { backStack.removeLastOrNull() },
@@ -216,7 +240,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                     entry<RecentRoute> {
                         RecentScreen(
                             viewModel = hiltViewModel(),
-                            onPlay = onPlay,
+                            onPlay = openMedia,
                             onShowInFolder = backStack::showInFolder,
                             onBack = { backStack.removeLastOrNull() },
                         )
@@ -228,7 +252,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                         SettingsCategoryScreen(route.category, onBack = { backStack.removeLastOrNull() })
                     }
                     entry<DownloadsRoute> {
-                        DownloadsScreen(onPlay = onPlay)
+                        DownloadsScreen(onPlay = openMedia)
                     }
                 },
             )
