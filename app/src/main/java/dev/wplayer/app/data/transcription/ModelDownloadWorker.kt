@@ -3,7 +3,6 @@ package dev.wplayer.app.data.transcription
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
-import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -13,7 +12,9 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.progressNotification
 import dev.wplayer.app.data.reason
+import dev.wplayer.app.data.WorkChannel
 import dev.wplayer.app.data.forEachChunk
 import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.IoDispatcher
@@ -119,16 +120,14 @@ class ModelDownloadWorker @AssistedInject constructor(
     private fun foregroundInfo(model: WhisperModel, fraction: Float?) =
         ForegroundInfo(NOTIFICATION_ID, notification(model, fraction), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
 
-    private fun notification(model: WhisperModel, fraction: Float?) =
-        NotificationCompat.Builder(applicationContext, ensureAiChannel(applicationContext))
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle(applicationContext.getString(R.string.ai_model_downloading))
-            .setContentText(model.fileName)
-            .setProgress(PROGRESS_MAX, ((fraction ?: 0f) * PROGRESS_MAX).toInt(), fraction == null)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .build()
+    private fun notification(model: WhisperModel, fraction: Float?) = progressNotification(
+        applicationContext,
+        WorkChannel.AI,
+        android.R.drawable.stat_sys_download,
+        title = applicationContext.getString(R.string.ai_model_downloading),
+        text = model.fileName,
+        fraction = fraction,
+    )
 
     companion object {
         const val KEY_MODEL = "model"
@@ -139,7 +138,6 @@ class ModelDownloadWorker @AssistedInject constructor(
         private const val TIMEOUT_MILLIS = 30_000
         private const val BUFFER_BYTES = 256 * 1024
         private const val REPORT_EVERY_BYTES = 4L * 1024 * 1024
-        private const val PROGRESS_MAX = 1000
         private const val MAX_RETRIES = 5
     }
 }
