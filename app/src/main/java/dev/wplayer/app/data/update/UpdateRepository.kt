@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -100,15 +101,18 @@ class UpdateRepository @Inject constructor(
         }
     }
 
-    /** Downloads [release], checks its SHA-256 and opens the system installer. */
+    /** Downloads [release], checks its SHA-256 and opens the system installer, unless an install is under way. */
     fun install(release: ReleaseManifest) {
         if (!context.packageManager.canRequestPackageInstalls()) {
             _state.value = UpdateState.NeedsInstallPermission
             return
         }
+        // Claimed before the download starts, so a second tap cannot write the same file at once.
+        val previous = _state.getAndUpdate { if (it.underWay) it else UpdateState.Downloading(release, 0f) }
+        if (previous.underWay) return
         scope.launch {
             try {
-                val apk = File(context.cacheDir, "updates/wplayer-${release.versionName}.apk")
+                val apk = File(context.cacheDir, APK_PATH)
                 download(release, apk)
                 _state.value = UpdateState.Installing(release)
                 withContext(io) { commitToInstaller(apk) }
@@ -170,8 +174,11 @@ class UpdateRepository @Inject constructor(
         }
     }
 
+    private val UpdateState.underWay get() = this is UpdateState.Downloading || this is UpdateState.Installing
+
     private companion object {
         const val MANIFEST_NAME = "latest.json"
+        const val APK_PATH = "updates/wplayer.apk"
         const val AUTO_CHECK_INTERVAL_MILLIS = 12 * 60 * 60 * 1000L
         const val DOWNLOAD_BUFFER_BYTES = 64 * 1024
         val json = Json { ignoreUnknownKeys = true }
