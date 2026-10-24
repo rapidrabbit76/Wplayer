@@ -25,7 +25,7 @@ class DownloadsViewModel @Inject constructor(
     val viewMode: StateFlow<BrowserViewMode> = settings.settings.map { it.browser.viewMode }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), settings.current.value.browser.viewMode)
 
-    fun setViewMode(mode: BrowserViewMode) = launch { settings.update { it.copy(browser = it.browser.copy(viewMode = mode)) } }
+    fun setViewMode(mode: BrowserViewMode) = launch { settings.updateBrowser { it.copy(viewMode = mode) } }
 
     val downloads: StateFlow<List<Download>> = repository.downloads.stateIn(
         scope = viewModelScope,

@@ -64,7 +64,7 @@ class SourcesViewModel @Inject constructor(
     }
 
     fun hideContinueWatching() {
-        viewModelScope.launch { settings.update { it.copy(browser = it.browser.copy(showContinueWatching = false)) } }
+        viewModelScope.launch { settings.updateBrowser { it.copy(showContinueWatching = false) } }
     }
 
     private companion object {

@@ -4,6 +4,7 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import dev.wplayer.app.data.model.AppSettings
+import dev.wplayer.app.data.model.BrowserSettings
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -37,6 +38,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
         dataStore.updateData(transform)
+    }
+
+    suspend fun updateBrowser(transform: (BrowserSettings) -> BrowserSettings) {
+        update { it.copy(browser = transform(it.browser)) }
     }
 }
 

@@ -229,7 +229,7 @@ class BrowserViewModel @AssistedInject constructor(
     }
 
     fun updateSettings(transform: (BrowserSettings) -> BrowserSettings) {
-        viewModelScope.launch { settingsRepository.update { it.copy(browser = transform(it.browser)) } }
+        viewModelScope.launch { settingsRepository.updateBrowser(transform) }
     }
 
     fun addToPlaylist(entry: MediaEntry, playlistId: Long) {
