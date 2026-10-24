@@ -85,7 +85,7 @@ class ThumbnailRepository @Inject constructor(
     // The width is part of the key, so a change of size renders thumbnails again instead of stretching old ones.
     private fun cacheKey(ref: MediaRef): String = MessageDigest.getInstance("SHA-1")
         .digest("${ref.sourceKey}\u0000${ref.path}\u0000$WIDTH_PX".toByteArray())
-        .joinToString("") { "%02x".format(it) }
+        .toHex()
 
     private companion object {
         const val TAG = "ThumbnailRepository"

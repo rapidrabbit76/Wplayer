@@ -13,6 +13,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.IoDispatcher
 import java.io.File
 import java.io.FileOutputStream
@@ -120,7 +121,7 @@ class ModelDownloadWorker @AssistedInject constructor(
                 digest.update(buffer, 0, n)
             }
         }
-        return digest.digest().joinToString("") { "%02x".format(it) }
+        return digest.digest().toHex()
     }
 
     private fun foregroundInfo(model: WhisperModel, fraction: Float?) =

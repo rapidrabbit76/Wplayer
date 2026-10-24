@@ -2,6 +2,7 @@ package dev.wplayer.app.data.transcription
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.wplayer.app.data.toHex
 import java.io.Closeable
 import java.io.File
 import java.io.Writer
@@ -16,7 +17,7 @@ class GeneratedSubtitles @Inject constructor(@ApplicationContext context: Contex
 
     fun file(mediaKey: String): File {
         val digest = MessageDigest.getInstance("SHA-256").digest(mediaKey.toByteArray())
-        return File(directory, digest.take(KEY_BYTES).joinToString("") { "%02x".format(it) } + ".srt")
+        return File(directory, digest.copyOf(KEY_BYTES).toHex() + ".srt")
     }
 
     /** The subtitles made for [mediaKey], if any lines were recognized. */
