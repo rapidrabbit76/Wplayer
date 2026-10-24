@@ -172,14 +172,13 @@ fun SubtitleSheet(
     onLoadFile: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) = PlayerPanel(onDismiss) {
-    val external = stringResource(R.string.player_track_external)
     val aiTrack = stringResource(R.string.ai_subtitle_track)
     SwitchRow(stringResource(R.string.player_subtitles_show), visible, actions::onVisibleChange)
     SectionTitle(stringResource(R.string.player_subtitles))
     val subtitles = tracks.filter { it.kind == TrackKind.SUBTITLE }
     TrackRow(stringResource(R.string.player_subtitles_off), subtitles.none { it.selected }) { actions.onSelectTrack(null) }
     subtitles.forEach { track ->
-        val label = if (track.title == AI_SUBTITLE_TITLE) aiTrack else track.label(external)
+        val label = if (track.title == AI_SUBTITLE_TITLE) aiTrack else track.label()
         TrackRow(label, track.selected) { actions.onSelectTrack(track.id) }
     }
     if (onLoadFile != null) PickerRow(stringResource(R.string.player_subtitle_load), Icons.Outlined.FileOpen, onLoadFile)
@@ -314,10 +313,9 @@ fun AudioSheet(
     onDelayChange: (Double) -> Unit,
     onDismiss: () -> Unit,
 ) = PlayerPanel(onDismiss) {
-    val external = stringResource(R.string.player_track_external)
     SectionTitle(stringResource(R.string.player_audio))
     tracks.filter { it.kind == TrackKind.AUDIO }.forEach { track ->
-        TrackRow(track.label(external), track.selected) { onSelectTrack(track.id) }
+        TrackRow(track.label(), track.selected) { onSelectTrack(track.id) }
     }
     PercentSliderRow(
         title = stringResource(R.string.player_audio_boost),
@@ -488,12 +486,13 @@ private fun AiSubtitleControls(ai: AiSubtitleStatus, actions: SubtitlePanelActio
     }
 }
 
-private fun Track.label(externalLabel: String): String = listOfNotNull(
+@Composable
+private fun Track.label(): String = listOfNotNull(
     title,
     language?.uppercase(),
     codec,
-    externalLabel.takeIf { external },
-).ifEmpty { listOf("#$id") }.joinToString(" · ")
+    stringResource(R.string.player_track_external).takeIf { external },
+).ifEmpty { listOf(stringResource(R.string.player_track_number, id)) }.joinToString(" · ")
 
 /**
  * The settings screen's playback categories, changed without leaving the video.

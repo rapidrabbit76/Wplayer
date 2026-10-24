@@ -760,7 +760,7 @@ private fun FeedbackPill(feedback: GestureFeedback, duration: Double, modifier: 
             val label = stringResource(
                 if (feedback.action == VerticalSwipeAction.BRIGHTNESS) R.string.player_brightness else R.string.player_volume,
             )
-            "$label ${(feedback.fraction * 100).roundToInt()}%"
+            "$label ${stringResource(R.string.percent_value, (feedback.fraction * 100).roundToInt())}"
         }
         is GestureFeedback.SubtitleDelay -> stringResource(R.string.player_subtitle_delay, feedback.seconds)
         is GestureFeedback.SubtitleSize -> stringResource(R.string.player_subtitle_size_value, feedback.percent)
