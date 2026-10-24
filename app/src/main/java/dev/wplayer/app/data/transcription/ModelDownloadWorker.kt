@@ -13,6 +13,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.forEachChunk
 import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.IoDispatcher
 import java.io.File
@@ -86,12 +87,9 @@ class ModelDownloadWorker @AssistedInject constructor(
             var lastReport = 0L
             connection.inputStream.use { input ->
                 FileOutputStream(partial, offset > 0).use { output ->
-                    val buffer = ByteArray(BUFFER_BYTES)
                     var copied = offset
-                    while (true) {
+                    input.forEachChunk(BUFFER_BYTES) { buffer, n ->
                         currentCoroutineContext().ensureActive()
-                        val n = input.read(buffer)
-                        if (n < 0) break
                         output.write(buffer, 0, n)
                         copied += n
                         if (copied - lastReport >= REPORT_EVERY_BYTES) {
@@ -113,14 +111,7 @@ class ModelDownloadWorker @AssistedInject constructor(
 
     private fun sha256Of(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input ->
-            val buffer = ByteArray(BUFFER_BYTES)
-            while (true) {
-                val n = input.read(buffer)
-                if (n < 0) break
-                digest.update(buffer, 0, n)
-            }
-        }
+        file.inputStream().use { input -> input.forEachChunk(BUFFER_BYTES) { buffer, n -> digest.update(buffer, 0, n) } }
         return digest.digest().toHex()
     }
 

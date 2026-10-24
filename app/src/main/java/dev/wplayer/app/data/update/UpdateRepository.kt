@@ -10,6 +10,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.wplayer.app.BuildConfig
 import dev.wplayer.app.data.SettingsRepository
+import dev.wplayer.app.data.forEachChunk
 import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.ApplicationScope
 import dev.wplayer.app.di.IoDispatcher
@@ -146,11 +147,8 @@ class UpdateRepository @Inject constructor(
             val total = connection.contentLengthLong.takeIf { it > 0 }
             connection.inputStream.use { input ->
                 target.outputStream().use { output ->
-                    val buffer = ByteArray(DOWNLOAD_BUFFER_BYTES)
                     var copied = 0L
-                    while (true) {
-                        val n = input.read(buffer)
-                        if (n < 0) break
+                    input.forEachChunk(DOWNLOAD_BUFFER_BYTES) { buffer, n ->
                         output.write(buffer, 0, n)
                         digest.update(buffer, 0, n)
                         copied += n
