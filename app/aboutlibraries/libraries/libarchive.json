@@ -1,0 +1,16 @@
+{
+  "uniqueId": "native:libarchive",
+  "name": "libarchive",
+  "description": "Reads zip, 7z and RAR comic archives.",
+  "website": "https://www.libarchive.org",
+  "developers": [
+    {
+      "name": "Tim Kientzle and the libarchive contributors"
+    }
+  ],
+  "licenses": [
+    "BSD-2-Clause",
+    "CC0-1.0"
+  ],
+  "artifactVersion": "${LIBARCHIVE_VERSION}"
+}

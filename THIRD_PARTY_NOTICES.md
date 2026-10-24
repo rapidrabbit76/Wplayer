@@ -16,6 +16,8 @@ compatible with GPL-3.0; the GPL is required because mpv is built with its GPL p
 | FreeType | VER-2-15-0 | FTL (FreeType License) | https://freetype.org |
 | HarfBuzz | 14.6.0 | MIT ("Old MIT") | https://github.com/harfbuzz/harfbuzz |
 | FriBidi | v1.0.17 | LGPL-2.1-or-later | https://github.com/fribidi/fribidi |
+| libarchive (linked into `libwplayer_core.so`) | 3.8.10 | BSD-2-Clause; its BLAKE2 code (RAR5 checksums): CC0-1.0 | https://www.libarchive.org |
+| liblzma from XZ Utils (linked into `libwplayer_core.so`) | 5.8.4 | 0BSD | https://tukaani.org/xz/ |
 | LLVM libc++ (`libc++_shared.so`, Android NDK) | NDK 30 | Apache-2.0 WITH LLVM-exception | https://github.com/llvm/llvm-project |
 
 ## Video shaders (app/src/main/assets/shaders, unmodified)
