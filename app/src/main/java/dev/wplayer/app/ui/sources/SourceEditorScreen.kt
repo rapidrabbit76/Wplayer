@@ -247,8 +247,8 @@ private fun ConnectionTestResult(test: ConnectionTest) {
 }
 
 internal val SourceProtocol.label: String
-    get() = when (this) {
-        SourceProtocol.LOCAL -> "Local"
+    @Composable get() = when (this) {
+        SourceProtocol.LOCAL -> stringResource(R.string.source_local_storage)
         SourceProtocol.SMB -> "SMB"
         SourceProtocol.NFS -> "NFS"
         SourceProtocol.FTP -> "FTP"

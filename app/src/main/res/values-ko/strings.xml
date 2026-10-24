@@ -54,6 +54,8 @@
     <string name="player_subtitles">자막</string>
     <string name="player_subtitles_off">자막 끄기</string>
     <string name="player_track_external">외부</string>
+    <string name="player_track_number">트랙 %1$d</string>
+    <string name="percent_value">%1$d%%</string>
     <string name="player_subtitle_delay">자막 싱크 %1$+.1f초</string>
     <string name="player_zoom">확대 %1$d%%</string>
     <string name="source_add">보관함 추가</string>

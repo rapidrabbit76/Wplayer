@@ -57,6 +57,8 @@
     <string name="player_subtitles">Subtitles</string>
     <string name="player_subtitles_off">Subtitles off</string>
     <string name="player_track_external">External</string>
+    <string name="player_track_number">Track %1$d</string>
+    <string name="percent_value">%1$d%%</string>
     <string name="player_subtitle_delay">Subtitle delay %1$+.1f s</string>
     <string name="player_zoom">Zoom %1$d%%</string>
     <string name="source_add">Add to library</string>

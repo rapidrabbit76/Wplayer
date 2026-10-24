@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import dev.wplayer.app.R
 import dev.wplayer.app.ui.theme.FOCUS_HIGHLIGHT_ALPHA
 import kotlin.math.roundToInt
 
@@ -86,7 +88,7 @@ fun PercentSliderRow(title: String, value: Int, range: IntRange, onChange: (perc
         headlineContent = {
             Row {
                 Text(title, modifier = Modifier.weight(1f))
-                Text("${shown.roundToInt()}%", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.percent_value, shown.roundToInt()), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             }
         },
         supportingContent = {
