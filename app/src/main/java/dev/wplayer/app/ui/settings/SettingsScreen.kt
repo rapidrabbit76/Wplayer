@@ -44,6 +44,7 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.CenterDoubleTapAction
+import dev.wplayer.app.data.model.ComicDirection
 import dev.wplayer.app.data.model.FolderNavigation
 import dev.wplayer.app.data.model.GestureSettings
 import dev.wplayer.app.data.model.MediaButtonAction
@@ -187,6 +188,14 @@ internal fun SettingsCategoryContent(
                             settings.pictures.slideshowSeconds,
                             { stringResource(R.string.settings_seconds, it) },
                         ) { seconds -> onUpdate { it.copy(pictures = it.pictures.copy(slideshowSeconds = seconds)) } }
+                    }
+                    item {
+                        ChoiceRow(
+                            R.string.settings_comic_direction,
+                            ComicDirection.entries,
+                            settings.pictures.comicDirection,
+                            { stringResource(it.label) },
+                        ) { direction -> onUpdate { it.copy(pictures = it.pictures.copy(comicDirection = direction)) } }
                     }
                     item { SectionHeader(R.string.settings_history) }
                     item {
@@ -762,6 +771,12 @@ private val ThemeMode.label: Int
         ThemeMode.SYSTEM -> R.string.theme_system
         ThemeMode.LIGHT -> R.string.theme_light
         ThemeMode.DARK -> R.string.theme_dark
+    }
+
+private val ComicDirection.label: Int
+    get() = when (this) {
+        ComicDirection.RIGHT_TO_LEFT -> R.string.comic_direction_right_to_left
+        ComicDirection.LEFT_TO_RIGHT -> R.string.comic_direction_left_to_right
     }
 
 private val CenterDoubleTapAction.label: Int
