@@ -1,6 +1,10 @@
 package dev.wplayer.app.ui.common
 
 import android.content.res.Configuration
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -20,6 +24,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.input.VisualTransformation
 
 /** Whether this is a TV, used with a remote's D-pad rather than touch. */
 val Configuration.isTelevision: Boolean
@@ -87,6 +92,31 @@ fun rememberRemoteTextField(): RemoteTextField {
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     return remember(television, focusManager, keyboard) { RemoteTextField(television, focusManager, keyboard) }
+}
+
+/** A single-line [OutlinedTextField] that a TV remote can pass through (see [RemoteTextField]). */
+@Composable
+fun RemoteOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+) {
+    val remote = rememberRemoteTextField()
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        readOnly = remote.readOnly,
+        label = { Text(label) },
+        singleLine = true,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        modifier = modifier.then(remote.modifier),
+    )
 }
 
 private val SELECT_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)

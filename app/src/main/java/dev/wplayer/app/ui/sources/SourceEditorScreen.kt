@@ -49,7 +49,7 @@ import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.leaveOnVerticalKeys
-import dev.wplayer.app.ui.common.rememberRemoteTextField
+import dev.wplayer.app.ui.common.RemoteOutlinedTextField
 import dev.wplayer.app.ui.common.message
 
 private val EDITABLE_PROTOCOLS = SourceProtocol.entries - SourceProtocol.LOCAL
@@ -138,18 +138,13 @@ internal fun SourceEditorContent(state: SourceEditorUiState, actions: SourceEdit
             Field(R.string.source_port, state.port, actions::onPortChange, keyboardType = KeyboardType.Number)
             Field(R.string.source_path, state.path, actions::onPathChange, keyboardType = KeyboardType.Uri)
             Field(R.string.source_username, state.username, actions::onUsernameChange, autoCorrect = false)
-            val passwordRemote = rememberRemoteTextField()
-            OutlinedTextField(
+            RemoteOutlinedTextField(
                 value = state.password,
                 onValueChange = actions::onPasswordChange,
-                readOnly = passwordRemote.readOnly,
-                label = {
-                    Text(stringResource(if (state.hasStoredPassword) R.string.source_password_kept else R.string.source_password))
-                },
-                singleLine = true,
+                label = stringResource(if (state.hasStoredPassword) R.string.source_password_kept else R.string.source_password),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth().then(passwordRemote.modifier),
+                modifier = Modifier.fillMaxWidth(),
             )
             if (state.protocol.usesTls) {
                 SwitchRow(
@@ -223,20 +218,17 @@ private fun Field(
     keyboardType: KeyboardType = KeyboardType.Text,
     autoCorrect: Boolean = true,
 ) {
-    val remote = rememberRemoteTextField()
-    OutlinedTextField(
+    RemoteOutlinedTextField(
         value = value,
         onValueChange = onChange,
-        readOnly = remote.readOnly,
-        label = { Text(stringResource(label)) },
-        singleLine = true,
+        label = stringResource(label),
         // Next moves focus down the form; addresses and user names must not be autocorrected.
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = ImeAction.Next,
             autoCorrectEnabled = autoCorrect && keyboardType == KeyboardType.Text,
         ),
-        modifier = Modifier.fillMaxWidth().then(remote.modifier),
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

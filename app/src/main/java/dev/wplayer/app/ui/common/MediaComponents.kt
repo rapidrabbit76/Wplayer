@@ -35,7 +35,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -331,16 +330,13 @@ fun AddToPlaylistDialog(
                     }
                 }
                 if (playlists.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                val remote = rememberRemoteTextField()
-                OutlinedTextField(
+                RemoteOutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    readOnly = remote.readOnly,
-                    label = { Text(stringResource(R.string.playlist_new_name)) },
-                    singleLine = true,
+                    label = stringResource(R.string.playlist_new_name),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { create() }),
-                    modifier = Modifier.fillMaxWidth().then(remote.modifier),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
@@ -376,16 +372,13 @@ fun PlaylistNameDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            val remote = rememberRemoteTextField()
-            OutlinedTextField(
+            RemoteOutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                readOnly = remote.readOnly,
-                label = { Text(stringResource(R.string.playlist_name)) },
-                singleLine = true,
+                label = stringResource(R.string.playlist_name),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onConfirm(name.trim()) }),
-                modifier = Modifier.fillMaxWidth().then(remote.modifier),
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
