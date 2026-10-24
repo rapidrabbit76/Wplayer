@@ -439,7 +439,7 @@ private fun LazyListScope.screenSection(settings: AppSettings, onUpdate: ((AppSe
     fun update(transform: (ScreenSettings) -> ScreenSettings) =
         onUpdate { it.copy(screen = transform(it.screen)) }
     item {
-        ChoiceRow(R.string.settings_enhancement, VideoEnhancement.entries, screen.enhancement, { stringResource(it.label) }) { enhancement ->
+        PickerRow(R.string.settings_enhancement, VideoEnhancement.entries, screen.enhancement, { stringResource(it.label) }) { enhancement ->
             update { it.copy(enhancement = enhancement) }
         }
     }
