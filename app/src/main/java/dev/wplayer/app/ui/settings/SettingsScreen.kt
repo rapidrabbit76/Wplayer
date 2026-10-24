@@ -32,7 +32,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -70,6 +69,7 @@ import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
+import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
 import kotlin.math.roundToInt
@@ -721,8 +721,8 @@ private fun <T> PickerRow(
 /** A percentage slider that saves when released, not on every step. */
 @Composable
 private fun SliderRow(@StringRes title: Int, value: Int, range: IntRange, onChange: (Int) -> Unit) {
-    var dragging by remember { mutableFloatStateOf(Float.NaN) }
-    val shown = if (dragging.isNaN()) value.toFloat() else dragging
+    val slider = rememberReleaseSliderState()
+    val shown = slider.shown(value)
     ListItem(
         headlineContent = {
             Row {
@@ -734,12 +734,8 @@ private fun SliderRow(@StringRes title: Int, value: Int, range: IntRange, onChan
             Column {
                 ListSlider(
                     value = shown,
-                    onValueChange = { dragging = it },
-                    onValueChangeFinished = {
-                        // A key press can finish without a change (at either end of the range).
-                        if (!dragging.isNaN()) onChange(dragging.roundToInt())
-                        dragging = Float.NaN
-                    },
+                    onValueChange = slider::drag,
+                    onValueChangeFinished = { slider.release()?.let(onChange) },
                     valueRange = range.first.toFloat()..range.last.toFloat(),
                 )
             }
