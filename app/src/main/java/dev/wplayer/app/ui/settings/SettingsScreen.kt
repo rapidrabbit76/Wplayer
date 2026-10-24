@@ -69,6 +69,7 @@ import dev.wplayer.app.data.model.WhisperModel
 import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.ListSlider
+import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
 import kotlin.math.roundToInt
@@ -635,14 +636,8 @@ private fun LazyListScope.gestureSection(settings: AppSettings, onUpdate: ((AppS
 }
 
 @Composable
-internal fun SectionHeader(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp),
-    )
-}
+internal fun SectionHeader(@StringRes title: Int) =
+    SectionHeader(stringResource(title), Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp))
 
 @Composable
 private fun SwitchRow(

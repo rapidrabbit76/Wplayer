@@ -66,6 +66,7 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.ui.common.ListSlider
+import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RepeatMode
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
@@ -418,14 +419,8 @@ private fun ChipRow(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
-}
+private fun SectionTitle(text: String) =
+    SectionHeader(text, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp))
 
 @Composable
 private fun SwitchLine(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
