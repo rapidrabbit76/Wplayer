@@ -7,6 +7,7 @@ import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.core.ffi.CoreException
 import dev.wplayer.core.ffi.TransferListener
 import dev.wplayer.core.ffi.downloadFile
+import dev.wplayer.core.ffi.readArchiveEntry
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -29,8 +30,9 @@ import kotlinx.coroutines.withContext
 
 /**
  * Pictures as local files for the image viewer. Device storage is read where
- * it is; files from network sources are copied into the app cache, which keeps
- * the most recently viewed up to [MAX_CACHE_BYTES]. Copies from locked folders
+ * it is; files from network sources, and pages taken out of archives on any
+ * source, are copied into the app cache, which keeps the most recently viewed
+ * up to [MAX_CACHE_BYTES]. Copies from locked folders
  * go to a folder of their own, emptied when the viewer closes and whenever the
  * folders lock again, so they never stay in the cache.
  */
@@ -64,15 +66,38 @@ class ImageCache @Inject constructor(
                 File(sources.localStorage.rootPath, path).takeIf { it.isFile } ?: throw FileNotFoundException(path)
             }
         }
+        return cached(sourceKey, path, cacheName("$sourceKey\u0000$path", path)) { target ->
+            copy(sourceKey, path, target, onProgress)
+        }
+    }
+
+    /**
+     * The picture [entryPath] inside the archive at [archivePath] of [sourceKey]
+     * as a local file, taking it out of the archive first if needed. Reading
+     * entries in archive order is cheapest (see [readArchiveEntry]).
+     */
+    suspend fun archivePage(sourceKey: String, archivePath: String, entryPath: String): File =
+        cached(sourceKey, archivePath, cacheName("$sourceKey\u0000$archivePath\u0000$entryPath", entryPath)) { target ->
+            val bytes = sources.withConnection(sourceKey) { readArchiveEntry(sourceKey, archivePath, entryPath) }
+            target.parentFile?.mkdirs()
+            val partial = File(target.path + PARTIAL_SUFFIX)
+            partial.writeBytes(bytes)
+            if (!partial.renameTo(target)) throw IOException("cannot keep page $entryPath of $archivePath")
+        }
+
+    /**
+     * The cache file [name] for a file at [path] of [sourceKey], made by [fetch]
+     * unless it is there; in the locked folder when [path] is in a locked folder.
+     */
+    private suspend fun cached(sourceKey: String, path: String, name: String, fetch: suspend (File) -> Unit): File {
         val locked = lockedFolders.isLocked(sourceKey, path)
-        val name = cacheName(sourceKey, path)
         val target = File(if (locked) lockedDir else dir, name)
         return copies.getOrPut(name) { Mutex() }.withLock {
             withContext(io) {
                 if (target.isFile) {
                     target.setLastModified(System.currentTimeMillis())
                 } else {
-                    copy(sourceKey, path, target, onProgress)
+                    fetch(target)
                     if (!locked) trimToSize(cachedFiles(keep = target), MAX_CACHE_BYTES, keep = target)
                 }
                 target
@@ -110,8 +135,9 @@ class ImageCache @Inject constructor(
         file == keep || copies[file.name.removeSuffix(PARTIAL_SUFFIX)]?.isLocked != true
     }
 
-    private fun cacheName(sourceKey: String, path: String): String {
-        val hash = MessageDigest.getInstance("SHA-1").digest("$sourceKey\u0000$path".toByteArray()).toHex()
+    /** A name unique to [identity], keeping the extension of [path] for the decoder. */
+    private fun cacheName(identity: String, path: String): String {
+        val hash = MessageDigest.getInstance("SHA-1").digest(identity.toByteArray()).toHex()
         val extension = path.substringAfterLast('/').substringAfterLast('.', "").lowercase()
         return if (extension.isEmpty()) hash else "$hash.$extension"
     }

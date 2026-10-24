@@ -6,12 +6,16 @@ import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
+import dev.wplayer.app.di.IoDispatcher
+import dev.wplayer.core.ffi.ArchiveEntry
+import dev.wplayer.core.ffi.listArchiveImages
 import dev.wplayer.core.ffi.listDirectory
 import dev.wplayer.core.ffi.mediaUri
 import dev.wplayer.core.ffi.subtitleUri as nativeSubtitleUri
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -22,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 
 /** Matches found so far by [BrowserRepository.search]. */
 data class SearchProgress(
@@ -92,6 +97,7 @@ class BrowserRepository @Inject constructor(
     private val sources: SourceRepository,
     private val index: SearchIndex,
     private val lockedFolders: LockedFolders,
+    @IoDispatcher private val io: CoroutineDispatcher,
 ) {
     /** Folders listed this session, so reopening one shows it at once while it is listed again. */
     private val listings = LruCache<String, List<MediaEntry>>(MAX_CACHED_FOLDERS)
@@ -110,6 +116,10 @@ class BrowserRepository @Inject constructor(
             listings.put(listingKey(sourceKey, path), entries)
             recordInIndex(sourceKey, path, entries)
         }
+
+    /** The pictures inside the archive at [path], in page order. */
+    suspend fun listArchive(sourceKey: String, path: String): List<ArchiveEntry> =
+        sources.withConnection(sourceKey) { withContext(io) { listArchiveImages(sourceKey, path) } }
 
     /** A listing that cannot be indexed (database full, say) is still a good listing. */
     private suspend fun recordInIndex(sourceKey: String, path: String, entries: List<MediaEntry>) {
