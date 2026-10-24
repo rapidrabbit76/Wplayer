@@ -1,10 +1,8 @@
 package dev.wplayer.app.data
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
-import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -140,32 +138,19 @@ class DownloadWorker @AssistedInject constructor(
         ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
     )
 
-    private fun notification(download: DownloadEntity, progress: Float?) =
-        NotificationCompat.Builder(applicationContext, ensureChannel())
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle(download.name)
-            .setContentText(applicationContext.getString(R.string.download_notification_running))
-            .setProgress(PROGRESS_MAX, ((progress ?: 0f) * PROGRESS_MAX).toInt(), progress == null)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .build()
-
-    private fun ensureChannel(): String {
-        if (notifications.getNotificationChannel(CHANNEL_ID) == null) {
-            notifications.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, applicationContext.getString(R.string.download_channel), NotificationManager.IMPORTANCE_LOW),
-            )
-        }
-        return CHANNEL_ID
-    }
+    private fun notification(download: DownloadEntity, progress: Float?) = progressNotification(
+        applicationContext,
+        WorkChannel.DOWNLOADS,
+        android.R.drawable.stat_sys_download,
+        title = download.name,
+        text = applicationContext.getString(R.string.download_notification_running),
+        fraction = progress,
+    )
 
     companion object {
         const val KEY_DOWNLOAD_ID = "download_id"
         const val KEY_COPIED = "copied"
-        private const val CHANNEL_ID = "downloads"
         private const val PROGRESS_INTERVAL_MS = 1_000L
-        private const val PROGRESS_MAX = 1000
         private const val UNKNOWN = -1L
         private const val MAX_RETRIES = 5
     }

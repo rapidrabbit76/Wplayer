@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.text.format.DateUtils
-import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -16,7 +15,9 @@ import dagger.assisted.AssistedInject
 import dev.wplayer.app.R
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.SettingsRepository
+import dev.wplayer.app.data.WorkChannel
 import dev.wplayer.app.data.model.mediaKey
+import dev.wplayer.app.data.progressNotification
 import dev.wplayer.app.data.reason
 import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.core.ffi.CoreException
@@ -70,7 +71,7 @@ class TranscriptionWorker @AssistedInject constructor(
             setProgress(workDataOf(KEY_DONE_SECONDS to 0.0, KEY_LINES to 0))
             val config = settings.settings.first().transcription
             if (!models.isInstalled(config.model)) return failure(applicationContext.getString(R.string.ai_model_missing))
-            setForeground(foregroundInfo(title, null))
+            setForeground(foregroundInfo(title))
             val uri = browser.playbackUri(sourceKey, path)
             val workDir = File(applicationContext.cacheDir, "transcription").apply {
                 deleteRecursively()
@@ -135,26 +136,24 @@ class TranscriptionWorker @AssistedInject constructor(
 
     private fun failure(reason: String) = Result.failure(workDataOf(KEY_ERROR to reason))
 
-    private fun foregroundInfo(title: String, fraction: Float?): ForegroundInfo {
+    private fun foregroundInfo(title: String): ForegroundInfo {
         // Android 15 has a service type for this kind of work; before it, data sync is the closest.
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING
         } else {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         }
-        return ForegroundInfo(NOTIFICATION_ID, notification(title, 0.0, 0.0, fraction), type)
+        return ForegroundInfo(NOTIFICATION_ID, notification(title, 0.0, 0.0), type)
     }
 
-    private fun notification(title: String, done: Double, duration: Double, fraction: Float? = null) =
-        NotificationCompat.Builder(applicationContext, ensureAiChannel(applicationContext))
-            .setSmallIcon(android.R.drawable.ic_menu_edit)
-            .setContentTitle(applicationContext.getString(R.string.ai_subtitles_running))
-            .setContentText(if (duration > 0) "$title · ${clock(done)} / ${clock(duration)}" else title)
-            .setProgress(PROGRESS_MAX, ((fraction ?: (done / duration).toFloat()).coerceIn(0f, 1f) * PROGRESS_MAX).toInt(), duration <= 0)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .build()
+    private fun notification(title: String, done: Double, duration: Double) = progressNotification(
+        applicationContext,
+        WorkChannel.AI,
+        android.R.drawable.ic_menu_edit,
+        title = applicationContext.getString(R.string.ai_subtitles_running),
+        text = if (duration > 0) "$title · ${clock(done)} / ${clock(duration)}" else title,
+        fraction = if (duration > 0) (done / duration).toFloat().coerceIn(0f, 1f) else null,
+    )
 
     private fun clock(seconds: Double) = DateUtils.formatElapsedTime(seconds.toLong())
 
@@ -170,7 +169,6 @@ class TranscriptionWorker @AssistedInject constructor(
         const val KEY_ERROR = "error"
         private const val NOTIFICATION_ID = 0x4149_0002
         private const val PROGRESS_INTERVAL_MS = 3_000L
-        private const val PROGRESS_MAX = 1000
 
         /** One file at a time: each saturates the big cores. */
         private val turn = Mutex()
