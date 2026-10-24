@@ -1,0 +1,15 @@
+{
+  "uniqueId": "native:xz",
+  "name": "liblzma (XZ Utils)",
+  "description": "LZMA decompression for 7z archives.",
+  "website": "https://tukaani.org/xz/",
+  "developers": [
+    {
+      "name": "Lasse Collin and the XZ Utils contributors"
+    }
+  ],
+  "licenses": [
+    "0BSD"
+  ],
+  "artifactVersion": "${XZ_VERSION}"
+}
