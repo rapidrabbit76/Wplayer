@@ -283,22 +283,58 @@ class ScreenshotTest {
     @Config(qualifiers = PHONE)
     fun viewer_phone() = captureViewer("viewer_phone")
 
-    /** The viewer with its overlay, on the second of three pictures; decoding runs on the test's main thread. */
+    @Test
+    @Config(qualifiers = TABLET)
+    fun comic_viewer_tablet() = captureComicViewer("comic_viewer_tablet")
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun comic_viewer_phone() = captureComicViewer("comic_viewer_phone")
+
+    /** The viewer with its overlay, on the second of three pictures. */
     private fun captureViewer(name: String) {
+        val pages = listOf("IMG_0001.jpg", "IMG_0002 바다.HEIC", "IMG_0003.png").map { ImagePage(it, "/사진/$it") }
+        captureViewer(name, ImageViewerUiState(pages = pages, startPath = pages[1].path), ::writePicture)
+    }
+
+    /** A comic archive read right to left, on the second of three pages: the overlay counts from the first. */
+    private fun captureComicViewer(name: String) {
+        val pages = listOf("001.jpg", "002.jpg", "003.jpg").map { ImagePage(it, "원피스 01권/$it") }
+        val state = ImageViewerUiState(pages = pages, startPath = pages[1].path, book = "원피스 01권.cbz", rightToLeft = true)
+        captureViewer(name, state, ::writeComicPage)
+    }
+
+    /** Every page shows the picture [draw] writes; decoding runs on the test's main thread. */
+    private fun captureViewer(name: String, state: ImageViewerUiState, draw: (File) -> Unit) {
         val context = RuntimeEnvironment.getApplication()
         SingletonImageLoader.setUnsafe(ImageLoader.Builder(context).coroutineContext(Dispatchers.Main.immediate).build())
         try {
-            val picture = File(context.cacheDir, "picture.png").apply { writePicture(this) }
-            val pages = listOf("IMG_0001.jpg", "IMG_0002 바다.HEIC", "IMG_0003.png").map { ImagePage(it, "/사진/$it") }
-            val state = ImageViewerUiState(
-                pages = pages,
-                startPath = pages[1].path,
-                images = pages.associate { it.path to PageImage.Ready(picture) },
-            )
-            capture(name) { ImageViewerContent(state, NoOpViewerActions) }
+            val picture = File(context.cacheDir, "$name.png").apply(draw)
+            val ready = state.copy(images = state.pages.orEmpty().associate { it.path to PageImage.Ready(picture) })
+            capture(name) { ImageViewerContent(ready, NoOpViewerActions) }
         } finally {
             SingletonImageLoader.reset()
         }
+    }
+
+    /** A portrait comic page: white paper with three black-framed panels, in flat colors so every run draws the same. */
+    private fun writeComicPage(file: File) {
+        val bitmap = Bitmap.createBitmap(800, 1200, Bitmap.Config.ARGB_8888)
+        val frame = Paint().apply {
+            color = 0xFF000000.toInt()
+            style = Paint.Style.STROKE
+            strokeWidth = 8f
+        }
+        val tone = Paint().apply { color = 0xFFBDBDBD.toInt() }
+        Canvas(bitmap).apply {
+            drawColor(0xFFFFFFFF.toInt())
+            drawRect(40f, 40f, 760f, 460f, tone)
+            drawRect(40f, 40f, 760f, 460f, frame)
+            drawRect(40f, 500f, 380f, 1160f, frame)
+            drawCircle(210f, 760f, 90f, tone)
+            drawRect(420f, 500f, 760f, 1160f, frame)
+        }
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     /** A landscape stand-in for a photo: sky, sea and a sun, in flat colors so every run draws the same. */
