@@ -1,6 +1,10 @@
 package dev.wplayer.app.ui.common
 
 import androidx.annotation.StringRes
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.stringResource
 import dev.wplayer.app.R
 
 /** One-off confirmations shown in a snackbar; the screen reports back once shown. */
@@ -14,4 +18,14 @@ enum class UserMessage(@StringRes val text: Int) {
     SUBTITLE_FONT_SET(R.string.message_subtitle_font_set),
     NOT_A_FONT(R.string.subtitle_font_invalid),
     SUBTITLE_FONT_FAILED(R.string.message_subtitle_font_failed),
+}
+
+@Composable
+fun UserMessageEffect(message: UserMessage?, snackbar: SnackbarHostState, onShown: () -> Unit) {
+    message ?: return
+    val text = stringResource(message.text)
+    LaunchedEffect(message) {
+        snackbar.showSnackbar(text)
+        onShown()
+    }
 }

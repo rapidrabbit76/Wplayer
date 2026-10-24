@@ -118,6 +118,7 @@ import dev.wplayer.app.ui.common.MediaRow
 import dev.wplayer.app.ui.common.RowAction
 import dev.wplayer.app.ui.common.ThumbnailSizeButton
 import dev.wplayer.app.ui.common.UserMessage
+import dev.wplayer.app.ui.common.UserMessageEffect
 import dev.wplayer.app.ui.common.ViewModeToggle
 import dev.wplayer.app.ui.common.rememberRemoteTextField
 import dev.wplayer.app.ui.common.mediaGridCellMinWidth
@@ -147,13 +148,7 @@ fun BrowserScreen(
     var focus by rememberSaveable { mutableStateOf(focusPath) }
     var addingToPlaylist by remember { mutableStateOf<MediaEntry?>(null) }
     val snackbar = remember { SnackbarHostState() }
-    state.message?.let { message ->
-        val text = stringResource(message.text)
-        LaunchedEffect(message) {
-            snackbar.showSnackbar(text)
-            viewModel.messageShown()
-        }
-    }
+    UserMessageEffect(state.message, snackbar, viewModel::messageShown)
 
     val auth = rememberDeviceAuthentication()
     val openLockedTitle = stringResource(R.string.locked_folder_open)
