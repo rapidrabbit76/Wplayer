@@ -183,14 +183,7 @@ fun SubtitleSheet(
         val label = if (track.title == AI_SUBTITLE_TITLE) aiTrack else track.label(external)
         TrackRow(label, track.selected) { actions.onSelectTrack(track.id) }
     }
-    if (onLoadFile != null) {
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.player_subtitle_load)) },
-            leadingContent = { Icon(Icons.Outlined.FileOpen, contentDescription = null) },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            modifier = Modifier.clickable(onClick = onLoadFile),
-        )
-    }
+    if (onLoadFile != null) PickerRow(stringResource(R.string.player_subtitle_load), Icons.Outlined.FileOpen, onLoadFile)
     if (ai != AiSubtitleStatus.Unavailable) {
         SectionTitle(stringResource(R.string.ai_subtitles))
         AiSubtitleControls(ai, actions)
@@ -399,14 +392,7 @@ fun QueueSheet(
     }
     SwitchLine(stringResource(R.string.player_shuffle), shuffle, onShuffleChange)
     SectionTitle(stringResource(R.string.player_queue))
-    if (queue.isEmpty()) {
-        Text(
-            text = stringResource(R.string.player_queue_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-    }
+    if (queue.isEmpty()) PickerMessage(stringResource(R.string.player_queue_empty))
     queue.forEach { ref ->
         val current = ref.path == currentPath
         ListItem(
