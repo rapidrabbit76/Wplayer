@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +67,7 @@ import dev.wplayer.app.data.model.VideoEnhancement
 import dev.wplayer.app.data.model.WhisperModel
 import dev.wplayer.app.data.transcription.ModelStatus
 import dev.wplayer.app.ui.common.BackTopAppBar
+import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.readableWidth
@@ -222,18 +222,13 @@ internal fun SettingsCategoryContent(
         }
     }
     if (confirmingClear) {
-        AlertDialog(
-            onDismissRequest = { confirmingClear = false },
-            text = { Text(stringResource(R.string.recent_clear_confirm)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmingClear = false
-                        maintenance.clearHistory()
-                    },
-                ) { Text(stringResource(R.string.action_ok)) }
+        ConfirmDialog(
+            text = stringResource(R.string.recent_clear_confirm),
+            onConfirm = {
+                confirmingClear = false
+                maintenance.clearHistory()
             },
-            dismissButton = { TextButton(onClick = { confirmingClear = false }) { Text(stringResource(R.string.action_cancel)) } },
+            onDismiss = { confirmingClear = false },
         )
     }
 }
