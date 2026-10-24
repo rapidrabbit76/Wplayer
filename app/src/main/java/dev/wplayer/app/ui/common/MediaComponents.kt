@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
@@ -295,6 +296,7 @@ val MediaKind.icon: ImageVector
     get() = when (this) {
         MediaKind.DIRECTORY -> Icons.Outlined.Folder
         MediaKind.AUDIO -> Icons.Outlined.MusicNote
+        MediaKind.IMAGE -> Icons.Outlined.Image
         else -> Icons.Outlined.Movie
     }
 

@@ -37,6 +37,12 @@ class MediaArrangementTest {
     }
 
     @Test
+    fun `pictures show like media while other files stay hidden`() {
+        val files = listOf(entry("photo.jpg"), entry("scan.PNG"), entry("notes.txt"), entry("a.mp4"))
+        assertEquals(listOf("a.mp4", "photo.jpg", "scan.PNG"), arrange(files, BrowserSettings()).map { it.name })
+    }
+
+    @Test
     fun `descending size keeps folders on top`() {
         val names = arrange(listing, BrowserSettings(sortField = SortField.SIZE, ascending = false)).map { it.name }
         assertEquals(listOf("Season 10", "Season 2", "b.mkv", "a.mp4", "c.avi"), names)
