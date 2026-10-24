@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -195,7 +194,7 @@ fun MediaCard(
     Box {
         Column(
             modifier = modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
                 .combinedClickable(
                     onClick = onClick,
@@ -239,7 +238,7 @@ fun MediaCard(
 fun CollectionCard(icon: ImageVector, title: String, supporting: String?, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
             .padding(6.dp),
     ) {
@@ -247,7 +246,7 @@ fun CollectionCard(icon: ImageVector, title: String, supporting: String?, onClic
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
         ) {
@@ -274,7 +273,7 @@ fun Thumbnail(kind: MediaKind, load: (suspend () -> Bitmap?)?, modifier: Modifie
     val image by produceState<ImageBitmap?>(initialValue = null) { value = currentLoad?.invoke()?.asImageBitmap() }
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentAlignment = Alignment.Center,
     ) {
