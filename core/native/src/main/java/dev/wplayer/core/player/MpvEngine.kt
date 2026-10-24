@@ -1,5 +1,6 @@
 package dev.wplayer.core.player
 
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.view.Surface
 import dev.wplayer.core.NativeCore
@@ -76,6 +77,21 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
     fun load(uri: String, startSeconds: Double? = null) {
         _state.update { it.forNewFile() }
         post { player.load(uri, startSeconds) }
+    }
+
+    /** Plays an open file. The engine owns [file] from here on: libmpv closes it, or this does if libmpv never gets it. */
+    fun load(file: ParcelFileDescriptor, startSeconds: Double? = null) {
+        _state.update { it.forNewFile() }
+        val accepted = offer {
+            val fd = file.detachFd()
+            try {
+                player.load("fdclose://$fd", startSeconds)
+            } catch (e: Exception) {
+                ParcelFileDescriptor.adoptFd(fd).close()
+                throw e
+            }
+        }
+        if (!accepted) file.close()
     }
 
     fun stop() {

@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.wplayer.app.data.BrowserRepository
 import dev.wplayer.app.data.CacheStorage
 import dev.wplayer.app.data.ExternalUriResolver
+import dev.wplayer.app.data.MediaInput
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SettingsRepository
@@ -390,8 +391,11 @@ class PlayerViewModel @Inject constructor(
             catchingFailures {
                 val appSettings = savedSettings()
                 val from = start ?: startPosition(request, appSettings)
-                val uri = resolveUri(request)
-                previewUri = uri.takeIf { request.allowsSeekPreview }
+                val media = when (request) {
+                    is PlaybackRequest.FromSource -> MediaInput.Location(browserRepository.playbackUri(request.sourceKey, request.path))
+                    is PlaybackRequest.FromUri -> externalUris.resolve(request.uri)
+                }
+                previewUri = (media as? MediaInput.Location)?.uri?.takeIf { request.allowsSeekPreview }
                 // Local files are already on flash: copying them into the disk cache would only wear it.
                 val cache = if (request.isLocal) "no" else mpvEnvironment.options(appSettings).getValue("cache")
                 target.engine.setProperty("cache", cache)
@@ -399,7 +403,11 @@ class PlayerViewModel @Inject constructor(
                 // tear it down and rebuild it once the surface arrives. In the background
                 // (sound only) there is no surface to wait for.
                 combine(surfaceOwner, inBackground) { owner, background -> owner === target.engine || background }.first { it }
-                target.engine.load(uri, from)
+                when (media) {
+                    is MediaInput.Location -> target.engine.load(media.uri, from)
+                    // Opened only now, so a load cancelled while waiting never leaves the file open.
+                    is MediaInput.Content -> target.engine.load(externalUris.openFile(media.uri), from)
+                }
                 if (!awaitStartOrFallBack(target, request, from)) return@catchingFailures
                 if (request is PlaybackRequest.FromSource) {
                     retryAfterReconnectIfNeeded(target.engine, request, from)
@@ -451,11 +459,6 @@ class PlayerViewModel @Inject constructor(
     /** The user's answer to [PlayerUiState.resumePrompt]. */
     fun answerResume(resume: Boolean) {
         resumeAnswer?.complete(resume)
-    }
-
-    private suspend fun resolveUri(request: PlaybackRequest): String = when (request) {
-        is PlaybackRequest.FromSource -> browserRepository.playbackUri(request.sourceKey, request.path)
-        is PlaybackRequest.FromUri -> externalUris.toPlayerUri(request.uri)
     }
 
     /**
@@ -552,7 +555,7 @@ class PlayerViewModel @Inject constructor(
         if (outcome.fileLoaded) return
         Log.i(TAG, "open failed (${outcome.error}); reconnecting ${request.sourceKey}")
         browserRepository.reconnect(request.sourceKey)
-        engine.load(resolveUri(request), start)
+        engine.load(browserRepository.playbackUri(request.sourceKey, request.path), start)
     }
 
     private fun fail(request: PlaybackRequest, error: Throwable) {
