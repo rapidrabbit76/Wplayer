@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds libmpv and its dependencies for Android arm64 and 32-bit ARM into
-# native/out/jniLibs.
+# native/out/jniLibs, and the static libarchive (with liblzma) that the Rust core
+# links into native/out/static.
 #
 #   ./build.sh            fetch missing sources, build everything not yet built
 #   ./build.sh ffmpeg mpv rebuild the named components (and nothing else)
@@ -9,7 +10,7 @@
 #
 # Versions live in versions.env; patches/<component>/*.patch are applied to the
 # fetched sources (rebuild the component after adding one). Requires: Android NDK (ANDROID_NDK_HOME),
-# meson, ninja, pkg-config, git. Runs on macOS and Linux hosts.
+# meson, cmake, ninja, pkg-config, git, curl. Runs on macOS and Linux hosts.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -60,6 +61,24 @@ fetch() { # name url ref [--recursive]
     git clone --quiet --depth 1 --branch "$ref" ${4:+--recurse-submodules --shallow-submodules} "$url" "$SRC/$name"
 }
 
+fetch_tarball() { # name url sha256
+    local name=$1 url=$2 sha256=$3
+    [[ -d "$SRC/$name" ]] && return
+    log "fetching $name $(basename "$url")"
+    local archive="$SRC/$(basename "$url")" actual
+    curl -fsSL -o "$archive" "$url"
+    actual=$( (sha256sum "$archive" 2>/dev/null || shasum -a 256 "$archive") | cut -d' ' -f1)
+    if [[ $actual != "$sha256" ]]; then
+        rm -f "$archive"
+        echo "$name: sha256 $actual does not match versions.env" >&2
+        exit 1
+    fi
+    rm -rf "$SRC/$name.tmp" && mkdir "$SRC/$name.tmp"
+    tar -xf "$archive" -C "$SRC/$name.tmp" --strip-components=1
+    mv "$SRC/$name.tmp" "$SRC/$name"
+    rm "$archive"
+}
+
 fetch_all() {
     mkdir -p "$SRC"
     fetch dav1d https://code.videolan.org/videolan/dav1d.git "$DAV1D_VERSION"
@@ -70,6 +89,8 @@ fetch_all() {
     fetch libass https://github.com/libass/libass.git "$LIBASS_VERSION"
     fetch libplacebo https://code.videolan.org/videolan/libplacebo.git "$LIBPLACEBO_VERSION" --recursive
     fetch mpv https://github.com/mpv-player/mpv.git "$MPV_VERSION"
+    fetch_tarball xz "https://github.com/tukaani-project/xz/releases/download/v$XZ_VERSION/xz-$XZ_VERSION.tar.xz" "$XZ_SHA256"
+    fetch_tarball libarchive "https://github.com/libarchive/libarchive/releases/download/v$LIBARCHIVE_VERSION/libarchive-$LIBARCHIVE_VERSION.tar.xz" "$LIBARCHIVE_SHA256"
 }
 
 apply_patches() { # applies patches/<component>/*.patch once each
@@ -116,6 +137,22 @@ meson_build() { # name [meson options...]
         --cross-file "$BUILD/cross.ini" \
         --prefix "$PREFIX" --libdir lib \
         --buildtype release --default-library static -Db_staticpic=true \
+        "$@"
+    ninja -C "$BUILD/$name" -j "$JOBS"
+    ninja -C "$BUILD/$name" install >/dev/null
+}
+
+cmake_build() { # name [cmake options...]
+    local name=$1; shift
+    log "building $name"
+    rm -rf "$BUILD/$name"
+    # Section flags let the Rust link drop the parts of these static libraries it never calls.
+    cmake -S "$SRC/$name" -B "$BUILD/$name" -G Ninja \
+        -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+        -DANDROID_ABI="$ABI" -DANDROID_PLATFORM="$API" \
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib \
+        -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DCMAKE_C_FLAGS="-ffunction-sections -fdata-sections" \
         "$@"
     ninja -C "$BUILD/$name" -j "$JOBS"
     ninja -C "$BUILD/$name" install >/dev/null
@@ -199,6 +236,28 @@ build_mpv() {
     ninja -C "$BUILD/mpv" install >/dev/null
 }
 
+# liblzma for 7z (and zip's xz/lzma methods). The encoders stay: libarchive's
+# configure only accepts a full liblzma, and the link drops them anyway.
+build_xz() {
+    cmake_build xz -DXZ_NLS=OFF -DXZ_DOC=OFF -DBUILD_TESTING=OFF \
+        -DXZ_TOOL_XZ=OFF -DXZ_TOOL_XZDEC=OFF -DXZ_TOOL_LZMADEC=OFF -DXZ_TOOL_LZMAINFO=OFF -DXZ_TOOL_SCRIPTS=OFF
+}
+
+# Reads zip, 7z and RAR comic archives. Deflate comes from the NDK's zlib. No iconv:
+# the Rust core decodes legacy (CP949) entry names itself. No bzip2, zstd or crypto
+# libraries: those zip and 7z methods are rare in comic archives.
+build_libarchive() {
+    cmake_build libarchive -DENABLE_TEST=OFF \
+        -DENABLE_TAR=OFF -DENABLE_CPIO=OFF -DENABLE_CAT=OFF -DENABLE_UNZIP=OFF \
+        -DENABLE_ACL=OFF -DENABLE_XATTR=OFF -DENABLE_ICONV=OFF \
+        -DENABLE_OPENSSL=OFF -DENABLE_MBEDTLS=OFF -DENABLE_NETTLE=OFF -DENABLE_MD=OFF -DENABLE_CNG=OFF \
+        -DENABLE_ZLIB=ON -DENABLE_LZMA=ON \
+        -DLIBLZMA_INCLUDE_DIR="$PREFIX/include" -DLIBLZMA_LIBRARY="$PREFIX/lib/liblzma.a" \
+        -DENABLE_BZip2=OFF -DENABLE_ZSTD=OFF -DENABLE_LZ4=OFF -DENABLE_LZO=OFF -DENABLE_LIBB2=OFF \
+        -DENABLE_LIBXML2=OFF -DENABLE_EXPAT=OFF -DENABLE_BSDXML=OFF -DENABLE_WIN32_XMLLITE=OFF \
+        -DENABLE_PCREPOSIX=OFF -DENABLE_PCRE2POSIX=OFF -DENABLE_LIBGCC=OFF
+}
+
 collect() {
     log "collecting shared libraries into ${OUT#"$ROOT/"}"
     rm -rf "$OUT" && mkdir -p "$OUT"
@@ -207,11 +266,15 @@ collect() {
         "$TOOLCHAIN/bin/llvm-strip" --strip-unneeded -o "$OUT/$lib.so" "$PREFIX/lib/$lib.so"
     done
     cp "$SYSROOT/usr/lib/$LIB_TRIPLE/libc++_shared.so" "$OUT/"
+    # Linked into libwplayer_core.so by rust/wplayer-core/build.rs, so nothing extra ships.
+    local static_out="$ROOT/out/static/$ABI"
+    rm -rf "$static_out" && mkdir -p "$static_out"
+    cp "$PREFIX/lib/libarchive.a" "$PREFIX/lib/liblzma.a" "$static_out/"
     # Every library must resolve its dependencies by unversioned soname.
     "$TOOLCHAIN/bin/llvm-readelf" -d "$OUT"/*.so | grep -E 'NEEDED|SONAME' | sort -u
 }
 
-COMPONENTS=(dav1d ffmpeg freetype fribidi harfbuzz libass libplacebo mpv)
+COMPONENTS=(dav1d ffmpeg freetype fribidi harfbuzz libass libplacebo mpv xz libarchive)
 
 main() {
     if [[ "${1:-}" == clean ]]; then
