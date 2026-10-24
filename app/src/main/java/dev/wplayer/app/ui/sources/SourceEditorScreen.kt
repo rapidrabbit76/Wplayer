@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -31,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.SourceProtocol
+import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.leaveOnVerticalKeys
 import dev.wplayer.app.ui.common.rememberRemoteTextField
 import dev.wplayer.app.ui.common.message
@@ -100,26 +99,17 @@ fun SourceEditorScreen(
     SourceEditorContent(state, actions)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SourceEditorContent(state: SourceEditorUiState, actions: SourceEditorActions) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(if (state.isNew) R.string.source_add else R.string.source_edit)) },
-                navigationIcon = {
-                    IconButton(onClick = actions::onDone) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+            BackTopAppBar(stringResource(if (state.isNew) R.string.source_add else R.string.source_edit), actions::onDone) {
+                if (!state.isNew) {
+                    IconButton(onClick = actions::onDelete) {
+                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.source_delete))
                     }
-                },
-                actions = {
-                    if (!state.isNew) {
-                        IconButton(onClick = actions::onDelete) {
-                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.source_delete))
-                        }
-                    }
-                },
-            )
+                }
+            }
         },
     ) { padding ->
         Box(

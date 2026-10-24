@@ -15,13 +15,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -69,6 +67,7 @@ import dev.wplayer.app.data.model.VerticalSwipeAction
 import dev.wplayer.app.data.model.VideoEnhancement
 import dev.wplayer.app.data.model.WhisperModel
 import dev.wplayer.app.data.transcription.ModelStatus
+import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.ListSlider
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
@@ -157,7 +156,6 @@ fun SettingsCategoryScreen(category: SettingsCategory, onBack: (() -> Unit)?, vi
     SettingsCategoryContent(category, settings, onBack, viewModel::update, maintenance, modelStatus, subtitleFonts)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsCategoryContent(
     category: SettingsCategory,
@@ -171,18 +169,7 @@ internal fun SettingsCategoryContent(
 ) {
     var confirmingClear by remember { mutableStateOf(false) }
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(category.title)) },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                        }
-                    }
-                },
-            )
-        },
+        topBar = { BackTopAppBar(stringResource(category.title), onBack) },
     ) { padding ->
         LazyColumn(modifier = Modifier.readableWidth(), contentPadding = padding) {
             when (category) {
