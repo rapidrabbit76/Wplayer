@@ -116,7 +116,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        PlaybackRequest.from(intent, this)?.let(viewModel::open)
+        PlaybackRequest.from(intent)?.let(viewModel::open)
     }
 
     /** Keeps the screen awake, PiP parameters and phone orientation in sync with playback. */

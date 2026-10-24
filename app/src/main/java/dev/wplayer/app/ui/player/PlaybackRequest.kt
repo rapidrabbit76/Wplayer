@@ -1,9 +1,7 @@
 package dev.wplayer.app.ui.player
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.OpenableColumns
 import dev.wplayer.app.data.model.mediaKey
 
 /** Where the files around the current one come from, for next/previous and auto-play. */
@@ -48,8 +46,11 @@ sealed interface PlaybackRequest {
             .putExtra(EXTRA_TITLE, title)
             .apply { if (queue is PlayQueue.Playlist) putExtra(EXTRA_PLAYLIST_ID, queue.playlistId) }
 
-        /** Parses an intent from this app or a `VIEW` intent from another app. */
-        fun from(intent: Intent, context: Context): PlaybackRequest? {
+        /**
+         * Parses an intent from this app or a `VIEW` intent from another app. A shared
+         * file is titled by its URI until the player asks its provider for the name.
+         */
+        fun from(intent: Intent): PlaybackRequest? {
             val sourceKey = intent.getStringExtra(EXTRA_SOURCE_KEY)
             val path = intent.getStringExtra(EXTRA_PATH)
             if (sourceKey != null && path != null) {
@@ -61,20 +62,7 @@ sealed interface PlaybackRequest {
                 return FromSource(sourceKey, path, intent.getStringExtra(EXTRA_TITLE) ?: path.substringAfterLast('/'), queue)
             }
             val uri = intent.data ?: return null
-            return FromUri(uri, displayName(context, uri))
-        }
-
-        /** The provider's display name when it offers one; providers may refuse or return null. */
-        private fun displayName(context: Context, uri: Uri): String {
-            val fromProvider = if (uri.scheme == "content") {
-                runCatching {
-                    context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-                        ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
-                }.getOrNull()
-            } else {
-                null
-            }
-            return fromProvider ?: uri.lastPathSegment ?: uri.toString()
+            return FromUri(uri, uri.lastPathSegment ?: uri.toString())
         }
     }
 }

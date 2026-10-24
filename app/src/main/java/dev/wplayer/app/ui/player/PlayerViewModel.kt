@@ -381,8 +381,16 @@ class PlayerViewModel @Inject constructor(
             }
         } else {
             session.update { it.copy(queue = emptyList()) }
+            if (newRequest is PlaybackRequest.FromUri) showDisplayName(newRequest)
         }
         load(current, newRequest)
+    }
+
+    private fun showDisplayName(request: PlaybackRequest.FromUri) {
+        viewModelScope.launch {
+            val name = externalUris.displayName(request.uri) ?: return@launch
+            session.update { if (it.request == request) it.copy(request = request.copy(title = name)) else it }
+        }
     }
 
     private fun load(target: EngineSlot, request: PlaybackRequest, start: Double? = null) {
