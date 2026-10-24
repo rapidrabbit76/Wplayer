@@ -323,7 +323,7 @@ fun AddToPlaylistDialog(
                             headlineContent = { Text(playlist.name) },
                             supportingContent = { Text(pluralStringResource(R.plurals.playlist_item_count, playlist.itemCount, playlist.itemCount)) },
                             leadingContent = { Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, contentDescription = null) },
-                            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            colors = transparentRowColors(),
                             modifier = Modifier.clickable { onPick(playlist.id) },
                         )
                     }

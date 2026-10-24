@@ -71,6 +71,7 @@ import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.ui.common.readableWidth
+import dev.wplayer.app.ui.common.transparentRowColors
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
 import dev.wplayer.app.ui.player.formatSpeed
 import kotlin.math.roundToInt
@@ -684,6 +685,7 @@ private fun <T> ChoiceRow(
                 }
             }
         },
+        colors = transparentRowColors(),
     )
 }
 
@@ -703,6 +705,7 @@ private fun <T> PickerRow(
             headlineContent = { Text(stringResource(title)) },
             supportingContent = supporting?.let { { Text(stringResource(it)) } },
             trailingContent = { Text(label(selected), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary) },
+            colors = transparentRowColors(),
             modifier = Modifier.clickable { expanded = true },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -741,6 +744,7 @@ private fun SliderRow(@StringRes title: Int, value: Int, range: IntRange, onChan
                 )
             }
         },
+        colors = transparentRowColors(),
     )
 }
 

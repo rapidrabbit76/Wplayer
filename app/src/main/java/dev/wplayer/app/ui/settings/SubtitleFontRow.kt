@@ -19,7 +19,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -31,13 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.SubtitleFont
+import dev.wplayer.app.ui.common.transparentRowColors
 
 /** The fonts the user added, and whether adding the last one failed. */
 data class SubtitleFontsState(val added: List<SubtitleFont> = emptyList(), val addFailed: Boolean = false)
@@ -72,6 +71,7 @@ internal fun SubtitleFontRow(
                 color = MaterialTheme.colorScheme.primary,
             )
         },
+        colors = transparentRowColors(),
         modifier = Modifier.clickable { choosing = true },
     )
     if (choosing) {
@@ -163,7 +163,7 @@ private fun FontOption(label: String, selected: Boolean, onClick: () -> Unit, tr
         ListItem(
             headlineContent = { Text(label) },
             leadingContent = { RadioButton(selected = selected, onClick = null) },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            colors = transparentRowColors(),
             modifier = Modifier.weight(1f).selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
         )
         trailing?.invoke()
