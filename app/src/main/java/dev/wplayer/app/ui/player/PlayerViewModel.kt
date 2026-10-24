@@ -667,9 +667,13 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    /** Plays the next file, or closes the player when there is none. */
     private fun onEnded() {
         savePosition()
+        playNextOrFinish()
+    }
+
+    /** Plays the next file, or closes the player when there is none. */
+    private fun playNextOrFinish() {
         val next = if (settings.value.playback.autoPlayNext) nextFile() else null
         if (next != null) play(next) else session.update { it.copy(finished = true) }
     }
@@ -774,7 +778,16 @@ class PlayerViewModel @Inject constructor(
     private val precise: Boolean get() = settings.value.playback.seekPrecision == SeekPrecision.ACCURATE
 
     fun seekBy(seconds: Double) {
-        engine?.seekBy(seconds, precise)
+        val playback = uiState.value.playback
+        // With keep-open, mpv answers a seek past the end with the last frame, paused, and never reports the end.
+        if (playback.fileLoaded && seeksPastEnd(playback.position, playback.duration, seconds)) {
+            session.value.request?.mediaKey?.let { key ->
+                applicationScope.launch { history.save(key, playback.duration, playback.duration) }
+            }
+            playNextOrFinish()
+        } else {
+            engine?.seekBy(seconds, precise)
+        }
     }
 
     fun seekTo(seconds: Double) {

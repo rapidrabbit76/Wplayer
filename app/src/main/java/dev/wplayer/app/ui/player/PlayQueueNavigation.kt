@@ -27,6 +27,10 @@ internal fun nextInQueue(
     }
 }
 
+/** Whether jumping [seconds] from [position] lands at or past the end, which finishes the file. */
+internal fun seeksPastEnd(position: Double, duration: Double, seconds: Double): Boolean =
+    seconds > 0 && duration > 0 && position + seconds >= duration
+
 /** The file before [currentPath], wrapping around with repeat-all. */
 internal fun previousInQueue(queue: List<MediaRef>, currentPath: String, repeat: RepeatMode): MediaRef? {
     val index = queue.indexOfFirst { it.path == currentPath }
