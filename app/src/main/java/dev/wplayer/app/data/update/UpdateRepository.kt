@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -124,6 +125,14 @@ class UpdateRepository @Inject constructor(
         }
     }
 
+    fun installDeclined() {
+        _state.update { if (it is UpdateState.Installing) UpdateState.Available(it.release) else it }
+    }
+
+    fun installFailed(reason: String) {
+        _state.update { if (it is UpdateState.Installing) UpdateState.Failed(reason) else it }
+    }
+
     /** The system screen where "install unknown apps" is allowed for this app. */
     fun installPermissionIntent(): Intent =
         Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
@@ -161,16 +170,22 @@ class UpdateRepository @Inject constructor(
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             .apply { setAppPackageName(context.packageName) }
         val sessionId = installer.createSession(params)
-        installer.openSession(sessionId).use { session ->
-            session.openWrite("base.apk", 0, apk.length()).use { out ->
-                apk.inputStream().use { it.copyTo(out) }
-                session.fsync(out)
+        try {
+            installer.openSession(sessionId).use { session ->
+                session.openWrite("base.apk", 0, apk.length()).use { out ->
+                    apk.inputStream().use { it.copyTo(out) }
+                    session.fsync(out)
+                }
+                // The installer fills in the result extras, so the intent must be mutable.
+                val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+                val callback = PendingIntent.getBroadcast(context, sessionId, Intent(context, UpdateInstallReceiver::class.java), flags)
+                session.commit(callback.intentSender)
             }
-            // The installer fills in the result extras, so the intent must be mutable.
-            val flags = PendingIntent.FLAG_UPDATE_CURRENT or
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
-            val callback = PendingIntent.getBroadcast(context, sessionId, Intent(context, UpdateInstallReceiver::class.java), flags)
-            session.commit(callback.intentSender)
+        } catch (e: Exception) {
+            // Otherwise the half-written session and its copy of the APK stay on the device.
+            installer.abandonSession(sessionId)
+            throw e
         }
     }
 
