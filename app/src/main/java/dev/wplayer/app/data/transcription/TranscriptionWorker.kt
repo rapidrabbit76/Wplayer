@@ -32,6 +32,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -51,7 +53,12 @@ class TranscriptionWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     private val notifications = context.getSystemService(NotificationManager::class.java)
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = turn.withLock {
+        setProgress(workDataOf(KEY_DONE_SECONDS to 0.0, KEY_LINES to 0))
+        transcribe()
+    }
+
+    private suspend fun transcribe(): Result {
         val sourceKey = inputData.getString(KEY_SOURCE) ?: return Result.failure()
         val path = inputData.getString(KEY_PATH) ?: return Result.failure()
         val title = inputData.getString(KEY_TITLE).orEmpty()
@@ -165,6 +172,9 @@ class TranscriptionWorker @AssistedInject constructor(
         private const val NOTIFICATION_ID = 0x4149_0002
         private const val PROGRESS_INTERVAL_MS = 3_000L
         private const val PROGRESS_MAX = 1000
+
+        /** One file at a time: each saturates the big cores. */
+        private val turn = Mutex()
 
         /** The big cores; the rest stay free for playback and the UI. */
         private val THREADS = (Runtime.getRuntime().availableProcessors() - 2).coerceIn(2, 6)
