@@ -64,7 +64,7 @@ class RecentViewModel @Inject constructor(
     suspend fun thumbnail(ref: MediaRef): Bitmap? = thumbnails.thumbnail(ref)
 
     fun setViewMode(mode: BrowserViewMode) {
-        viewModelScope.launch { settings.update { it.copy(browser = it.browser.copy(viewMode = mode)) } }
+        viewModelScope.launch { settings.updateBrowser { it.copy(viewMode = mode) } }
     }
 
     fun forget(ref: MediaRef) {

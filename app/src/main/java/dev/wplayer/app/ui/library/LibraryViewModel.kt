@@ -23,7 +23,7 @@ class LibraryViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), settingsRepository.current.value.browser.viewMode)
 
     fun setViewMode(mode: BrowserViewMode) {
-        viewModelScope.launch { settingsRepository.update { it.copy(browser = it.browser.copy(viewMode = mode)) } }
+        viewModelScope.launch { settingsRepository.updateBrowser { it.copy(viewMode = mode) } }
     }
 
     val playlists: StateFlow<List<Playlist>> = playlistRepository.playlists.stateIn(
