@@ -72,6 +72,7 @@ import dev.wplayer.app.ui.common.SwitchRow
 import dev.wplayer.app.ui.common.rememberReleaseSliderState
 import dev.wplayer.app.ui.common.readableWidth
 import dev.wplayer.app.ui.player.MAX_VOLUME_PERCENT
+import dev.wplayer.app.ui.player.formatSpeed
 import kotlin.math.roundToInt
 
 private val TWO_PANE_MIN_WIDTH = 840.dp
@@ -416,7 +417,7 @@ private fun LazyListScope.playbackSection(settings: AppSettings, onUpdate: ((App
         }
     }
     item {
-        ChoiceRow(R.string.settings_long_press_speed, BOOST_SPEEDS, playback.longPressSpeed, { "${it}x" }) { speed ->
+        ChoiceRow(R.string.settings_long_press_speed, BOOST_SPEEDS, playback.longPressSpeed, { formatSpeed(it) }) { speed ->
             update { it.copy(longPressSpeed = speed) }
         }
     }

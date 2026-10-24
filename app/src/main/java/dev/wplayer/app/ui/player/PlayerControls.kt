@@ -99,6 +99,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.wplayer.app.R
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Date
 import kotlinx.coroutines.delay
 
@@ -354,10 +356,10 @@ private fun QuickStartButtons(state: PlayerUiState, actions: PlayerControlAction
             Icon(Icons.Filled.Lock, contentDescription = stringResource(R.string.player_lock), Modifier.size(QUICK_ICON_SIZE))
         }
         val speed = state.playback.speed
-        QuickMenu(stringResource(R.string.player_speed), actions::onQuickMenu, label = speedLabel(speed)) { close ->
+        QuickMenu(stringResource(R.string.player_speed), actions::onQuickMenu, label = formatSpeed(speed)) { close ->
             MenuHeader(stringResource(R.string.player_speed))
             SPEEDS.forEach { option ->
-                MenuChoice(speedLabel(option), selected = option == speed) {
+                MenuChoice(formatSpeed(option), selected = option == speed) {
                     actions.onSetSpeed(option)
                     close()
                 }
@@ -458,10 +460,6 @@ private fun MenuChoice(text: String, selected: Boolean, onClick: () -> Unit) {
         onClick = onClick,
     )
 }
-
-/** "1.0x", "1.25x": one decimal unless the speed needs two. */
-private fun speedLabel(speed: Double): String =
-    if ((speed * 10).let { it == Math.rint(it) }) "%.1fx".format(speed) else "%.2fx".format(speed)
 
 @Composable
 private fun OverflowMenu(items: List<TopBarAction>) {
@@ -688,6 +686,12 @@ internal object OverlayColors {
 
     /** Behind a short text label, so it stays legible on bright frames. */
     val textBackdrop = Color.Black.copy(alpha = 0.6f)
+}
+
+/** "1.0x", "1.25x", "0.5x": one or two decimals, the same in every locale. */
+fun formatSpeed(speed: Double): String {
+    val exact = BigDecimal.valueOf(speed).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros()
+    return "${exact.setScale(maxOf(exact.scale(), 1)).toPlainString()}x"
 }
 
 /** `H:MM:SS` or `M:SS`. */

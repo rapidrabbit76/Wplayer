@@ -59,7 +59,6 @@
     <string name="player_track_external">External</string>
     <string name="player_subtitle_delay">Subtitle delay %1$+.1f s</string>
     <string name="player_zoom">Zoom %1$d%%</string>
-    <string name="player_speed_value">%1$.2gx</string>
     <string name="source_add">Add to library</string>
     <string name="source_edit">Edit library entry</string>
     <string name="source_delete">Delete</string>

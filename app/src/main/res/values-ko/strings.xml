@@ -56,7 +56,6 @@
     <string name="player_track_external">외부</string>
     <string name="player_subtitle_delay">자막 싱크 %1$+.1f초</string>
     <string name="player_zoom">확대 %1$d%%</string>
-    <string name="player_speed_value">%1$.2gx</string>
     <string name="source_add">보관함 추가</string>
     <string name="source_edit">보관함 편집</string>
     <string name="source_delete">삭제</string>
