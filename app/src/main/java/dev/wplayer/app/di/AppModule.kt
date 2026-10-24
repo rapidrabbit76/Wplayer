@@ -18,6 +18,7 @@ import dev.wplayer.app.data.local.DownloadDao
 import dev.wplayer.app.data.local.LockedFolderDao
 import dev.wplayer.app.data.local.PlaybackPositionDao
 import dev.wplayer.app.data.local.PlaylistDao
+import dev.wplayer.app.data.local.ReadingPositionDao
 import dev.wplayer.app.data.local.RecentMediaDao
 import dev.wplayer.app.data.local.SearchIndexDao
 import dev.wplayer.app.data.local.SourceDao
@@ -78,6 +79,9 @@ object AppModule {
 
     @Provides
     fun subtitleChoiceDao(database: AppDatabase): SubtitleChoiceDao = database.subtitleChoiceDao()
+
+    @Provides
+    fun readingPositionDao(database: AppDatabase): ReadingPositionDao = database.readingPositionDao()
 
     @Provides
     @Singleton
