@@ -15,7 +15,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +35,7 @@ import dev.wplayer.app.ui.common.MediaCollection
 import dev.wplayer.app.ui.common.MediaItem
 import dev.wplayer.app.ui.common.PlaylistNameDialog
 import dev.wplayer.app.ui.common.RowAction
+import dev.wplayer.app.ui.common.UserMessageEffect
 import dev.wplayer.app.ui.common.ViewModeToggle
 import dev.wplayer.app.ui.player.PlayQueue
 import dev.wplayer.app.ui.player.PlaybackRequest
@@ -139,13 +139,7 @@ fun RecentScreen(
     var addingToPlaylist by remember { mutableStateOf<MediaRef?>(null) }
     var confirmingClear by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
-    state.message?.let { message ->
-        val text = stringResource(message.text)
-        LaunchedEffect(message) {
-            snackbar.showSnackbar(text)
-            viewModel.messageShown()
-        }
-    }
+    UserMessageEffect(state.message, snackbar, viewModel::messageShown)
 
     LibraryLayout(
         title = stringResource(R.string.recent_title),
