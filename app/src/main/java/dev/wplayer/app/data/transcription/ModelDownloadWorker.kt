@@ -13,6 +13,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.reason
 import dev.wplayer.app.data.forEachChunk
 import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.IoDispatcher
@@ -63,7 +64,7 @@ class ModelDownloadWorker @AssistedInject constructor(
         } catch (e: IOException) {
             if (runAttemptCount < MAX_RETRIES) Result.retry() else failure(e.message ?: "I/O error")
         } catch (e: Exception) {
-            failure(e.message ?: e.javaClass.simpleName)
+            failure(e.reason())
         }
     }
 

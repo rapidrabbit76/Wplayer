@@ -11,6 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.wplayer.app.BuildConfig
 import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.forEachChunk
+import dev.wplayer.app.data.reason
 import dev.wplayer.app.data.toHex
 import dev.wplayer.app.di.ApplicationScope
 import dev.wplayer.app.di.IoDispatcher
@@ -99,7 +100,7 @@ class UpdateRepository @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                UpdateState.Failed(e.message ?: e.javaClass.simpleName)
+                UpdateState.Failed(e.reason())
             }
         }
     }
@@ -122,7 +123,7 @@ class UpdateRepository @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = UpdateState.Failed(e.message ?: e.javaClass.simpleName)
+                _state.value = UpdateState.Failed(e.reason())
             }
         }
     }

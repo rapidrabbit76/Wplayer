@@ -101,7 +101,7 @@ class DownloadWorker @AssistedInject constructor(
                 fail(id, e.detailOrName())
             }
         } catch (e: Exception) {
-            fail(id, e.message ?: e.javaClass.simpleName)
+            fail(id, e.reason())
         }
     }
 
