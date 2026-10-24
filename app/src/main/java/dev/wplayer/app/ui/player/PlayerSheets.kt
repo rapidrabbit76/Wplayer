@@ -369,8 +369,8 @@ fun VideoSheet(
     }
     SectionTitle(stringResource(R.string.player_decoder))
     ChipRow {
-        FilterChip(selected = hardwareDecoding, onClick = { onHardwareDecodingChange(true) }, label = { Text("H/W") })
-        FilterChip(selected = !hardwareDecoding, onClick = { onHardwareDecodingChange(false) }, label = { Text("S/W") })
+        FilterChip(selected = hardwareDecoding, onClick = { onHardwareDecodingChange(true) }, label = { Text(stringResource(R.string.player_decoder_hw)) })
+        FilterChip(selected = !hardwareDecoding, onClick = { onHardwareDecodingChange(false) }, label = { Text(stringResource(R.string.player_decoder_sw)) })
     }
 }
 

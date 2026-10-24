@@ -391,7 +391,8 @@ private fun QuickEndButtons(state: PlayerUiState, actions: PlayerControlActions,
             }
         }
         val decoder = stringResource(R.string.player_decoder)
-        QuickMenu(decoder, actions::onQuickMenu, label = if (state.hardwareDecoding) "HW" else "SW") { close ->
+        val decoderLabel = stringResource(if (state.hardwareDecoding) R.string.player_decoder_hw_short else R.string.player_decoder_sw_short)
+        QuickMenu(decoder, actions::onQuickMenu, label = decoderLabel) { close ->
             MenuHeader(decoder)
             MenuChoice(stringResource(R.string.player_decoder_hw), selected = state.hardwareDecoding) {
                 actions.onSetHardwareDecoding(true)

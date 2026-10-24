@@ -196,6 +196,8 @@
     <string name="player_decoder">디코더</string>
     <string name="player_decoder_hw">하드웨어 (HW)</string>
     <string name="player_decoder_sw">소프트웨어 (SW)</string>
+    <string name="player_decoder_hw_short">HW</string>
+    <string name="player_decoder_sw_short">SW</string>
     <string name="player_settings">재생 설정</string>
     <string name="player_resume_question">%1$s부터 이어서 재생할까요?</string>
     <string name="player_resume_restart">처음부터</string>
