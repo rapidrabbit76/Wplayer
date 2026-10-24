@@ -128,7 +128,7 @@ class PlayerViewModel @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> =
-        settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
+        settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, settingsRepository.current.value)
 
     /** The file of the added subtitle font, for subtitles drawn without mpv. */
     fun subtitleFontFile(font: SubtitleFont): File? = subtitleFontStore.fileOf(font)
@@ -218,7 +218,7 @@ class PlayerViewModel @Inject constructor(
 
     private var loadJob: Job? = null
     private var queueJob: Job? = null
-    private var queueOrigin: Any? = null
+    private var queueOrigin: QueueOrigin? = null
     private var speedBeforeBoost: Double? = null
     private var resumeAnswer: CompletableDeferred<Boolean>? = null
 
@@ -645,29 +645,25 @@ class PlayerViewModel @Inject constructor(
         whisperModels.download(settings.value.transcription.model)
     }
 
-    /** Loads the files around [request] unless they are already known. */
+    /** Loads the files around [request], in the browser's saved order, unless that list is already loaded. */
     private fun loadQueue(request: PlaybackRequest.FromSource) {
-        val folder = folderOf(request.path)
-        val origin = when (val queue = request.queue) {
-            PlayQueue.Folder -> request.sourceKey to folder
-            is PlayQueue.Playlist -> queue
-        }
-        if (origin == queueOrigin) return
-        queueOrigin = origin
-        session.update { it.copy(queue = emptyList()) }
         queueJob?.cancel()
         queueJob = viewModelScope.launch {
+            val origin = QueueOrigin.of(request, savedSettings().browser)
+            if (origin == queueOrigin) return@launch
+            queueOrigin = null
+            session.update { it.copy(queue = emptyList()) }
             catchingFailures {
-                when (val queue = request.queue) {
-                    PlayQueue.Folder -> browserRepository.playableFiles(request.sourceKey, folder, settings.value.browser)
-                    is PlayQueue.Playlist -> playlistRepository.playableItems(queue.playlistId)
+                when (origin) {
+                    is QueueOrigin.Folder -> browserRepository.playableFiles(origin.sourceKey, origin.folder, origin.browser)
+                    is QueueOrigin.Playlist -> playlistRepository.playableItems(origin.playlistId)
                 }
             }
-                .onSuccess { files -> session.update { it.copy(queue = files) } }
-                .onFailure {
-                    Log.w(TAG, "cannot list the files around ${request.path}", it)
-                    queueOrigin = null
+                .onSuccess { files ->
+                    queueOrigin = origin
+                    session.update { it.copy(queue = files) }
                 }
+                .onFailure { Log.w(TAG, "cannot list the files around ${request.path}", it) }
         }
     }
 

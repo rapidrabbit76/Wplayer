@@ -2,6 +2,8 @@ package dev.wplayer.app.ui.player
 
 import android.content.Intent
 import android.net.Uri
+import dev.wplayer.app.data.folderOf
+import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.mediaKey
 
 /** Where the files around the current one come from, for next/previous and auto-play. */
@@ -10,6 +12,21 @@ sealed interface PlayQueue {
     data object Folder : PlayQueue
 
     data class Playlist(val playlistId: Long) : PlayQueue
+}
+
+/** The list a queue was made from; a different one means listing the files again. */
+internal sealed interface QueueOrigin {
+    /** A folder in the browser's order, so a new sort or filter lists it again. */
+    data class Folder(val sourceKey: String, val folder: String, val browser: BrowserSettings) : QueueOrigin
+
+    data class Playlist(val playlistId: Long) : QueueOrigin
+
+    companion object {
+        fun of(request: PlaybackRequest.FromSource, browser: BrowserSettings): QueueOrigin = when (val queue = request.queue) {
+            PlayQueue.Folder -> Folder(request.sourceKey, folderOf(request.path), browser)
+            is PlayQueue.Playlist -> Playlist(queue.playlistId)
+        }
+    }
 }
 
 /** What the player was asked to open. */
