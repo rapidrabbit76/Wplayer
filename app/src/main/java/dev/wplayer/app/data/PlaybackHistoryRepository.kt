@@ -9,7 +9,6 @@ import dev.wplayer.app.data.local.SubtitleChoiceEntity
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RecentMedia
 import dev.wplayer.app.data.model.WatchProgress
-import dev.wplayer.app.data.model.mediaKey
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -58,7 +57,7 @@ class PlaybackHistoryRepository @Inject constructor(
 
     /** Forgets where [ref] was left and removes it from the recent list. */
     suspend fun forget(ref: MediaRef) {
-        positions.delete(mediaKey(ref.sourceKey, ref.path))
+        positions.delete(ref.mediaKey)
         recents.delete(ref.sourceKey, ref.path)
     }
 

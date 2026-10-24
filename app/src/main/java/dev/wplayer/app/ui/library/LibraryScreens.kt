@@ -25,10 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.SourceRepository
-import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
-import dev.wplayer.app.data.model.mediaKey
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.BackTopAppBar
 import dev.wplayer.app.ui.common.CenteredMessage
@@ -87,7 +85,7 @@ fun PlaylistScreen(
                 MediaItem(
                     grid = grid,
                     name = item.ref.name,
-                    kind = if (item.ref.isDirectory) MediaKind.DIRECTORY else MediaEntry.kindOf(item.ref.name, isDirectory = false),
+                    kind = item.ref.kind,
                     supporting = sourceLabel(item.ref.sourceKey, state.sourceNames) + " · " + item.ref.parentPath(),
                     progress = state.progress[item.id],
                     actions = listOf(
@@ -99,7 +97,7 @@ fun PlaylistScreen(
                     onClick = {
                         if (item.ref.isDirectory) onOpenFolder(item.ref.sourceKey, item.ref.path) else play(item.ref)
                     },
-                    loadThumbnail = if (state.showThumbnails && item.ref.isVideo) ({ viewModel.thumbnail(item.ref) }) else null,
+                    loadThumbnail = if (state.showThumbnails && item.ref.kind == MediaKind.VIDEO) ({ viewModel.thumbnail(item.ref) }) else null,
                 )
             }
         }
@@ -170,16 +168,16 @@ fun RecentScreen(
                 MediaItem(
                     grid = grid,
                     name = ref.name,
-                    kind = MediaEntry.kindOf(ref.name, isDirectory = false),
+                    kind = ref.kind,
                     supporting = sourceLabel(ref.sourceKey, state.sourceNames) + " · " + ref.parentPath(),
-                    progress = state.progress[mediaKey(ref.sourceKey, ref.path)],
+                    progress = state.progress[ref.mediaKey],
                     actions = listOf(
                         RowAction(showInFolder) { onShowInFolder(ref) },
                         RowAction(addLabel) { addingToPlaylist = ref },
                         RowAction(forgetLabel) { viewModel.forget(ref) },
                     ),
                     onClick = { onPlay(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name)) },
-                    loadThumbnail = if (state.showThumbnails && ref.isVideo) ({ viewModel.thumbnail(ref) }) else null,
+                    loadThumbnail = if (state.showThumbnails && ref.kind == MediaKind.VIDEO) ({ viewModel.thumbnail(ref) }) else null,
                 )
             }
         }
@@ -236,7 +234,5 @@ private fun sourceLabel(sourceKey: String, names: Map<String, String>): String =
     } else {
         names[sourceKey] ?: stringResource(R.string.source_missing)
     }
-
-private val MediaRef.isVideo: Boolean get() = MediaEntry.kindOf(name, isDirectory) == MediaKind.VIDEO
 
 private fun MediaRef.parentPath(): String = path.substringBeforeLast('/', "").ifEmpty { "/" }

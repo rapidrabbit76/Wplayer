@@ -26,7 +26,6 @@ import dev.wplayer.app.R
 import dev.wplayer.app.data.model.BrowserViewMode
 import dev.wplayer.app.data.model.Download
 import dev.wplayer.app.data.model.DownloadStatus
-import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.WatchProgress
 import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.MediaCollection
@@ -101,7 +100,7 @@ private fun DownloadItem(download: Download, grid: Boolean, actions: DownloadAct
     MediaItem(
         grid = grid,
         name = download.ref.name,
-        kind = MediaEntry.kindOf(download.ref.name, isDirectory = false),
+        kind = download.ref.kind,
         supporting = statusText(download),
         // The bar shows download progress here, not watch progress.
         progress = if (active) WatchProgress(download.fraction.toDouble(), 1.0) else null,

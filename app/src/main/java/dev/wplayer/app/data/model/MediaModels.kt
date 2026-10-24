@@ -9,7 +9,10 @@ data class MediaRef(
     val path: String,
     val name: String,
     val isDirectory: Boolean,
-)
+) {
+    val kind: MediaKind get() = MediaEntry.kindOf(name, isDirectory)
+    val mediaKey: String get() = mediaKey(sourceKey, path)
+}
 
 data class Playlist(val id: Long, val name: String, val itemCount: Int)
 

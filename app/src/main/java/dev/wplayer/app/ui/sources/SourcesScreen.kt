@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
-import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
@@ -233,7 +232,7 @@ private fun ContinueCard(
     /** Shown on a long press. */
     menu: List<RowAction>,
 ) {
-    val kind = MediaEntry.kindOf(item.ref.name, isDirectory = false)
+    val kind = item.ref.kind
     var menuOpen by remember { mutableStateOf(false) }
     Box {
         OutlinedCard(
