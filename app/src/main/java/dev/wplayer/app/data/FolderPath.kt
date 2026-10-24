@@ -1,4 +1,4 @@
-package dev.wplayer.app.ui.browser
+package dev.wplayer.app.data
 
 /** A folder on the way to the current one; [path] is in the core's `/a/b` form. */
 data class PathSegment(val name: String, val path: String)
@@ -15,3 +15,6 @@ fun parentPath(path: String): String? {
     if (trimmed.isEmpty()) return null
     return trimmed.substringBeforeLast('/').ifEmpty { "/" }
 }
+
+/** The folder holding [path]; the root holds itself. */
+fun folderOf(path: String): String = parentPath(path) ?: "/"

@@ -18,6 +18,7 @@ import dev.wplayer.app.data.PlaylistRepository
 import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.SourceRepository
 import dev.wplayer.app.data.SubtitleFontStore
+import dev.wplayer.app.data.folderOf
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.MediaButtonAction
 import dev.wplayer.app.data.model.MediaEntry
@@ -29,11 +30,11 @@ import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
 import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.SeekPrecision
 import dev.wplayer.app.data.model.SubtitleFont
+import dev.wplayer.app.data.parentPath
 import dev.wplayer.app.data.reason
 import dev.wplayer.app.data.transcription.TranscriptionRepository
 import dev.wplayer.app.data.transcription.WhisperModelStore
 import dev.wplayer.app.di.ApplicationScope
-import dev.wplayer.app.ui.browser.parentPath
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
 import dev.wplayer.app.ui.settings.SubtitleFontActions
@@ -597,7 +598,7 @@ class PlayerViewModel @Inject constructor(
 
     /** Where the subtitle file picker starts: the playing video's folder, or null for media from other apps. */
     val subtitlePickerStart: String?
-        get() = (session.value.request as? PlaybackRequest.FromSource)?.let { parentPath(it.path) ?: "/" }
+        get() = (session.value.request as? PlaybackRequest.FromSource)?.let { folderOf(it.path) }
 
     /** Folders and subtitle files in [path] of the playing video's source. */
     suspend fun listSubtitleFolder(path: String): List<MediaEntry> {
@@ -646,7 +647,7 @@ class PlayerViewModel @Inject constructor(
 
     /** Loads the files around [request] unless they are already known. */
     private fun loadQueue(request: PlaybackRequest.FromSource) {
-        val folder = request.path.substringBeforeLast('/', "").ifEmpty { "/" }
+        val folder = folderOf(request.path)
         val origin = when (val queue = request.queue) {
             PlayQueue.Folder -> request.sourceKey to folder
             is PlayQueue.Playlist -> queue

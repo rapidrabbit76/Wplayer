@@ -100,6 +100,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.MAX_SEARCH_DEPTH
 import dev.wplayer.app.data.MAX_SEARCH_RESULTS
+import dev.wplayer.app.data.PathSegment
 import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.BrowserViewMode
@@ -107,6 +108,8 @@ import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.SortField
 import dev.wplayer.app.data.model.SourceProtocol
+import dev.wplayer.app.data.parentPath
+import dev.wplayer.app.data.pathSegments
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.CollectionCard

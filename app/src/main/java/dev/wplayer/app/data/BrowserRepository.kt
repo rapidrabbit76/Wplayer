@@ -213,7 +213,7 @@ class BrowserRepository @Inject constructor(
 
     /** Subtitles for [videoPath] in the same folder, best match first (see [matchSubtitles]). */
     suspend fun siblingSubtitles(sourceKey: String, videoPath: String): List<MediaEntry> {
-        val dir = videoPath.substringBeforeLast('/', "").ifEmpty { "/" }
+        val dir = folderOf(videoPath)
         val names = sources.withConnection(sourceKey) { listDirectory(sourceKey, dir) }
             .filter { !it.isDir }
             .associateBy { it.name }

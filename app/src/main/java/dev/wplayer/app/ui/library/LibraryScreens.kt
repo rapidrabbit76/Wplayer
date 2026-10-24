@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.SourceRepository
+import dev.wplayer.app.data.folderOf
 import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
@@ -86,7 +87,7 @@ fun PlaylistScreen(
                     grid = grid,
                     name = item.ref.name,
                     kind = item.ref.kind,
-                    supporting = sourceLabel(item.ref.sourceKey, state.sourceNames) + " · " + item.ref.parentPath(),
+                    supporting = sourceLabel(item.ref.sourceKey, state.sourceNames) + " · " + folderOf(item.ref.path),
                     progress = state.progress[item.id],
                     actions = listOf(
                         RowAction(showInFolder) { onShowInFolder(item.ref) },
@@ -169,7 +170,7 @@ fun RecentScreen(
                     grid = grid,
                     name = ref.name,
                     kind = ref.kind,
-                    supporting = sourceLabel(ref.sourceKey, state.sourceNames) + " · " + ref.parentPath(),
+                    supporting = sourceLabel(ref.sourceKey, state.sourceNames) + " · " + folderOf(ref.path),
                     progress = state.progress[ref.mediaKey],
                     actions = listOf(
                         RowAction(showInFolder) { onShowInFolder(ref) },
@@ -234,5 +235,3 @@ private fun sourceLabel(sourceKey: String, names: Map<String, String>): String =
     } else {
         names[sourceKey] ?: stringResource(R.string.source_missing)
     }
-
-private fun MediaRef.parentPath(): String = path.substringBeforeLast('/', "").ifEmpty { "/" }

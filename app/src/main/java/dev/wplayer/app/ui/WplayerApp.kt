@@ -66,10 +66,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.wplayer.app.R
+import dev.wplayer.app.data.folderOf
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.ui.browser.BrowserScreen
 import dev.wplayer.app.ui.browser.BrowserViewModel
-import dev.wplayer.app.ui.browser.parentPath
 import dev.wplayer.app.ui.common.isTelevision
 import dev.wplayer.app.ui.downloads.DownloadsScreen
 import dev.wplayer.app.ui.library.LibraryScreen
@@ -190,7 +190,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                             selectedPath = backStack.childOf(route)?.path,
                             focusPath = route.focusPath,
                             onOpenFolder = { path -> backStack.openFolder(from = route, path = path) },
-                            onShowInFolder = { path -> backStack.openFolder(from = route, path = parentPath(path) ?: "/", focusPath = path) },
+                            onShowInFolder = { path -> backStack.openFolder(from = route, path = folderOf(path), focusPath = path) },
                             onNavigateTo = { path -> backStack.goToFolder(from = route, path = path) },
                             onPlay = onPlay,
                             onBack = { backStack.closeFolder(route) },
@@ -334,7 +334,7 @@ private fun NavBackStack<NavKey>.openFolder(from: BrowserRoute, path: String, fo
 
 /** Opens the folder holding [ref] with [ref] scrolled to and highlighted. */
 private fun NavBackStack<NavKey>.showInFolder(ref: MediaRef) {
-    add(BrowserRoute(ref.sourceKey, parentPath(ref.path) ?: "/", focusPath = ref.path))
+    add(BrowserRoute(ref.sourceKey, folderOf(ref.path), focusPath = ref.path))
 }
 
 /**

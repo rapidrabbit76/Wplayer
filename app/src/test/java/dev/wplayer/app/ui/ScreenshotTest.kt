@@ -32,11 +32,11 @@ import dev.wplayer.app.data.model.SourceProtocol
 import dev.wplayer.app.data.model.SubtitleFont
 import dev.wplayer.app.data.model.WatchProgress
 import dev.wplayer.app.data.model.WhisperModel
+import dev.wplayer.app.data.pathSegments
 import dev.wplayer.app.ui.browser.BrowserContent
 import dev.wplayer.app.ui.browser.BrowserLayout
 import dev.wplayer.app.ui.browser.BrowserUiState
 import dev.wplayer.app.ui.browser.ParentEntry
-import dev.wplayer.app.ui.browser.pathSegments
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.downloads.DownloadActions
 import dev.wplayer.app.ui.downloads.DownloadsContent

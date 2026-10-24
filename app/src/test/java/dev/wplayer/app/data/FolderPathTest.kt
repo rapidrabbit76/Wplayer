@@ -1,4 +1,4 @@
-package dev.wplayer.app.ui.browser
+package dev.wplayer.app.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -19,5 +19,12 @@ class FolderPathTest {
         assertNull(parentPath("/"))
         assertEquals("/", parentPath("/Download"))
         assertEquals("/Download", parentPath("/Download/영상"))
+    }
+
+    @Test
+    fun folderOfTheRootIsTheRoot() {
+        assertEquals("/", folderOf("/"))
+        assertEquals("/", folderOf("/a.mkv"))
+        assertEquals("/Download", folderOf("/Download/a.mkv"))
     }
 }
