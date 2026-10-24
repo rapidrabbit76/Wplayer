@@ -11,7 +11,6 @@ import dev.wplayer.app.data.ThumbnailRepository
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.WatchProgress
-import dev.wplayer.app.data.model.mediaKey
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +45,7 @@ class SourcesViewModel @Inject constructor(
         if (!shown) return@combine emptyList()
         recents
             .mapNotNull { recent ->
-                progress[mediaKey(recent.ref.sourceKey, recent.ref.path)]
+                progress[recent.ref.mediaKey]
                     ?.takeIf { it.isResumable }
                     ?.let { ContinueWatching(recent.ref, it) }
             }

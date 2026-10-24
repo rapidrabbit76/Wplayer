@@ -16,7 +16,6 @@ import dev.wplayer.app.data.model.BrowserViewMode
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.PlaylistItem
 import dev.wplayer.app.data.model.WatchProgress
-import dev.wplayer.app.data.model.mediaKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -55,7 +54,7 @@ class PlaylistViewModel @AssistedInject constructor(
             name = name,
             items = items,
             progress = items.mapNotNull { item ->
-                progress[mediaKey(item.ref.sourceKey, item.ref.path)]?.let { item.id to it }
+                progress[item.ref.mediaKey]?.let { item.id to it }
             }.toMap(),
             sourceNames = sourceList.associate { it.key to it.name },
             showThumbnails = appSettings.browser.showThumbnails,
