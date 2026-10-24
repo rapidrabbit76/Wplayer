@@ -50,7 +50,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
@@ -182,17 +181,16 @@ private fun ImagePager(state: ImageViewerUiState, pages: List<ImagePage>, action
         Modifier
             .fillMaxSize()
             .onKeyEvent { event ->
-                val action: (() -> Unit)? = when (event.key) {
-                    // A zoomed picture keeps the arrows; paging is for whole pictures.
-                    Key.DirectionLeft -> if (zoomed) null else ({ go(-1) })
-                    Key.DirectionRight -> if (zoomed) null else ({ go(1) })
-                    Key.MediaPrevious, Key.PageUp -> ({ go(-1) })
-                    Key.MediaNext, Key.PageDown -> ({ go(1) })
-                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> toggleOverlay
-                    Key.MediaPlayPause, Key.Spacebar -> ({ setSlideshow(!slideshow) })
-                    else -> null
+                val action = viewerKeyAction(event.key, state.rightToLeft, zoomed)
+                if (event.type == KeyEventType.KeyDown) {
+                    when (action) {
+                        ViewerKeyAction.NEXT_PAGE -> go(1)
+                        ViewerKeyAction.PREVIOUS_PAGE -> go(-1)
+                        ViewerKeyAction.TOGGLE_OVERLAY -> toggleOverlay()
+                        ViewerKeyAction.TOGGLE_SLIDESHOW -> setSlideshow(!slideshow)
+                        null -> Unit
+                    }
                 }
-                if (action != null && event.type == KeyEventType.KeyDown) action()
                 action != null
             }
             .focusRequester(focus)
@@ -202,6 +200,8 @@ private fun ImagePager(state: ImageViewerUiState, pages: List<ImagePage>, action
             state = pagerState,
             key = { pages[it].path },
             beyondViewportPageCount = 1,
+            // Right to left puts the first page on the right, so a swipe to the right turns to the next.
+            reverseLayout = state.rightToLeft,
             modifier = Modifier.fillMaxSize(),
         ) { index ->
             val page = pages[index]
