@@ -424,4 +424,6 @@
     <string name="image_viewer_unreadable">이 사진은 표시할 수 없습니다.</string>
     <string name="image_viewer_slideshow_start">슬라이드쇼 시작</string>
     <string name="image_viewer_slideshow_stop">슬라이드쇼 중지</string>
+    <string name="settings_pictures">사진</string>
+    <string name="settings_slideshow_interval">슬라이드쇼 간격</string>
 </resources>
