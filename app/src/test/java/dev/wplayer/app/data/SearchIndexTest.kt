@@ -65,6 +65,13 @@ class SearchIndexTest {
     }
 
     @Test
+    fun aDeletedFileIsNoLongerFound() = runTest {
+        index.record(SOURCE, "/드라마", listOf(file("/드라마/선재 01.mkv"), file("/드라마/선재 02.mkv")))
+        index.forget(SOURCE, "/드라마/선재 01.mkv")
+        assertEquals(listOf("/드라마/선재 02.mkv"), names("/", "선재"))
+    }
+
+    @Test
     fun recentListingsAreReusedOlderOnesAreNot() = runTest {
         index.record(SOURCE, "/", listOf(dir("/a"), file("/b.mkv")), nowMillis = 1_000)
         assertEquals(listOf("/a"), index.freshSubfolders(SOURCE, "/", maxAgeMillis = 500, nowMillis = 1_400))

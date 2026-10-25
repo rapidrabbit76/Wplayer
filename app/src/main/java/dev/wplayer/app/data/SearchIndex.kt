@@ -44,6 +44,9 @@ class SearchIndex @Inject constructor(private val dao: SearchIndexDao) {
         return dao.search(sourceKey, below, name, limit).map { rows -> rows.map { it.toEntry() } }
     }
 
+    /** Drops one file, deleted from its source, so searches stop finding it. */
+    suspend fun forget(sourceKey: String, path: String) = dao.deleteEntry(sourceKey, path)
+
     suspend fun forgetSource(sourceKey: String) = dao.deleteSource(sourceKey)
 
     suspend fun clear() = dao.clear()

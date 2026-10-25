@@ -68,6 +68,13 @@ impl Vfs for LocalVfs {
         let size = file.metadata()?.len();
         Ok(Box::new(LocalReader { file, size }))
     }
+
+    async fn delete(&self, path: &str) -> CoreResult<()> {
+        let (normalized, full) = self.resolve(path)?;
+        tokio::fs::remove_file(&full)
+            .await
+            .map_err(|e| CoreError::from_io(e, &normalized))
+    }
 }
 
 struct LocalReader {
@@ -109,6 +116,23 @@ mod tests {
         assert_eq!(reader.read_at(6, &mut buf).unwrap(), 4);
         assert_eq!(&buf, b"6789");
         assert_eq!(reader.read_at(10, &mut buf).unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn deletes_files_but_not_folders() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("영화")).unwrap();
+        std::fs::write(dir.path().join("영화/a.mkv"), b"0").unwrap();
+
+        let vfs = LocalVfs::new(dir.path().to_str().unwrap()).unwrap();
+        vfs.delete("/영화/a.mkv").await.unwrap();
+        assert!(vfs.list("/영화").await.unwrap().is_empty());
+        assert!(matches!(
+            vfs.delete("/영화/a.mkv").await,
+            Err(CoreError::NotFound { .. })
+        ));
+        assert!(vfs.delete("/영화").await.is_err());
+        assert!(dir.path().join("영화").is_dir());
     }
 
     #[test]

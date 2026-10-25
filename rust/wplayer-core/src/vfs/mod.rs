@@ -61,6 +61,9 @@ pub trait Vfs: Send + Sync {
 
     /// Opens a file for random access. Called from player threads, so it blocks.
     fn open(&self, path: &str) -> CoreResult<Box<dyn RandomReader>>;
+
+    /// Deletes a file. Folders are refused.
+    async fn delete(&self, path: &str) -> CoreResult<()>;
 }
 
 /// Blocking random-access reader backing a libmpv stream.

@@ -1,6 +1,6 @@
 //! FTP and explicit FTPS (AUTH TLS) via `suppaftp`'s blocking client.
 //!
-//! Listing shares one control connection; every opened file gets its own,
+//! Listing and deleting share one control connection; every opened file gets its own,
 //! because a running transfer occupies the control channel.
 
 use std::io::{self, Read};
@@ -79,24 +79,41 @@ impl FtpVfs {
     }
 
     fn list_remote(&self, relative: &str, remote: &str) -> CoreResult<Vec<Entry>> {
+        let items = self.on_control(relative, |connection| match connection {
+            Connection::Plain(s) => list_entries(s, remote),
+            Connection::Secure(s) => list_entries(s, remote),
+        })?;
+        Ok(items
+            .into_iter()
+            .filter(|f| f.name() != "." && f.name() != "..")
+            .map(|f| to_entry(relative, &f))
+            .collect())
+    }
+
+    fn delete_blocking(&self, path: &str) -> CoreResult<()> {
+        let (relative, remote) = self.remote_path(path)?;
+        self.with_names_retry(&remote, || {
+            self.on_control(&relative, |connection| match connection {
+                Connection::Plain(s) => s.rm(&remote),
+                Connection::Secure(s) => s.rm(&remote),
+            })
+        })
+    }
+
+    /// Runs `request` on the shared control connection, reconnecting once if
+    /// the server dropped it while idle.
+    fn on_control<T>(
+        &self,
+        relative: &str,
+        mut request: impl FnMut(&mut Connection) -> Result<T, FtpError>,
+    ) -> CoreResult<T> {
         let mut guard = self.listing.lock().expect("ftp listing lock poisoned");
-        // Reconnect once if the idle control connection was dropped by the server.
         for attempt in 0..2 {
             if guard.is_none() {
                 *guard = Some(open_connection(&self.config, self.secure, &self.names)?);
             }
-            let result = match guard.as_mut().expect("connection present") {
-                Connection::Plain(s) => list_entries(s, remote),
-                Connection::Secure(s) => list_entries(s, remote),
-            };
-            match result {
-                Ok(items) => {
-                    return Ok(items
-                        .into_iter()
-                        .filter(|f| f.name() != "." && f.name() != "..")
-                        .map(|f| to_entry(relative, &f))
-                        .collect());
-                }
+            match request(guard.as_mut().expect("connection present")) {
+                Ok(value) => return Ok(value),
                 Err(FtpError::ConnectionError(_)) if attempt == 0 => *guard = None,
                 Err(e) => return Err(map_error(e, relative)),
             }
@@ -114,6 +131,10 @@ impl Vfs for FtpVfs {
     fn open(&self, path: &str) -> CoreResult<Box<dyn RandomReader>> {
         let (relative, remote) = self.remote_path(path)?;
         self.with_names_retry(&remote, || self.open_reader(&relative, &remote))
+    }
+
+    async fn delete(&self, path: &str) -> CoreResult<()> {
+        tokio::task::block_in_place(|| self.delete_blocking(path))
     }
 }
 

@@ -80,6 +80,9 @@ abstract class SearchIndexDao {
         upsertFolder(IndexedFolderEntity(sourceKey, folder, listedAtMillis))
     }
 
+    @Query("DELETE FROM search_index WHERE sourceKey = :sourceKey AND path = :path")
+    abstract suspend fun deleteEntry(sourceKey: String, path: String)
+
     @Query("DELETE FROM search_index WHERE sourceKey = :sourceKey AND parentPath = :folder")
     protected abstract suspend fun deleteChildren(sourceKey: String, folder: String)
 

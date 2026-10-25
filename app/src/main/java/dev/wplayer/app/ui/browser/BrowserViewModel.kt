@@ -253,6 +253,25 @@ class BrowserViewModel @AssistedInject constructor(
 
     suspend fun thumbnail(entry: MediaEntry): Bitmap? = thumbnails.thumbnail(entry.toRef())
 
+    /** Deletes [entry]'s file from the source, and where it was left off. */
+    fun delete(entry: MediaEntry) {
+        viewModelScope.launch {
+            catchingFailures { browserRepository.delete(route.sourceKey, entry.path) }
+                .onSuccess {
+                    listing.update { state -> state.copy(entries = state.entries.filterNot { it.path == entry.path }) }
+                    history.forget(entry.toRef())
+                    message.value = UserMessage.FILE_DELETED
+                }
+                .onFailure { e ->
+                    Log.w(TAG, "cannot delete ${entry.path}", e)
+                    message.value = when (UserError.from(e).reason) {
+                        UserError.Reason.PERMISSION, UserError.Reason.AUTHENTICATION -> UserMessage.DELETE_NOT_ALLOWED
+                        else -> UserMessage.DELETE_FAILED
+                    }
+                }
+        }
+    }
+
     /** Downloads a file from this (network) source to device storage. */
     fun download(entry: MediaEntry) {
         viewModelScope.launch {

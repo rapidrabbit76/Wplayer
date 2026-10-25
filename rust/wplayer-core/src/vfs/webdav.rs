@@ -87,6 +87,23 @@ impl WebDavVfs {
             .join("/")
     }
 
+    async fn propfind(&self, server_path: &str, depth: &str, relative: &str) -> CoreResult<Vec<DavItem>> {
+        let response = self
+            .request(Method::from_bytes(b"PROPFIND").expect("valid method"), server_path)
+            .header("Depth", depth)
+            .header(CONTENT_TYPE, "application/xml; charset=utf-8")
+            .body(PROPFIND_BODY)
+            .send()
+            .await
+            .map_err(map_reqwest)?;
+        let body = check_status(response, relative)
+            .await?
+            .text()
+            .await
+            .map_err(map_reqwest)?;
+        Ok(parse_multistatus(&body))
+    }
+
     fn request(&self, method: Method, server_path: &str) -> RequestBuilder {
         let request = self.client.request(method, format!("{}{server_path}", self.origin));
         match &self.username {
@@ -104,21 +121,9 @@ impl Vfs for WebDavVfs {
         if !dir.ends_with('/') {
             dir.push('/');
         }
-        let response = self
-            .request(Method::from_bytes(b"PROPFIND").expect("valid method"), &dir)
-            .header("Depth", "1")
-            .header(CONTENT_TYPE, "application/xml; charset=utf-8")
-            .body(PROPFIND_BODY)
-            .send()
-            .await
-            .map_err(map_reqwest)?;
-        let body = check_status(response, &relative)
-            .await?
-            .text()
-            .await
-            .map_err(map_reqwest)?;
+        let items = self.propfind(&dir, "1", &relative).await?;
         let own_path = percent_decode(&dir);
-        Ok(parse_multistatus(&body)
+        Ok(items
             .into_iter()
             .filter(|item| percent_decode(&item.href).trim_end_matches('/') != own_path.trim_end_matches('/'))
             .filter_map(|item| {
@@ -161,6 +166,34 @@ impl Vfs for WebDavVfs {
             response: None,
             pending: Bytes::new(),
         }))
+    }
+
+    async fn delete(&self, path: &str) -> CoreResult<()> {
+        let relative = path::normalize(path)?;
+        let server_path = self.server_path(&relative);
+        // DELETE on a collection removes the whole folder, so check what the path is first.
+        if self
+            .propfind(&server_path, "0", &relative)
+            .await?
+            .iter()
+            .any(|item| item.is_collection)
+        {
+            return Err(CoreError::InvalidArgument {
+                detail: format!("not a file: {relative}"),
+            });
+        }
+        let response = self
+            .request(Method::DELETE, &server_path)
+            .send()
+            .await
+            .map_err(map_reqwest)?;
+        match response.status() {
+            // 401 is a wrong password; 403 and 405 mean the account or server does not allow deleting.
+            StatusCode::FORBIDDEN | StatusCode::METHOD_NOT_ALLOWED => {
+                Err(CoreError::PermissionDenied { path: relative })
+            }
+            _ => check_status(response, &relative).await.map(drop),
+        }
     }
 }
 

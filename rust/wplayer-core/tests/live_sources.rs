@@ -3,6 +3,7 @@
 //! Ignored by default. Each test reads its server from an environment variable
 //! holding `host:port` and expects the tree created by `scripts/test-servers.sh start`:
 //! `/영화/sample #1.mkv` (5 MiB + 77 bytes, byte `i` = `i % 251`) and `/영화/Season 2/`.
+//! The delete tests also need `WPLAYER_TEST_SHARE`, the servers' folder on this machine.
 //!
 //! ```sh
 //! eval "$(scripts/test-servers.sh start)" && (cd rust && cargo test -p wplayer-core --test live_sources -- --ignored)
@@ -73,6 +74,69 @@ fn exercise(config: SourceConfig) {
     assert_stream(reader.as_mut(), SAMPLE_LEN - 88, 88);
     assert_eq!(reader.read_at(SAMPLE_LEN, &mut buf).unwrap(), 0);
     assert_stream(reader.as_mut(), 752, 3_000_000);
+}
+
+/// Deletes a file put in the servers' folder, then checks that a missing file
+/// is NotFound and that a folder is refused.
+fn exercise_delete(config: SourceConfig) {
+    let share = std::path::PathBuf::from(std::env::var("WPLAYER_TEST_SHARE").expect("WPLAYER_TEST_SHARE"));
+    let name = format!("다 본 영화 #{:?}.mkv", config.protocol);
+    let local = share.join("영화").join(&name);
+    std::fs::write(&local, b"watched").unwrap();
+
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let vfs: Arc<dyn Vfs> = runtime
+        .block_on(async { tokio::spawn(connect(config)).await.unwrap() })
+        .unwrap();
+    let delete = |path: String| {
+        let vfs = Arc::clone(&vfs);
+        runtime.block_on(async { tokio::spawn(async move { vfs.delete(&path).await }).await.unwrap() })
+    };
+
+    delete(format!("/영화/{name}")).unwrap();
+    assert!(!local.exists(), "{name} still on the server");
+    assert!(
+        matches!(
+            delete(format!("/영화/{name}")),
+            Err(wplayer_core::CoreError::NotFound { .. })
+        ),
+        "deleting a missing file is not NotFound"
+    );
+    assert!(delete("/영화/Season 2".to_owned()).is_err(), "a folder was deleted");
+    assert!(share.join("영화/Season 2").is_dir());
+    runtime.block_on(async move { drop(vfs) });
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_FTP and WPLAYER_TEST_SHARE"]
+fn ftp_deletes_files_only() {
+    let address = std::env::var("WPLAYER_TEST_FTP").expect("WPLAYER_TEST_FTP");
+    exercise_delete(config(Protocol::Ftp, &address, Some("tester"), Some("secret")));
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_WEBDAV and WPLAYER_TEST_SHARE"]
+fn webdav_deletes_files_only() {
+    let address = std::env::var("WPLAYER_TEST_WEBDAV").expect("WPLAYER_TEST_WEBDAV");
+    exercise_delete(config(Protocol::WebDav, &address, None, None));
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_SMB and WPLAYER_TEST_SHARE"]
+fn smb_deletes_files_only() {
+    let address = std::env::var("WPLAYER_TEST_SMB").expect("WPLAYER_TEST_SMB");
+    let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
+    config.root_path = "/share".to_owned();
+    exercise_delete(config);
+}
+
+#[test]
+#[ignore = "needs WPLAYER_TEST_NFS and WPLAYER_TEST_SHARE"]
+fn nfs_deletes_files_only() {
+    let address = std::env::var("WPLAYER_TEST_NFS").expect("WPLAYER_TEST_NFS");
+    let mut config = config(Protocol::Nfs, &address, None, None);
+    config.root_path = "/export".to_owned();
+    exercise_delete(config);
 }
 
 /// Reads `[start, start + len)` in consecutive odd-sized reads and checks every byte.

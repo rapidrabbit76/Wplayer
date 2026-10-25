@@ -9,3 +9,10 @@ pub async fn list_directory(source_id: String, path: String) -> CoreResult<Vec<E
     let vfs = source::get(&source_id)?;
     runtime::spawn(async move { vfs.list(&path).await }).await?
 }
+
+/// Deletes one file of a registered source. Folders are refused.
+#[uniffi::export]
+pub async fn delete_file(source_id: String, path: String) -> CoreResult<()> {
+    let vfs = source::get(&source_id)?;
+    runtime::spawn(async move { vfs.delete(&path).await }).await?
+}
