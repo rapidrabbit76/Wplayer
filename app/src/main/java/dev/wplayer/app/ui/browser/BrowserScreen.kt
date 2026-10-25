@@ -113,6 +113,7 @@ import dev.wplayer.app.data.pathSegments
 import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.CenteredMessage
 import dev.wplayer.app.ui.common.CollectionCard
+import dev.wplayer.app.ui.common.ConfirmDialog
 import dev.wplayer.app.ui.common.MediaCard
 import dev.wplayer.app.ui.common.MediaRow
 import dev.wplayer.app.ui.common.RowAction
@@ -147,6 +148,7 @@ fun BrowserScreen(
     // A search result in this very folder is shown here rather than in a new column.
     var focus by rememberSaveable { mutableStateOf(focusPath) }
     var addingToPlaylist by remember { mutableStateOf<MediaEntry?>(null) }
+    var deleting by remember { mutableStateOf<MediaEntry?>(null) }
     val snackbar = remember { SnackbarHostState() }
     UserMessageEffect(state.message, snackbar, viewModel::messageShown)
 
@@ -193,6 +195,7 @@ fun BrowserScreen(
     val lockFolderLabel = stringResource(R.string.browser_lock_folder)
     val showInFolderLabel = stringResource(R.string.show_in_folder)
     val useAsFontLabel = stringResource(R.string.browser_use_as_subtitle_font)
+    val deleteLabel = stringResource(R.string.action_delete)
     val isRemote = state.source?.protocol != SourceProtocol.LOCAL
     val inSearch = state.search != null
     val entryActions: (MediaEntry) -> List<RowAction> = { entry ->
@@ -218,6 +221,7 @@ fun BrowserScreen(
                 add(RowAction(downloadLabel) { startDownload(entry) })
             }
             if (entry.path in state.progress) add(RowAction(forgetLabel) { viewModel.forgetHistory(entry) })
+            if (entry.kind != MediaKind.DIRECTORY) add(RowAction(deleteLabel) { deleting = entry })
             if (entry.kind == MediaKind.DIRECTORY) {
                 if (entry.path in state.lockedFolders) {
                     add(RowAction(unlockFolderTitle) { auth.authenticate(unlockFolderTitle) { viewModel.removeLock(entry) } })
@@ -284,6 +288,16 @@ fun BrowserScreen(
         }
     }
 
+    deleting?.let { entry ->
+        ConfirmDialog(
+            text = stringResource(R.string.browser_delete_confirm, entry.name),
+            onConfirm = {
+                viewModel.delete(entry)
+                deleting = null
+            },
+            onDismiss = { deleting = null },
+        )
+    }
     addingToPlaylist?.let { entry ->
         AddToPlaylistDialog(
             itemName = entry.name,

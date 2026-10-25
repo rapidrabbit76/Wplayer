@@ -10,8 +10,8 @@ use std::time::Duration;
 use async_trait::async_trait;
 use futures_util::StreamExt;
 use smb::{
-    Client, ClientConfig, Directory, File, FileAccessMask, FileCreateArgs, FileDirectoryInformation, GetLen,
-    IoctlBuffer, PipeTransceiveRequest, Resource, UncPath,
+    Client, ClientConfig, Directory, File, FileAccessMask, FileCreateArgs, FileDirectoryInformation,
+    FileDispositionInformation, GetLen, IoctlBuffer, PipeTransceiveRequest, Resource, UncPath,
 };
 
 use super::chunked::ChunkedReader;
@@ -112,7 +112,7 @@ impl SmbVfs {
             .map_err(map_error)
     }
 
-    async fn open_resource(&self, path: &str) -> CoreResult<Resource> {
+    async fn open_resource(&self, path: &str, access: FileAccessMask) -> CoreResult<Resource> {
         let (share, inner) = self.locate(path).ok_or_else(|| CoreError::InvalidArgument {
             detail: format!("not inside a share: {path}"),
         })?;
@@ -123,7 +123,7 @@ impl SmbVfs {
         } else {
             unc.with_path(&inner)
         };
-        let args = FileCreateArgs::make_open_existing(FileAccessMask::new().with_generic_read(true));
+        let args = FileCreateArgs::make_open_existing(access);
         self.client.create_file(&unc, &args).await.map_err(map_error)
     }
 
@@ -178,7 +178,7 @@ impl Vfs for SmbVfs {
     fn open(&self, path: &str) -> CoreResult<Box<dyn RandomReader>> {
         let file_path = path::normalize(path)?;
         let (file, size, max_read) = runtime::block_on(bounded("open", async {
-            match self.open_resource(&file_path).await? {
+            match self.open_resource(&file_path, read_access()).await? {
                 Resource::File(file) => {
                     let size = file.get_len().await.map_err(map_error)?;
                     Ok((file, size, self.max_read().await))
@@ -194,6 +194,33 @@ impl Vfs for SmbVfs {
             max_read,
         })))
     }
+
+    async fn delete(&self, path: &str) -> CoreResult<()> {
+        let file_path = path::normalize(path)?;
+        bounded("delete", async {
+            let access = FileAccessMask::new().with_generic_read(true).with_delete(true);
+            let file = match self.open_resource(&file_path, access).await? {
+                Resource::File(file) => file,
+                _ => {
+                    return Err(CoreError::InvalidArgument {
+                        detail: format!("not a file: {file_path}"),
+                    });
+                }
+            };
+            // The server removes the file once the handle marked for deletion closes.
+            let marked = file
+                .set_info(FileDispositionInformation::default())
+                .await
+                .map_err(map_error);
+            let closed = file.close().await.map_err(map_error);
+            marked.and(closed)
+        })
+        .await
+    }
+}
+
+fn read_access() -> FileAccessMask {
+    FileAccessMask::new().with_generic_read(true)
 }
 
 impl SmbVfs {
@@ -219,7 +246,7 @@ impl SmbVfs {
         if self.locate(&dir_path).is_none() {
             return self.list_shares().await;
         }
-        let directory = match self.open_resource(&dir_path).await? {
+        let directory = match self.open_resource(&dir_path, read_access()).await? {
             Resource::Directory(directory) => Arc::new(directory),
             _ => {
                 return Err(CoreError::InvalidArgument {

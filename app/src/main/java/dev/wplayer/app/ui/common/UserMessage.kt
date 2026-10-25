@@ -18,6 +18,9 @@ enum class UserMessage(@StringRes val text: Int) {
     SUBTITLE_FONT_SET(R.string.message_subtitle_font_set),
     NOT_A_FONT(R.string.subtitle_font_invalid),
     SUBTITLE_FONT_FAILED(R.string.message_subtitle_font_failed),
+    FILE_DELETED(R.string.message_file_deleted),
+    DELETE_NOT_ALLOWED(R.string.message_delete_not_allowed),
+    DELETE_FAILED(R.string.message_delete_failed),
 }
 
 @Composable

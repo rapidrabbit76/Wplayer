@@ -25,7 +25,7 @@ EOF
     fi
     [[ -x "$WORK/bin/cargo-nfs3-server" ]] || cargo install -q --root "$WORK" cargo-nfs3-server
 
-    nohup "$WORK/venv/bin/python" -I -m pyftpdlib -p 2121 -d "$SHARE" -u tester -P secret >"$WORK/ftp.log" 2>&1 &
+    nohup "$WORK/venv/bin/python" -I -m pyftpdlib -p 2121 -d "$SHARE" -u tester -P secret -w >"$WORK/ftp.log" 2>&1 &
     echo $! >"$WORK/ftp.pid"
     # Older servers: one without MLSD (like vsftpd), one naming files in CP949.
     local here
@@ -36,7 +36,7 @@ EOF
     echo $! >"$WORK/ftp-cp949.pid"
     nohup "$WORK/venv/bin/wsgidav" --host 127.0.0.1 --port 8088 --root "$SHARE" --auth anonymous >"$WORK/dav.log" 2>&1 &
     echo $! >"$WORK/dav.pid"
-    nohup "$WORK/bin/cargo-nfs3-server" --path "$SHARE" -i 127.0.0.1 -p 11111 -r --export-name /export >"$WORK/nfs.log" 2>&1 &
+    nohup "$WORK/bin/cargo-nfs3-server" --path "$SHARE" -i 127.0.0.1 -p 11111 --export-name /export >"$WORK/nfs.log" 2>&1 &
     echo $! >"$WORK/nfs.pid"
     # `share` needs tester/secret; `public` allows guests (live_sources checks how guest login fails).
     cat >"$WORK/smb.conf" <<'CONF'
@@ -74,6 +74,7 @@ export WPLAYER_TEST_SMB_SMALL_READS=127.0.0.1:1446
 export WPLAYER_TEST_OMV_FTP=127.0.0.1:2124
 export WPLAYER_TEST_OMV_SMB=127.0.0.1:1447
 export WPLAYER_TEST_NFS=127.0.0.1:11111
+export WPLAYER_TEST_SHARE="$SHARE"
 # then: (cd rust && cargo test -p wplayer-core --test live_sources -- --ignored)
 EOF
 }

@@ -11,8 +11,8 @@ use std::time::Duration;
 use async_trait::async_trait;
 use nfs3_client::net::Connector;
 use nfs3_client::nfs3_types::nfs3::{
-    GETATTR3args, LOOKUP3args, Nfs3Option, Nfs3Result, READ3args, READDIRPLUS3args, cookieverf3, diropargs3, filename3,
-    ftype3, nfs_fh3, nfsstat3,
+    GETATTR3args, LOOKUP3args, Nfs3Option, Nfs3Result, READ3args, READDIRPLUS3args, REMOVE3args, cookieverf3,
+    diropargs3, fattr3, filename3, ftype3, nfs_fh3, nfsstat3,
 };
 use nfs3_client::nfs3_types::rpc::{auth_unix, opaque_auth};
 use nfs3_client::nfs3_types::xdr_codec::Opaque;
@@ -76,6 +76,21 @@ impl NfsVfs {
 }
 
 impl Shared {
+    async fn attributes(&self, path: &str) -> CoreResult<(nfs_fh3, fattr3)> {
+        let handle = self.resolve(path).await?;
+        let reply = self
+            .connection
+            .lock()
+            .await
+            .getattr(&GETATTR3args { object: handle.clone() })
+            .await
+            .map_err(rpc_error)?;
+        match reply {
+            Nfs3Result::Ok(ok) => Ok((handle, ok.obj_attributes)),
+            Nfs3Result::Err((status, _)) => Err(status_error(status, path)),
+        }
+    }
+
     /// Walks `path` from the export root with LOOKUP, caching every handle found.
     async fn resolve(&self, path: &str) -> CoreResult<nfs_fh3> {
         if path == "/" {
@@ -174,25 +189,48 @@ impl Vfs for NfsVfs {
     fn open(&self, path: &str) -> CoreResult<Box<dyn RandomReader>> {
         let file_path = path::normalize(path)?;
         let shared = Arc::clone(&self.shared);
-        let (handle, size) = runtime::block_on(async move {
-            let handle = shared.resolve(&file_path).await?;
-            let reply = shared
-                .connection
-                .lock()
-                .await
-                .getattr(&GETATTR3args { object: handle.clone() })
-                .await
-                .map_err(rpc_error)?;
-            match reply {
-                Nfs3Result::Ok(ok) => Ok((handle, ok.obj_attributes.size)),
-                Nfs3Result::Err((status, _)) => Err(status_error(status, &file_path)),
-            }
-        })?;
+        let (handle, attributes) = runtime::block_on(async move { shared.attributes(&file_path).await })?;
         Ok(Box::new(ChunkedReader::new(NfsReader {
             shared: Arc::clone(&self.shared),
             handle,
-            size,
+            size: attributes.size,
         })))
+    }
+
+    async fn delete(&self, path: &str) -> CoreResult<()> {
+        let file_path = path::normalize(path)?;
+        let (parent, name) = file_path.rsplit_once('/').ok_or_else(|| CoreError::InvalidArgument {
+            detail: format!("not a file: {file_path}"),
+        })?;
+        // Some servers answer REMOVE on an empty folder by removing it, so look first.
+        if self.shared.attributes(&file_path).await?.1.type_ == ftype3::NF3DIR {
+            return Err(CoreError::InvalidArgument {
+                detail: format!("not a file: {file_path}"),
+            });
+        }
+        let dir = self
+            .shared
+            .resolve(if parent.is_empty() { "/" } else { parent })
+            .await?;
+        let args = REMOVE3args {
+            object: diropargs3 {
+                dir,
+                name: filename3(Opaque::owned(name.as_bytes().to_vec())),
+            },
+        };
+        let reply = self
+            .shared
+            .connection
+            .lock()
+            .await
+            .remove(&args)
+            .await
+            .map_err(rpc_error)?;
+        self.shared.handles.lock().await.remove(&file_path);
+        match reply {
+            Nfs3Result::Ok(_) => Ok(()),
+            Nfs3Result::Err((status, _)) => Err(status_error(status, &file_path)),
+        }
     }
 }
 
