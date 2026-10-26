@@ -12,6 +12,7 @@ import dev.wplayer.app.data.ImageCache
 import dev.wplayer.app.data.ImagePage
 import dev.wplayer.app.data.LockState
 import dev.wplayer.app.data.LockedFolders
+import dev.wplayer.app.data.PdfBook
 import dev.wplayer.app.data.PlaybackHistoryRepository
 import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.archivePages
@@ -23,12 +24,16 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.PictureSettings
 import dev.wplayer.app.data.model.mediaKey
 import dev.wplayer.app.data.nextArchivePage
+import dev.wplayer.app.data.nextPdfPage
+import dev.wplayer.app.data.pdfPages
 import dev.wplayer.app.di.ApplicationScope
+import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.app.ui.common.UserError
 import dev.wplayer.app.ui.common.catchingFailures
 import dev.wplayer.app.ui.navigation.ImageViewerRoute
 import dev.wplayer.core.ffi.ArchiveEntry
 import java.io.File
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +44,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** How far a page's picture has come. */
 sealed interface PageImage {
@@ -61,12 +67,14 @@ data class ImageViewerUiState(
     val startPath: String = "",
     /** Listing the pictures failed. */
     val error: UserError? = null,
+    /** The fraction of a PDF copied from its source before its pages show; null when unknown or not copying. */
+    val openingProgress: Float? = null,
     /** The pictures are (inside) a locked folder that has not been unlocked. */
     val hiddenByLock: Boolean = false,
     /** By [ImagePage.path]; pages not asked for yet are missing. */
     val images: Map<String, PageImage> = emptyMap(),
     val slideshowSeconds: Int = PictureSettings().slideshowSeconds,
-    /** The archive's name when the pages are the pictures inside one; null for a folder's pictures. */
+    /** The archive's or PDF's name when the pages are its pictures; null for a folder's pictures. */
     val book: String? = null,
     /** The first page is on the right and the next one to its left, as in Japanese manga. */
     val rightToLeft: Boolean = false,
@@ -79,19 +87,31 @@ data class ImageViewerUiState(
 private sealed interface Listing {
     data class Folder(val entries: List<MediaEntry>) : Listing
 
-    /** [entries] in page order; [startPath] is the page the archive was left on. */
-    data class Archive(val entries: List<ArchiveEntry>, val startPath: String?) : Listing {
-        val pages: List<ImagePage> = archivePages(entries)
+    /** An archive or a PDF: pages read one at a time, opened on [startPath], the page it was left on. */
+    sealed interface Book : Listing {
+        val pages: List<ImagePage>
+        val startPath: String?
+    }
+
+    /** [entries] in page order. */
+    data class Archive(val entries: List<ArchiveEntry>, override val startPath: String?) : Book {
+        override val pages: List<ImagePage> = archivePages(entries)
+    }
+
+    data class Pdf(val pageCount: Int, override val startPath: String?) : Book {
+        override val pages: List<ImagePage> = pdfPages(pageCount)
     }
 }
 
 /**
- * The image viewer: the pictures of one folder, or of one archive, each made a
- * local file when its page comes near the screen. A folder's pictures are
- * copied side by side; a page that moves away stops its copy, which continues
- * from where it stopped when the page comes back. An archive's pages are taken
- * out one at a time, the shown page first and then ahead in archive order,
- * since an archive reads fastest from front to back.
+ * The image viewer: the pictures of one folder, of one archive or of one PDF,
+ * each made a local file when its page comes near the screen. A folder's
+ * pictures are copied side by side; a page that moves away stops its copy,
+ * which continues from where it stopped when the page comes back. An
+ * archive's pages are taken out one at a time, the shown page first and then
+ * ahead in archive order, since an archive reads fastest from front to back.
+ * A PDF is copied whole first, then its pages are drawn one at a time,
+ * nearest to the shown page first.
  */
 @HiltViewModel(assistedFactory = ImageViewerViewModel.Factory::class)
 class ImageViewerViewModel @AssistedInject constructor(
@@ -102,43 +122,48 @@ class ImageViewerViewModel @AssistedInject constructor(
     private val imageCache: ImageCache,
     private val history: PlaybackHistoryRepository,
     @ApplicationScope private val appScope: CoroutineScope,
+    @IoDispatcher private val io: CoroutineDispatcher,
 ) : ViewModel() {
     // The browser listed this folder moments ago, so the first frame usually has the pages already.
     private val listing = MutableStateFlow<Listing?>(
         (route as? ImageViewerRoute.Folder)?.let { browserRepository.cachedListing(it.sourceKey, it.folder) }?.let(Listing::Folder),
     )
     private val listingError = MutableStateFlow<UserError?>(null)
+    private val opening = MutableStateFlow<Float?>(null)
+
+    /** The open PDF, once copied; closed with the viewer. */
+    private var pdf: PdfBook? = null
     private val images = MutableStateFlow<Map<String, PageImage>>(emptyMap())
 
     /** A folder's copies running, by page path; touched on the main thread only. */
     private val fetches = mutableMapOf<String, Job>()
 
-    /** An archive's pages on or next to the screen, by path; touched on the main thread only. */
+    /** A book's pages on or next to the screen, by path; touched on the main thread only. */
     private val onScreen = mutableSetOf<String>()
     private var settledPage = 0
-    private var archiveReader: Job? = null
+    private var bookReader: Job? = null
 
     /** The [ArchiveEntry.index] read last, where the archive continues from. */
     private var lastRead: UInt? = null
 
     val uiState: StateFlow<ImageViewerUiState> = combine(
-        listing,
+        combine(listing, opening, ::Pair),
         listingError,
         settingsRepository.settings,
         locks.state,
         images,
-    ) { listing, error, settings, lockState, images -> state(listing, error, settings, lockState, images) }
+    ) { (listing, opening), error, settings, lockState, images -> state(listing, opening, error, settings, lockState, images) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            state(listing.value, null, settingsRepository.current.value, locks.state.value, emptyMap()),
+            state(listing.value, null, null, settingsRepository.current.value, locks.state.value, emptyMap()),
         )
 
     init {
         when (route) {
             is ImageViewerRoute.Folder -> if (listing.value == null) load()
-            // An archive in a locked folder stays unopened until the folders are unlocked.
-            is ImageViewerRoute.Archive -> viewModelScope.launch {
+            // A book in a locked folder stays unopened until the folders are unlocked.
+            is ImageViewerRoute.Archive, is ImageViewerRoute.Pdf -> viewModelScope.launch {
                 locks.state.first { !it.isHidden(route.sourceKey, route.path) }
                 load()
             }
@@ -147,6 +172,7 @@ class ImageViewerViewModel @AssistedInject constructor(
 
     private fun state(
         listing: Listing?,
+        opening: Float?,
         error: UserError?,
         settings: AppSettings,
         lockState: LockState,
@@ -154,18 +180,19 @@ class ImageViewerViewModel @AssistedInject constructor(
     ) = ImageViewerUiState(
         pages = when (listing) {
             is Listing.Folder -> imagePages(route.sourceKey, listing.entries, settings.browser, lockState)
-            is Listing.Archive -> listing.pages
+            is Listing.Book -> listing.pages
             null -> null
         },
         startPath = when (listing) {
-            is Listing.Archive -> listing.startPath.orEmpty()
+            is Listing.Book -> listing.startPath.orEmpty()
             else -> route.path
         },
         error = error,
+        openingProgress = opening,
         hiddenByLock = lockState.isHidden(route.sourceKey, route.path),
         images = images,
         slideshowSeconds = settings.pictures.slideshowSeconds,
-        book = (route as? ImageViewerRoute.Archive)?.path?.substringAfterLast('/'),
+        book = route.path.substringAfterLast('/').takeIf { route !is ImageViewerRoute.Folder },
         rightToLeft = route is ImageViewerRoute.Archive && settings.pictures.comicDirection == ComicDirection.RIGHT_TO_LEFT,
     )
 
@@ -174,7 +201,7 @@ class ImageViewerViewModel @AssistedInject constructor(
             listingError.value = null
             catchingFailures { list() }
                 .onSuccess { listed ->
-                    if (listed is Listing.Archive) settledPage = listed.pages.indexOfFirst { it.path == listed.startPath }.coerceAtLeast(0)
+                    if (listed is Listing.Book) settledPage = listed.pages.indexOfFirst { it.path == listed.startPath }.coerceAtLeast(0)
                     listing.value = listed
                 }
                 .onFailure { listingError.value = it.toUserError() }
@@ -190,15 +217,23 @@ class ImageViewerViewModel @AssistedInject constructor(
             }
             Listing.Archive(entries, history.readingPage(mediaKey(route.sourceKey, route.path)))
         }
+        is ImageViewerRoute.Pdf -> {
+            val book = pdf ?: run {
+                val file = imageCache.file(route.sourceKey, route.path) { fraction -> opening.value = fraction }
+                withContext(io) { PdfBook.open(file) }.also { pdf = it }
+            }
+            history.recordPlayed(MediaRef(route.sourceKey, route.path, route.path.substringAfterLast('/'), isDirectory = false))
+            Listing.Pdf(book.pageCount, history.readingPage(mediaKey(route.sourceKey, route.path)))
+        }
     }
 
     /** [page] is on or next to the screen: fetches its picture unless it is here or on its way. */
     fun show(page: ImagePage) {
         when (route) {
             is ImageViewerRoute.Folder -> copy(page)
-            is ImageViewerRoute.Archive -> {
+            is ImageViewerRoute.Archive, is ImageViewerRoute.Pdf -> {
                 onScreen += page.path
-                readArchive()
+                readBook()
             }
         }
     }
@@ -212,12 +247,11 @@ class ImageViewerViewModel @AssistedInject constructor(
         }
     }
 
-    /** The pager came to rest on [page]: an archive remembers it and reads on from there. */
+    /** The pager came to rest on [page]: a book remembers it and reads on from there. */
     fun settle(page: ImagePage) {
-        if (route !is ImageViewerRoute.Archive) return
-        val archive = listing.value as? Listing.Archive ?: return
-        settledPage = archive.pages.indexOf(page).coerceAtLeast(0)
-        readArchive()
+        val book = listing.value as? Listing.Book ?: return
+        settledPage = book.pages.indexOf(page).coerceAtLeast(0)
+        readBook()
         appScope.launch { history.saveReadingPage(mediaKey(route.sourceKey, route.path), page.path) }
     }
 
@@ -256,35 +290,46 @@ class ImageViewerViewModel @AssistedInject constructor(
     }
 
     /**
-     * Takes the wanted pages out of the archive one by one until none is left:
-     * those on or next to the screen and the [PREFETCH_PAGES] after the settled one.
+     * Takes the wanted pages out of the archive, or draws them from the PDF,
+     * one by one until none is left: those on or next to the screen and the
+     * [PREFETCH_PAGES] after the settled one.
      */
-    private fun readArchive() {
-        if (archiveReader?.isActive == true) return
-        archiveReader = viewModelScope.launch {
+    private fun readBook() {
+        if (bookReader?.isActive == true) return
+        bookReader = viewModelScope.launch {
             while (!locks.state.value.isHidden(route.sourceKey, route.path)) {
-                val archive = listing.value as? Listing.Archive ?: break
-                val pages = archive.pages
+                val book = listing.value as? Listing.Book ?: break
+                val pages = book.pages
                 val ahead = settledPage + 1..settledPage + PREFETCH_PAGES
                 val wanted = pages.indices.filterTo(mutableSetOf()) { index ->
                     (pages[index].path in onScreen || index in ahead) && pages[index].path !in images.value
                 }
-                val index = nextArchivePage(archive.entries, wanted, settledPage, lastRead) ?: break
+                val index = when (book) {
+                    is Listing.Archive -> nextArchivePage(book.entries, wanted, settledPage, lastRead)
+                    is Listing.Pdf -> nextPdfPage(wanted, settledPage)
+                } ?: break
                 val page = pages[index]
                 images.update { it + (page.path to PageImage.Arriving(null)) }
-                catchingFailures { imageCache.archivePage(route.sourceKey, route.path, page.path) }
+                catchingFailures {
+                    when (book) {
+                        is Listing.Archive -> imageCache.archivePage(route.sourceKey, route.path, page.path)
+                        is Listing.Pdf -> imageCache.pdfPage(route.sourceKey, route.path, page.path) { target ->
+                            checkNotNull(pdf) { "PDF closed" }.render(index, target)
+                        }
+                    }
+                }
                     .onSuccess { file -> images.update { it + (page.path to PageImage.Ready(file)) } }
                     .onFailure { e ->
                         Log.w(TAG, "cannot read ${page.path} of ${route.path}", e)
-                        images.update { it + (page.path to PageImage.Failed(UserError.fromArchive(e))) }
+                        images.update { it + (page.path to PageImage.Failed(e.toUserError())) }
                     }
-                lastRead = archive.entries[index].index
+                if (book is Listing.Archive) lastRead = book.entries[index].index
             }
         }
     }
 
     private fun Throwable.toUserError() = when (route) {
-        is ImageViewerRoute.Folder -> UserError.from(this)
+        is ImageViewerRoute.Folder, is ImageViewerRoute.Pdf -> UserError.from(this)
         is ImageViewerRoute.Archive -> UserError.fromArchive(this)
     }
 
@@ -293,7 +338,10 @@ class ImageViewerViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         // Copies from locked folders live only while their viewer is open.
-        appScope.launch { imageCache.forgetLocked() }
+        appScope.launch {
+            pdf?.close()
+            imageCache.forgetLocked()
+        }
     }
 
     private companion object {

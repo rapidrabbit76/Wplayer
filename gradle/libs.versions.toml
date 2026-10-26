@@ -27,6 +27,8 @@ profileinstaller = "1.4.1"
 aboutlibraries = "15.3.0"
 coil = "3.6.3"
 telephoto = "0.19.0"
+readium = "3.4.0"
+desugar-jdk-libs = "2.1.5"
 uiautomator = "2.4.0"
 
 [libraries]
@@ -77,6 +79,11 @@ aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3",
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 telephoto-zoomable-image-coil3 = { module = "me.saket.telephoto:zoomable-image-coil3", version.ref = "telephoto" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
+readium-shared = { module = "org.readium.kotlin-toolkit:readium-shared", version.ref = "readium" }
+readium-streamer = { module = "org.readium.kotlin-toolkit:readium-streamer", version.ref = "readium" }
+readium-navigator-web-reflowable = { module = "org.readium.kotlin-toolkit:readium-navigator-web-reflowable", version.ref = "readium" }
+readium-navigator-web-fixedlayout = { module = "org.readium.kotlin-toolkit:readium-navigator-web-fixedlayout", version.ref = "readium" }
 benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }

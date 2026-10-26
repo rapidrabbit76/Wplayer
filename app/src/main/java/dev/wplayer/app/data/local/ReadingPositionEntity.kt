@@ -6,14 +6,14 @@ import androidx.room.Query
 import androidx.room.Upsert
 
 /**
- * The page a comic archive was left on, opened there next time. Kept apart
+ * Where a comic archive, PDF or EPUB was left, opened there next time. Kept apart
  * from playback positions, which hold seconds and feed continue watching.
  */
 @Entity(tableName = "reading_positions", primaryKeys = ["mediaKey"])
 data class ReadingPositionEntity(
-    /** The archive's source key and path. */
+    /** The book's source key and path. */
     val mediaKey: String,
-    /** The page's path inside the archive. */
+    /** The page's path inside the archive or PDF; for an EPUB, a Readium locator as JSON. */
     val pagePath: String,
     val updatedAtMillis: Long,
 )

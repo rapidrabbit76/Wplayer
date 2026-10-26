@@ -271,6 +271,8 @@ data class PictureSettings(
     val slideshowSeconds: Int = 3,
     /** For pictures in archives; a folder's pictures always go left to right. Right to left suits Japanese manga. */
     val comicDirection: ComicDirection = ComicDirection.RIGHT_TO_LEFT,
+    /** Text size in the EPUB reader, 1.0 being the book's own. */
+    val bookFontScale: Double = 1.0,
 )
 
 /** How the app looks for new versions (see UpdateRepository). */

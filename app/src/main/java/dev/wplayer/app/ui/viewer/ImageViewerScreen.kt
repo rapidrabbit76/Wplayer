@@ -139,14 +139,16 @@ internal fun ImageViewerContent(state: ImageViewerUiState, actions: ImageViewerA
                         state.hiddenByLock -> LockedFolderMessage(onOpen = actions::unlock)
                         state.error != null -> CenteredMessage(
                             text = stringResource(R.string.browser_error, state.error.message()),
-                            // Trying an encrypted or unreadable archive again would only fail again.
-                            action = if (state.error.reason == UserError.Reason.UNSUPPORTED_ARCHIVE) {
+                            action = if (state.error.reason.isPermanent) {
                                 null
                             } else {
                                 { Button(onClick = actions::reload) { Text(stringResource(R.string.action_retry)) } }
                             },
                         )
-                        state.pages == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        state.pages == null -> when (val fraction = state.openingProgress) {
+                            null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                            else -> CircularProgressIndicator(progress = { fraction }, modifier = Modifier.align(Alignment.Center))
+                        }
                         state.book != null -> CenteredMessage(stringResource(R.string.image_viewer_archive_empty))
                         else -> CenteredMessage(stringResource(R.string.image_viewer_empty))
                     }
@@ -394,7 +396,7 @@ private fun LightSystemBarIcons() {
 
 /** Hides the status and navigation bars while [hidden]; a swipe from the edge shows them for a moment. */
 @Composable
-private fun HideSystemBars(hidden: Boolean) {
+internal fun HideSystemBars(hidden: Boolean) {
     val window = LocalActivity.current?.window ?: return
     val view = LocalView.current
     DisposableEffect(window, view, hidden) {

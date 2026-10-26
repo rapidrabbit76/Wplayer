@@ -1,9 +1,11 @@
 package dev.wplayer.app.data
 
+import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MediaEntryTest {
@@ -44,6 +46,18 @@ class MediaEntryTest {
             assertFalse(name, entry.isPlayable)
         }
         assertEquals(MediaKind.OTHER, MediaEntry.kindOf("a.tar", isDirectory = false))
+    }
+
+    @Test
+    fun `PDF and EPUB files are books the browser shows without the other-files setting`() {
+        assertEquals(MediaKind.PDF, MediaEntry.kindOf("Manual.PDF", isDirectory = false))
+        assertEquals(MediaKind.EPUB, MediaEntry.kindOf("소설.epub", isDirectory = false))
+        listOf("Manual.PDF", "소설.epub").forEach { name ->
+            val entry = MediaEntry(name, "/$name", MediaEntry.kindOf(name, isDirectory = false), size = 1, modifiedAtMillis = null)
+            assertTrue(name, entry.isShown(BrowserSettings(showOtherFiles = false)))
+            assertTrue(name, entry.kind.isViewed)
+            assertFalse(name, entry.isPlayable)
+        }
     }
 
     @Test

@@ -4,6 +4,7 @@ import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.SortField
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ImagePagesTest {
@@ -51,5 +52,27 @@ class ImagePagesTest {
     fun `a lock on another source leaves the pictures alone`() {
         val elsewhere = LockState(setOf(FolderKey("other", "/photos")), unlocked = false)
         assertEquals(3, imagePages("nas", folder, BrowserSettings(), elsewhere).size)
+    }
+
+    @Test
+    fun `a PDF's pages are named by their number`() {
+        assertEquals(listOf(ImagePage("1", "1.png"), ImagePage("2", "2.png")), pdfPages(2))
+    }
+
+    @Test
+    fun `the PDF page on screen is drawn first, then the nearest, later ones before earlier ones`() {
+        assertEquals(4, nextPdfPage(setOf(2, 4, 5, 6), current = 4))
+        assertEquals(5, nextPdfPage(setOf(3, 5, 6), current = 4))
+        assertEquals(2, nextPdfPage(setOf(2, 7), current = 4))
+        assertEquals(null, nextPdfPage(emptySet(), current = 4))
+    }
+
+    @Test
+    fun `PDF pages are drawn sharp but never huge`() {
+        // A4 in points: about 2375 x 3361, under eight million pixels.
+        val (w, h) = renderSize(595, 842)
+        assertTrue(w * h <= 8_000_000 && w > 2_300 && h > 3_300)
+        // A long strip is held to 4096 pixels on its long side.
+        assertEquals(4096, renderSize(100, 20_000).second)
     }
 }

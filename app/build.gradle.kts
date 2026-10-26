@@ -108,6 +108,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Readium's navigators are built with library desugaring and refuse apps without it.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     // English by default (values/), Korean in values-ko/; the generated locale config
@@ -127,6 +129,8 @@ android {
     lint {
         warningsAsErrors = true
         abortOnError = true
+        // Readium brings Timber along, whose check would have the app log through Timber too.
+        disable += "LogNotTimber"
     }
 
     testOptions {
@@ -315,6 +319,11 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.telephoto.zoomable.image.coil3)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.readium.shared)
+    implementation(libs.readium.streamer)
+    implementation(libs.readium.navigator.web.reflowable)
+    implementation(libs.readium.navigator.web.fixedlayout)
     baselineProfile(project(":baselineprofile"))
 
     testImplementation(libs.junit)

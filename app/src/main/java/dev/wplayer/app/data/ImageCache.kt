@@ -29,9 +29,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Pictures as local files for the image viewer. Device storage is read where
- * it is; files from network sources, and pages taken out of archives on any
- * source, are copied into the app cache, which keeps the most recently viewed
+ * Pictures and books as local files for the image viewer and the reader.
+ * Device storage is read where it is; files from network sources, pages taken
+ * out of archives and pages drawn from PDFs are kept in the app cache, which keeps the most recently viewed
  * up to [MAX_CACHE_BYTES]. Copies from locked folders
  * go to a folder of their own, emptied when the viewer closes and whenever the
  * folders lock again, so they never stay in the cache.
@@ -83,6 +83,18 @@ class ImageCache @Inject constructor(
             val partial = File(target.path + PARTIAL_SUFFIX)
             partial.writeBytes(bytes)
             if (!partial.renameTo(target)) throw IOException("cannot keep page $entryPath of $archivePath")
+        }
+
+    /**
+     * Page [pagePath] of the PDF at [pdfPath] of [sourceKey] as a local
+     * picture, drawn first by [render] if needed.
+     */
+    suspend fun pdfPage(sourceKey: String, pdfPath: String, pagePath: String, render: suspend (File) -> Unit): File =
+        cached(sourceKey, pdfPath, cacheName("$sourceKey\u0000$pdfPath\u0000$pagePath", pagePath)) { target ->
+            target.parentFile?.mkdirs()
+            val partial = File(target.path + PARTIAL_SUFFIX)
+            render(partial)
+            if (!partial.renameTo(target)) throw IOException("cannot keep page $pagePath of $pdfPath")
         }
 
     /**

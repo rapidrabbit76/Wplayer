@@ -4,6 +4,7 @@ import dev.wplayer.app.data.model.BrowserSettings
 import dev.wplayer.app.data.model.MediaEntry
 import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.core.ffi.ArchiveEntry
+import kotlin.math.abs
 
 /**
  * One picture of the image viewer. [path] is unique among the viewer's pages:
@@ -22,6 +23,16 @@ fun imagePages(sourceKey: String, entries: List<MediaEntry>, settings: BrowserSe
 
 /** The pictures of an archive, in the page order of [entries]. */
 fun archivePages(entries: List<ArchiveEntry>): List<ImagePage> = entries.map { ImagePage(it.path.substringAfterLast('/'), it.path) }
+
+/** The pages of a PDF of [pageCount] pages, named by their number. */
+fun pdfPages(pageCount: Int): List<ImagePage> = (1..pageCount).map { ImagePage("$it", "$it.png") }
+
+/**
+ * Which of the [wanted] pages of a PDF to draw next: the nearest to the
+ * [current] one, the later one when two are as near.
+ */
+fun nextPdfPage(wanted: Set<Int>, current: Int): Int? =
+    wanted.minWithOrNull(compareBy({ abs(it - current) }, { it < current }))
 
 /**
  * Which of the [wanted] pages (indexes into [entries]) to take out of the
