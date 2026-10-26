@@ -5,7 +5,7 @@ use std::time::UNIX_EPOCH;
 
 use async_trait::async_trait;
 
-use super::{Entry, RandomReader, Vfs, path};
+use super::{Entry, RandomReader, Vfs, path, refuse_root};
 use crate::error::{CoreError, CoreResult};
 
 /// Device storage rooted at an absolute directory (e.g. `/storage/emulated/0`).
@@ -75,6 +75,15 @@ impl Vfs for LocalVfs {
             .await
             .map_err(|e| CoreError::from_io(e, &normalized))
     }
+
+    async fn delete_folder(&self, path: &str) -> CoreResult<()> {
+        let (normalized, full) = self.resolve(path)?;
+        refuse_root(&normalized)?;
+        // Removes a linked folder's link, not what it points to.
+        tokio::fs::remove_dir_all(&full)
+            .await
+            .map_err(|e| CoreError::from_io(e, &normalized))
+    }
 }
 
 struct LocalReader {
@@ -133,6 +142,26 @@ mod tests {
         ));
         assert!(vfs.delete("/영화").await.is_err());
         assert!(dir.path().join("영화").is_dir());
+    }
+
+    #[tokio::test]
+    async fn deletes_folders_with_everything_inside() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("영화/Season 1/자막")).unwrap();
+        std::fs::write(dir.path().join("영화/Season 1/e01.mkv"), b"0").unwrap();
+        std::fs::write(dir.path().join("영화/Season 1/자막/e01.srt"), b"0").unwrap();
+        std::fs::write(dir.path().join("영화/a.mkv"), b"0").unwrap();
+
+        let vfs = LocalVfs::new(dir.path().to_str().unwrap()).unwrap();
+        assert!(vfs.delete_folder("/영화/a.mkv").await.is_err());
+        assert!(vfs.delete_folder("/").await.is_err());
+        vfs.delete_folder("/영화/Season 1").await.unwrap();
+        let left = vfs.list("/영화").await.unwrap();
+        assert_eq!(left.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), ["a.mkv"]);
+        assert!(matches!(
+            vfs.delete_folder("/영화/Season 1").await,
+            Err(CoreError::NotFound { .. })
+        ));
     }
 
     #[test]

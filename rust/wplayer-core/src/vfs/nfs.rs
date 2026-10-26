@@ -11,8 +11,8 @@ use std::time::Duration;
 use async_trait::async_trait;
 use nfs3_client::net::Connector;
 use nfs3_client::nfs3_types::nfs3::{
-    GETATTR3args, LOOKUP3args, Nfs3Option, Nfs3Result, READ3args, READDIRPLUS3args, REMOVE3args, cookieverf3,
-    diropargs3, fattr3, filename3, ftype3, nfs_fh3, nfsstat3,
+    GETATTR3args, LOOKUP3args, Nfs3Option, Nfs3Result, READ3args, READDIRPLUS3args, REMOVE3args, RMDIR3args,
+    cookieverf3, diropargs3, fattr3, filename3, ftype3, nfs_fh3, nfsstat3,
 };
 use nfs3_client::nfs3_types::rpc::{auth_unix, opaque_auth};
 use nfs3_client::nfs3_types::xdr_codec::Opaque;
@@ -21,7 +21,7 @@ use nfs3_client::{Nfs3Connection, Nfs3ConnectionBuilder};
 use tokio::sync::Mutex;
 
 use super::chunked::ChunkedReader;
-use super::{Entry, RandomReader, SourceConfig, Vfs, path};
+use super::{Entry, RandomReader, SourceConfig, Vfs, delete_files_under, path, refuse_root};
 use crate::error::{CoreError, CoreResult};
 use crate::runtime;
 
@@ -89,6 +89,38 @@ impl Shared {
             Nfs3Result::Ok(ok) => Ok((handle, ok.obj_attributes)),
             Nfs3Result::Err((status, _)) => Err(status_error(status, path)),
         }
+    }
+
+    /// Removes a file with REMOVE, or an empty folder with RMDIR when `folder` is set.
+    async fn remove(&self, path: &str, folder: bool) -> CoreResult<()> {
+        let (parent, name) = path.rsplit_once('/').ok_or_else(|| CoreError::InvalidArgument {
+            detail: format!("not inside the export: {path}"),
+        })?;
+        // Some servers answer REMOVE on an empty folder by removing it, so look first.
+        if (self.attributes(path).await?.1.type_ == ftype3::NF3DIR) != folder {
+            return Err(CoreError::InvalidArgument {
+                detail: format!("not a {}: {path}", if folder { "folder" } else { "file" }),
+            });
+        }
+        let object = diropargs3 {
+            dir: self.resolve(if parent.is_empty() { "/" } else { parent }).await?,
+            name: filename3(Opaque::owned(name.as_bytes().to_vec())),
+        };
+        let mut connection = self.connection.lock().await;
+        let status = if folder {
+            match connection.rmdir(&RMDIR3args { object }).await.map_err(rpc_error)? {
+                Nfs3Result::Ok(_) => None,
+                Nfs3Result::Err((status, _)) => Some(status),
+            }
+        } else {
+            match connection.remove(&REMOVE3args { object }).await.map_err(rpc_error)? {
+                Nfs3Result::Ok(_) => None,
+                Nfs3Result::Err((status, _)) => Some(status),
+            }
+        };
+        drop(connection);
+        self.handles.lock().await.remove(path);
+        status.map_or(Ok(()), |status| Err(status_error(status, path)))
     }
 
     /// Walks `path` from the export root with LOOKUP, caching every handle found.
@@ -198,39 +230,16 @@ impl Vfs for NfsVfs {
     }
 
     async fn delete(&self, path: &str) -> CoreResult<()> {
-        let file_path = path::normalize(path)?;
-        let (parent, name) = file_path.rsplit_once('/').ok_or_else(|| CoreError::InvalidArgument {
-            detail: format!("not a file: {file_path}"),
-        })?;
-        // Some servers answer REMOVE on an empty folder by removing it, so look first.
-        if self.shared.attributes(&file_path).await?.1.type_ == ftype3::NF3DIR {
-            return Err(CoreError::InvalidArgument {
-                detail: format!("not a file: {file_path}"),
-            });
+        self.shared.remove(&path::normalize(path)?, false).await
+    }
+
+    async fn delete_folder(&self, path: &str) -> CoreResult<()> {
+        let folder = path::normalize(path)?;
+        refuse_root(&folder)?;
+        for dir in delete_files_under(self, &folder).await? {
+            self.shared.remove(&dir, true).await?;
         }
-        let dir = self
-            .shared
-            .resolve(if parent.is_empty() { "/" } else { parent })
-            .await?;
-        let args = REMOVE3args {
-            object: diropargs3 {
-                dir,
-                name: filename3(Opaque::owned(name.as_bytes().to_vec())),
-            },
-        };
-        let reply = self
-            .shared
-            .connection
-            .lock()
-            .await
-            .remove(&args)
-            .await
-            .map_err(rpc_error)?;
-        self.shared.handles.lock().await.remove(&file_path);
-        match reply {
-            Nfs3Result::Ok(_) => Ok(()),
-            Nfs3Result::Err((status, _)) => Err(status_error(status, &file_path)),
-        }
+        Ok(())
     }
 }
 

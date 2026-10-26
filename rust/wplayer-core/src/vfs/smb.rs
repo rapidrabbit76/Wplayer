@@ -15,7 +15,7 @@ use smb::{
 };
 
 use super::chunked::ChunkedReader;
-use super::{Entry, RandomReader, SourceConfig, Vfs, path, srvsvc};
+use super::{Entry, RandomReader, SourceConfig, Vfs, delete_files_under, path, refuse_root, srvsvc};
 use crate::error::{CoreError, CoreResult};
 use crate::runtime;
 
@@ -196,26 +196,21 @@ impl Vfs for SmbVfs {
     }
 
     async fn delete(&self, path: &str) -> CoreResult<()> {
-        let file_path = path::normalize(path)?;
-        bounded("delete", async {
-            let access = FileAccessMask::new().with_generic_read(true).with_delete(true);
-            let file = match self.open_resource(&file_path, access).await? {
-                Resource::File(file) => file,
-                _ => {
-                    return Err(CoreError::InvalidArgument {
-                        detail: format!("not a file: {file_path}"),
-                    });
-                }
-            };
-            // The server removes the file once the handle marked for deletion closes.
-            let marked = file
-                .set_info(FileDispositionInformation::default())
-                .await
-                .map_err(map_error);
-            let closed = file.close().await.map_err(map_error);
-            marked.and(closed)
-        })
-        .await
+        self.delete_resource(&path::normalize(path)?, false).await
+    }
+
+    async fn delete_folder(&self, path: &str) -> CoreResult<()> {
+        let folder = path::normalize(path)?;
+        refuse_root(&folder)?;
+        if self.locate(&folder).is_none_or(|(_, inner)| inner.is_empty()) {
+            return Err(CoreError::InvalidArgument {
+                detail: format!("a share cannot be deleted: {folder}"),
+            });
+        }
+        for dir in delete_files_under(self, &folder).await? {
+            self.delete_resource(&dir, true).await?;
+        }
+        Ok(())
     }
 }
 
@@ -224,6 +219,31 @@ fn read_access() -> FileAccessMask {
 }
 
 impl SmbVfs {
+    /// Deletes a file, or an empty folder when `folder` is set; refuses the other kind.
+    async fn delete_resource(&self, path: &str, folder: bool) -> CoreResult<()> {
+        bounded("delete", async {
+            let access = FileAccessMask::new().with_generic_read(true).with_delete(true);
+            let resource = self.open_resource(path, access).await?;
+            let handle = match (&resource, folder) {
+                (Resource::File(file), false) => &**file,
+                (Resource::Directory(directory), true) => &**directory,
+                _ => {
+                    return Err(CoreError::InvalidArgument {
+                        detail: format!("not a {}: {path}", if folder { "folder" } else { "file" }),
+                    });
+                }
+            };
+            // The server removes it once the handle marked for deletion closes.
+            let marked = handle
+                .set_info(FileDispositionInformation::default())
+                .await
+                .map_err(map_error);
+            let closed = handle.close().await.map_err(map_error);
+            marked.and(closed)
+        })
+        .await
+    }
+
     /// The longest READ the server accepts, as it said when the connection was
     /// negotiated. Servers reject a longer one instead of shortening it.
     async fn max_read(&self) -> usize {

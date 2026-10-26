@@ -253,17 +253,20 @@ class BrowserViewModel @AssistedInject constructor(
 
     suspend fun thumbnail(entry: MediaEntry): Bitmap? = thumbnails.thumbnail(entry.toRef())
 
-    /** Deletes [entry]'s file from the source, and where it was left off. */
+    /** Deletes [entry] from the source, a folder with everything in it, and where its files were left off. */
     fun delete(entry: MediaEntry) {
         viewModelScope.launch {
-            catchingFailures { browserRepository.delete(route.sourceKey, entry.path) }
+            catchingFailures { browserRepository.delete(route.sourceKey, entry) }
                 .onSuccess {
                     listing.update { state -> state.copy(entries = state.entries.filterNot { it.path == entry.path }) }
                     history.forget(entry.toRef())
+                    if (entry.kind == MediaKind.DIRECTORY) locks.forgetFolder(route.sourceKey, entry.path)
                     message.value = UserMessage.FILE_DELETED
                 }
                 .onFailure { e ->
                     Log.w(TAG, "cannot delete ${entry.path}", e)
+                    // A folder may be half deleted by then; show what is left.
+                    if (entry.kind == MediaKind.DIRECTORY) refresh()
                     message.value = when (UserError.from(e).reason) {
                         UserError.Reason.PERMISSION, UserError.Reason.AUTHENTICATION -> UserMessage.DELETE_NOT_ALLOWED
                         else -> UserMessage.DELETE_FAILED
@@ -307,6 +310,10 @@ class BrowserViewModel @AssistedInject constructor(
             message.value = UserMessage.FOLDER_LOCKED
         }
     }
+
+    /** Deleting a locked folder, or one holding a locked folder, needs the device's authentication first. */
+    fun deleteNeedsUnlock(entry: MediaEntry): Boolean =
+        entry.kind == MediaKind.DIRECTORY && locks.state.value.holdsLock(route.sourceKey, entry.path)
 
     /** Call after the device authenticated the user. */
     fun removeLock(entry: MediaEntry) {

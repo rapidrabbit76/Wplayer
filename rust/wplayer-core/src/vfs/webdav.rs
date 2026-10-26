@@ -10,7 +10,7 @@ use quick_xml::events::Event;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_TYPE, RANGE};
 use reqwest::{Client, Method, RequestBuilder, Response, StatusCode};
 
-use super::{Entry, RandomReader, SourceConfig, Vfs, path, tls};
+use super::{Entry, RandomReader, SourceConfig, Vfs, path, refuse_root, tls};
 use crate::error::{CoreError, CoreResult};
 use crate::runtime;
 
@@ -169,18 +169,33 @@ impl Vfs for WebDavVfs {
     }
 
     async fn delete(&self, path: &str) -> CoreResult<()> {
-        let relative = path::normalize(path)?;
-        let server_path = self.server_path(&relative);
-        // DELETE on a collection removes the whole folder, so check what the path is first.
-        if self
-            .propfind(&server_path, "0", &relative)
+        self.delete_item(&path::normalize(path)?, false).await
+    }
+
+    async fn delete_folder(&self, path: &str) -> CoreResult<()> {
+        let folder = path::normalize(path)?;
+        refuse_root(&folder)?;
+        self.delete_item(&folder, true).await
+    }
+}
+
+impl WebDavVfs {
+    /// DELETE removes a collection with everything in it, so check the path is
+    /// the kind asked for first.
+    async fn delete_item(&self, relative: &str, folder: bool) -> CoreResult<()> {
+        let mut server_path = self.server_path(relative);
+        let is_collection = self
+            .propfind(&server_path, "0", relative)
             .await?
             .iter()
-            .any(|item| item.is_collection)
-        {
+            .any(|item| item.is_collection);
+        if is_collection != folder {
             return Err(CoreError::InvalidArgument {
-                detail: format!("not a file: {relative}"),
+                detail: format!("not a {}: {relative}", if folder { "folder" } else { "file" }),
             });
+        }
+        if folder && !server_path.ends_with('/') {
+            server_path.push('/');
         }
         let response = self
             .request(Method::DELETE, &server_path)
@@ -189,10 +204,10 @@ impl Vfs for WebDavVfs {
             .map_err(map_reqwest)?;
         match response.status() {
             // 401 is a wrong password; 403 and 405 mean the account or server does not allow deleting.
-            StatusCode::FORBIDDEN | StatusCode::METHOD_NOT_ALLOWED => {
-                Err(CoreError::PermissionDenied { path: relative })
-            }
-            _ => check_status(response, &relative).await.map(drop),
+            StatusCode::FORBIDDEN | StatusCode::METHOD_NOT_ALLOWED => Err(CoreError::PermissionDenied {
+                path: relative.to_owned(),
+            }),
+            _ => check_status(response, relative).await.map(drop),
         }
     }
 }

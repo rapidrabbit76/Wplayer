@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::error::CoreResult;
+use crate::error::{CoreError, CoreResult};
 
 pub use local::LocalVfs;
 
@@ -64,6 +64,37 @@ pub trait Vfs: Send + Sync {
 
     /// Deletes a file. Folders are refused.
     async fn delete(&self, path: &str) -> CoreResult<()>;
+
+    /// Deletes a folder and everything in it. Files and the source root are refused.
+    async fn delete_folder(&self, path: &str) -> CoreResult<()>;
+}
+
+/// Deletes every file under `folder` and returns the folders found, deepest
+/// first, for the caller to remove with its protocol's own command.
+async fn delete_files_under(vfs: &dyn Vfs, folder: &str) -> CoreResult<Vec<String>> {
+    let mut pending = vec![folder.to_owned()];
+    let mut folders = Vec::new();
+    while let Some(dir) = pending.pop() {
+        for entry in vfs.list(&dir).await? {
+            if entry.is_dir {
+                pending.push(entry.path);
+            } else {
+                vfs.delete(&entry.path).await?;
+            }
+        }
+        folders.push(dir);
+    }
+    folders.reverse();
+    Ok(folders)
+}
+
+fn refuse_root(folder: &str) -> CoreResult<()> {
+    if folder == "/" {
+        return Err(CoreError::InvalidArgument {
+            detail: "the source root cannot be deleted".into(),
+        });
+    }
+    Ok(())
 }
 
 /// Blocking random-access reader backing a libmpv stream.

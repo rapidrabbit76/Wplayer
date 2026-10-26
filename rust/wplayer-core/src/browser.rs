@@ -16,3 +16,10 @@ pub async fn delete_file(source_id: String, path: String) -> CoreResult<()> {
     let vfs = source::get(&source_id)?;
     runtime::spawn(async move { vfs.delete(&path).await }).await?
 }
+
+/// Deletes a folder of a registered source with everything in it. Files and the source root are refused.
+#[uniffi::export]
+pub async fn delete_folder(source_id: String, path: String) -> CoreResult<()> {
+    let vfs = source::get(&source_id)?;
+    runtime::spawn(async move { vfs.delete_folder(&path).await }).await?
+}

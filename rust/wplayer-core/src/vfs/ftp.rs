@@ -18,7 +18,7 @@ use suppaftp::{
 };
 
 use super::chunked::ChunkedReader;
-use super::{Entry, RandomReader, SourceConfig, Vfs, path, tls};
+use super::{Entry, RandomReader, SourceConfig, Vfs, delete_files_under, path, refuse_root, tls};
 use crate::error::{CoreError, CoreResult};
 
 const DEFAULT_PORT: u16 = 21;
@@ -90,12 +90,15 @@ impl FtpVfs {
             .collect())
     }
 
-    fn delete_blocking(&self, path: &str) -> CoreResult<()> {
+    /// Deletes a file with DELE, or an empty folder with RMD when `folder` is set.
+    fn delete_blocking(&self, path: &str, folder: bool) -> CoreResult<()> {
         let (relative, remote) = self.remote_path(path)?;
         self.with_names_retry(&remote, || {
-            self.on_control(&relative, |connection| match connection {
-                Connection::Plain(s) => s.rm(&remote),
-                Connection::Secure(s) => s.rm(&remote),
+            self.on_control(&relative, |connection| match (connection, folder) {
+                (Connection::Plain(s), false) => s.rm(&remote),
+                (Connection::Secure(s), false) => s.rm(&remote),
+                (Connection::Plain(s), true) => s.rmdir(&remote),
+                (Connection::Secure(s), true) => s.rmdir(&remote),
             })
         })
     }
@@ -134,7 +137,16 @@ impl Vfs for FtpVfs {
     }
 
     async fn delete(&self, path: &str) -> CoreResult<()> {
-        tokio::task::block_in_place(|| self.delete_blocking(path))
+        tokio::task::block_in_place(|| self.delete_blocking(path, false))
+    }
+
+    async fn delete_folder(&self, path: &str) -> CoreResult<()> {
+        let folder = path::normalize(path)?;
+        refuse_root(&folder)?;
+        for dir in delete_files_under(self, &folder).await? {
+            tokio::task::block_in_place(|| self.delete_blocking(&dir, true))?;
+        }
+        Ok(())
     }
 }
 

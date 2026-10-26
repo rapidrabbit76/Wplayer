@@ -9,6 +9,7 @@ import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.di.IoDispatcher
 import dev.wplayer.core.ffi.ArchiveEntry
 import dev.wplayer.core.ffi.deleteFile
+import dev.wplayer.core.ffi.deleteFolder
 import dev.wplayer.core.ffi.listArchiveImages
 import dev.wplayer.core.ffi.listDirectory
 import dev.wplayer.core.ffi.mediaUri
@@ -118,9 +119,15 @@ class BrowserRepository @Inject constructor(
             recordInIndex(sourceKey, path, entries)
         }
 
-    /** Deletes the file at [path] from its source, and from this session's listing and the search index. */
-    suspend fun delete(sourceKey: String, path: String) {
-        sources.withConnection(sourceKey) { deleteFile(sourceKey, path) }
+    /**
+     * Deletes [entry] from its source, a folder with everything in it, and
+     * from this session's listing and the search index.
+     */
+    suspend fun delete(sourceKey: String, entry: MediaEntry) {
+        val path = entry.path
+        sources.withConnection(sourceKey) {
+            if (entry.kind == MediaKind.DIRECTORY) deleteFolder(sourceKey, path) else deleteFile(sourceKey, path)
+        }
         val folderKey = listingKey(sourceKey, folderOf(path))
         listings.get(folderKey)?.let { entries -> listings.put(folderKey, entries.filterNot { it.path == path }) }
         index.forget(sourceKey, path)

@@ -80,7 +80,8 @@ fn exercise(config: SourceConfig) {
 /// is NotFound and that a folder is refused.
 fn exercise_delete(config: SourceConfig) {
     let share = std::path::PathBuf::from(std::env::var("WPLAYER_TEST_SHARE").expect("WPLAYER_TEST_SHARE"));
-    let name = format!("다 본 영화 #{:?}.mkv", config.protocol);
+    let config_protocol = config.protocol;
+    let name = format!("다 본 영화 #{config_protocol:?}.mkv");
     let local = share.join("영화").join(&name);
     std::fs::write(&local, b"watched").unwrap();
 
@@ -91,6 +92,14 @@ fn exercise_delete(config: SourceConfig) {
     let delete = |path: String| {
         let vfs = Arc::clone(&vfs);
         runtime.block_on(async { tokio::spawn(async move { vfs.delete(&path).await }).await.unwrap() })
+    };
+    let delete_folder = |path: String| {
+        let vfs = Arc::clone(&vfs);
+        runtime.block_on(async {
+            tokio::spawn(async move { vfs.delete_folder(&path).await })
+                .await
+                .unwrap()
+        })
     };
 
     delete(format!("/영화/{name}")).unwrap();
@@ -104,26 +113,41 @@ fn exercise_delete(config: SourceConfig) {
     );
     assert!(delete("/영화/Season 2".to_owned()).is_err(), "a folder was deleted");
     assert!(share.join("영화/Season 2").is_dir());
+
+    let season = format!("다 본 시즌 #{:?}", config_protocol);
+    let local = share.join("영화").join(&season);
+    std::fs::create_dir_all(local.join("자막/빈 폴더")).unwrap();
+    std::fs::write(local.join("e01.mkv"), b"watched").unwrap();
+    std::fs::write(local.join("자막/e01.srt"), b"watched").unwrap();
+    assert!(
+        delete_folder(format!("/영화/{season}/e01.mkv")).is_err(),
+        "a file was deleted as a folder"
+    );
+    assert!(local.join("e01.mkv").exists());
+    assert!(delete_folder("/".to_owned()).is_err(), "the source root was deleted");
+    delete_folder(format!("/영화/{season}")).unwrap();
+    assert!(!local.exists(), "{season} still on the server");
+    assert!(share.join("영화/Season 2").is_dir());
     runtime.block_on(async move { drop(vfs) });
 }
 
 #[test]
 #[ignore = "needs WPLAYER_TEST_FTP and WPLAYER_TEST_SHARE"]
-fn ftp_deletes_files_only() {
+fn ftp_deletes_files_and_folders() {
     let address = std::env::var("WPLAYER_TEST_FTP").expect("WPLAYER_TEST_FTP");
     exercise_delete(config(Protocol::Ftp, &address, Some("tester"), Some("secret")));
 }
 
 #[test]
 #[ignore = "needs WPLAYER_TEST_WEBDAV and WPLAYER_TEST_SHARE"]
-fn webdav_deletes_files_only() {
+fn webdav_deletes_files_and_folders() {
     let address = std::env::var("WPLAYER_TEST_WEBDAV").expect("WPLAYER_TEST_WEBDAV");
     exercise_delete(config(Protocol::WebDav, &address, None, None));
 }
 
 #[test]
 #[ignore = "needs WPLAYER_TEST_SMB and WPLAYER_TEST_SHARE"]
-fn smb_deletes_files_only() {
+fn smb_deletes_files_and_folders() {
     let address = std::env::var("WPLAYER_TEST_SMB").expect("WPLAYER_TEST_SMB");
     let mut config = config(Protocol::Smb, &address, Some("tester"), Some("secret"));
     config.root_path = "/share".to_owned();
@@ -132,7 +156,7 @@ fn smb_deletes_files_only() {
 
 #[test]
 #[ignore = "needs WPLAYER_TEST_NFS and WPLAYER_TEST_SHARE"]
-fn nfs_deletes_files_only() {
+fn nfs_deletes_files_and_folders() {
     let address = std::env::var("WPLAYER_TEST_NFS").expect("WPLAYER_TEST_NFS");
     let mut config = config(Protocol::Nfs, &address, None, None);
     config.root_path = "/export".to_owned();

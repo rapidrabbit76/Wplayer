@@ -45,7 +45,8 @@ class SearchIndex @Inject constructor(private val dao: SearchIndexDao) {
     }
 
     /** Drops one file, deleted from its source, so searches stop finding it. */
-    suspend fun forget(sourceKey: String, path: String) = dao.deleteEntry(sourceKey, path)
+    /** Drops the file or folder at [path], with everything below a folder. */
+    suspend fun forget(sourceKey: String, path: String) = dao.deleteTree(sourceKey, path)
 
     suspend fun forgetSource(sourceKey: String) = dao.deleteSource(sourceKey)
 

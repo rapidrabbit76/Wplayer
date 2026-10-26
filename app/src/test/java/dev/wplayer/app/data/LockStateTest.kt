@@ -27,4 +27,14 @@ class LockStateTest {
         assertFalse(open.isHidden("server", "/Private/a.mkv"))
         assertTrue(open.isLocked("server", "/Private/a.mkv"))
     }
+
+    @Test
+    fun aFolderHoldsALockWhenItOrAFolderBelowItIsLocked() {
+        val nested = LockState(folders = setOf(FolderKey("server", "/Video/Private")))
+        assertTrue(nested.holdsLock("server", "/Video"))
+        assertTrue(nested.holdsLock("server", "/Video/Private"))
+        assertFalse(nested.holdsLock("server", "/Video/Private/Trips"))
+        assertFalse(nested.holdsLock("server", "/Vid"))
+        assertFalse(nested.holdsLock("other", "/Video"))
+    }
 }

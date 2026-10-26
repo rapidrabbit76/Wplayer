@@ -72,6 +72,21 @@ class SearchIndexTest {
     }
 
     @Test
+    fun aDeletedFolderIsNoLongerFoundNorAnythingBelowIt() = runTest {
+        index.record(SOURCE, "/", listOf(dir("/a_b"), dir("/axb"), dir("/a_b 2")))
+        index.record(SOURCE, "/a_b", listOf(dir("/a_b/deep"), file("/a_b/x.mkv")))
+        index.record(SOURCE, "/a_b/deep", listOf(file("/a_b/deep/y.mkv")))
+        index.record(SOURCE, "/axb", listOf(file("/axb/z.mkv")))
+        index.record(SOURCE, "/a_b 2", listOf(file("/a_b 2/w.mkv")))
+
+        index.forget(SOURCE, "/a_b")
+
+        assertEquals(listOf("/a_b 2/w.mkv", "/axb/z.mkv"), names("/", ".mkv").sorted())
+        assertEquals(listOf("/a_b 2"), names("/", "a_b"))
+        assertNull(index.freshSubfolders(SOURCE, "/a_b/deep", maxAgeMillis = Long.MAX_VALUE))
+    }
+
+    @Test
     fun recentListingsAreReusedOlderOnesAreNot() = runTest {
         index.record(SOURCE, "/", listOf(dir("/a"), file("/b.mkv")), nowMillis = 1_000)
         assertEquals(listOf("/a"), index.freshSubfolders(SOURCE, "/", maxAgeMillis = 500, nowMillis = 1_400))
