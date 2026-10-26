@@ -8,8 +8,18 @@ enum class MediaKind {
 
     /** Zip, 7z and RAR archives, opened as books of the pictures inside. */
     ARCHIVE,
+
+    /** PDF documents, opened like archives as books of their pages. */
+    PDF,
+
+    /** EPUB books, opened in the reader. */
+    EPUB,
     SUBTITLE,
     OTHER,
+    ;
+
+    /** Opens in the image viewer or the reader rather than the player, so playlists cannot hold it. */
+    val isViewed: Boolean get() = this == IMAGE || this == ARCHIVE || this == PDF || this == EPUB
 }
 
 data class MediaEntry(
@@ -49,6 +59,8 @@ data class MediaEntry(
                 in AUDIO -> MediaKind.AUDIO
                 in IMAGE -> MediaKind.IMAGE
                 in ARCHIVE -> MediaKind.ARCHIVE
+                "pdf" -> MediaKind.PDF
+                "epub" -> MediaKind.EPUB
                 in SUBTITLE -> MediaKind.SUBTITLE
                 else -> MediaKind.OTHER
             }

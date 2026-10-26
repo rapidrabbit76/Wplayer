@@ -85,6 +85,7 @@ import dev.wplayer.app.ui.navigation.DownloadsRoute
 import dev.wplayer.app.ui.navigation.ImageViewerRoute
 import dev.wplayer.app.ui.navigation.LibraryRoute
 import dev.wplayer.app.ui.navigation.PlaylistRoute
+import dev.wplayer.app.ui.navigation.ReaderRoute
 import dev.wplayer.app.ui.navigation.RecentRoute
 import dev.wplayer.app.ui.navigation.SettingsCategoryRoute
 import dev.wplayer.app.ui.navigation.SettingsRoute
@@ -96,6 +97,8 @@ import dev.wplayer.app.ui.settings.SettingsScreen
 import dev.wplayer.app.ui.sources.SourceEditorScreen
 import dev.wplayer.app.ui.sources.SourceEditorViewModel
 import dev.wplayer.app.ui.sources.SourcesScreen
+import dev.wplayer.app.ui.reader.ReaderScreen
+import dev.wplayer.app.ui.reader.ReaderViewModel
 import dev.wplayer.app.ui.viewer.ImageViewerScreen
 import dev.wplayer.app.ui.viewer.ImageViewerViewModel
 
@@ -134,13 +137,15 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
     // phones the standard short bar (icon above label). The image viewer covers the whole screen.
     val television = isTelevision()
     val wide = windowWidth >= WIDE_BAR_MIN_WIDTH
-    val fullScreen = backStack.lastOrNull() is ImageViewerRoute
-    // Pictures and archives open in the viewer, in this tab; everything else plays in the player.
+    val fullScreen = backStack.lastOrNull().let { it is ImageViewerRoute || it is ReaderRoute }
+    // Pictures, archives and PDFs open in the viewer, EPUBs in the reader, in this tab; everything else plays in the player.
     val openMedia: (PlaybackRequest) -> Unit = { request ->
         val viewer = (request as? PlaybackRequest.FromSource)?.let { file ->
             when (MediaEntry.kindOf(file.path, isDirectory = false)) {
                 MediaKind.IMAGE -> ImageViewerRoute.Folder(file.sourceKey, file.path)
                 MediaKind.ARCHIVE -> ImageViewerRoute.Archive(file.sourceKey, file.path)
+                MediaKind.PDF -> ImageViewerRoute.Pdf(file.sourceKey, file.path)
+                MediaKind.EPUB -> ReaderRoute(file.sourceKey, file.path)
                 else -> null
             }
         }
@@ -217,6 +222,13 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                     }
                     entry<ImageViewerRoute.Folder> { route -> ImageViewer(route, onBack = { backStack.removeLastOrNull() }) }
                     entry<ImageViewerRoute.Archive> { route -> ImageViewer(route, onBack = { backStack.removeLastOrNull() }) }
+                    entry<ImageViewerRoute.Pdf> { route -> ImageViewer(route, onBack = { backStack.removeLastOrNull() }) }
+                    entry<ReaderRoute> { route ->
+                        ReaderScreen(
+                            viewModel = hiltViewModel<ReaderViewModel, ReaderViewModel.Factory>(creationCallback = { it.create(route) }),
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
                     entry<LibraryRoute> {
                         LibraryScreen(
                             onOpenRecent = { backStack.add(RecentRoute) },

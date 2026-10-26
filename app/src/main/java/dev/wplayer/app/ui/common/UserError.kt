@@ -3,6 +3,7 @@ package dev.wplayer.app.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.wplayer.app.R
+import dev.wplayer.app.data.UnreadableDocumentException
 import dev.wplayer.core.ffi.CoreException
 import java.io.FileNotFoundException
 import kotlin.coroutines.cancellation.CancellationException
@@ -18,7 +19,14 @@ data class UserError(val reason: Reason, val detail: String? = null) {
 
         /** An encrypted archive, a solid RAR4 one, or a page too large to take out. */
         UNSUPPORTED_ARCHIVE,
+
+        /** A password-protected or damaged document. */
+        UNREADABLE_DOCUMENT,
         OTHER,
+        ;
+
+        /** Trying again would only fail again. */
+        val isPermanent: Boolean get() = this == UNSUPPORTED_ARCHIVE || this == UNREADABLE_DOCUMENT
     }
 
     companion object {
@@ -28,6 +36,7 @@ data class UserError(val reason: Reason, val detail: String? = null) {
             is CoreException.PermissionDenied, is SecurityException -> UserError(Reason.PERMISSION)
             is CoreException.Connection -> UserError(Reason.CONNECTION, error.detail)
             is CoreException.Unsupported -> UserError(Reason.UNSUPPORTED, error.detail)
+            is UnreadableDocumentException -> UserError(Reason.UNREADABLE_DOCUMENT)
             else -> UserError(Reason.OTHER, error.message)
         }
 
@@ -46,6 +55,7 @@ fun UserError.message(): String {
         UserError.Reason.CONNECTION -> stringResource(R.string.error_connection)
         UserError.Reason.UNSUPPORTED -> stringResource(R.string.error_unsupported)
         UserError.Reason.UNSUPPORTED_ARCHIVE -> stringResource(R.string.error_unsupported_archive)
+        UserError.Reason.UNREADABLE_DOCUMENT -> stringResource(R.string.error_unreadable_document)
         UserError.Reason.OTHER -> stringResource(R.string.error_other)
     }
     return detail?.let { "$text ($it)" } ?: text

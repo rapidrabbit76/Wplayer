@@ -22,11 +22,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -299,6 +301,8 @@ val MediaKind.icon: ImageVector
         MediaKind.AUDIO -> Icons.Outlined.MusicNote
         MediaKind.IMAGE -> Icons.Outlined.Image
         MediaKind.ARCHIVE -> Icons.AutoMirrored.Outlined.MenuBook
+        MediaKind.PDF -> Icons.Outlined.PictureAsPdf
+        MediaKind.EPUB -> Icons.Outlined.AutoStories
         else -> Icons.Outlined.Movie
     }
 

@@ -435,5 +435,9 @@
     <string name="comic_direction_right_to_left">오른쪽에서 왼쪽</string>
     <string name="comic_direction_left_to_right">왼쪽에서 오른쪽</string>
     <string name="image_viewer_archive_empty">이 압축 파일에는 그림이 없습니다</string>
+    <string name="reader_contents">목차</string>
+    <string name="reader_text_smaller">글자 작게</string>
+    <string name="reader_text_larger">글자 크게</string>
+    <string name="error_unreadable_document">암호가 걸렸거나 손상된 문서는 열 수 없습니다.</string>
     <string name="error_unsupported_archive">암호가 걸린 압축 파일, 솔리드 RAR4 압축 파일, 64MB가 넘는 그림은 열 수 없습니다.</string>
 </resources>

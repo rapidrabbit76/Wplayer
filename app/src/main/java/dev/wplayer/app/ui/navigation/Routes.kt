@@ -12,7 +12,7 @@ data object SourcesRoute : NavKey
 @Serializable
 data class BrowserRoute(val sourceKey: String, val path: String = "/", val focusPath: String? = null) : NavKey
 
-/** The image viewer, paging through a folder's pictures or the pictures inside an archive. */
+/** The image viewer, paging through a folder's pictures, the pictures inside an archive or the pages of a PDF. */
 @Serializable
 sealed interface ImageViewerRoute : NavKey {
     val sourceKey: String
@@ -29,7 +29,15 @@ sealed interface ImageViewerRoute : NavKey {
     /** The pictures inside the archive at [path], opened on the page it was left on. */
     @Serializable
     data class Archive(override val sourceKey: String, override val path: String) : ImageViewerRoute
+
+    /** The pages of the PDF at [path], opened on the page it was left on. */
+    @Serializable
+    data class Pdf(override val sourceKey: String, override val path: String) : ImageViewerRoute
 }
+
+/** The EPUB reader, opened on the place the book at [path] was left at. */
+@Serializable
+data class ReaderRoute(val sourceKey: String, val path: String) : NavKey
 
 /** Adds a source, or edits the one with [sourceKey]. */
 @Serializable

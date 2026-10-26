@@ -168,8 +168,8 @@ fun RecentScreen(
                     progress = state.progress[ref.mediaKey],
                     actions = buildList {
                         add(RowAction(showInFolder) { onShowInFolder(ref) })
-                        // Comic archives open in the viewer, which playlists do not reach.
-                        if (ref.kind != MediaKind.ARCHIVE) add(RowAction(addLabel) { addingToPlaylist = ref })
+                        // Comic archives and books open in the viewer, which playlists do not reach.
+                        if (!ref.kind.isViewed) add(RowAction(addLabel) { addingToPlaylist = ref })
                         add(RowAction(forgetLabel) { viewModel.forget(ref) })
                     },
                     onClick = { onPlay(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name)) },
