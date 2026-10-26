@@ -8,9 +8,11 @@ import dev.wplayer.app.data.local.RecentMediaDao
 import dev.wplayer.app.data.local.RecentMediaEntity
 import dev.wplayer.app.data.local.SubtitleChoiceDao
 import dev.wplayer.app.data.local.SubtitleChoiceEntity
+import dev.wplayer.app.data.local.escapeLike
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.RecentMedia
 import dev.wplayer.app.data.model.WatchProgress
+import dev.wplayer.app.data.model.mediaKey
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -66,11 +68,18 @@ class PlaybackHistoryRepository @Inject constructor(
         recents.trim(RECENT_LIMIT)
     }
 
-    /** Forgets where [ref] was left and removes it from the recent list. */
+    /** Forgets where [ref] was left and removes it from the recent list; for a folder, every file below it too. */
     suspend fun forget(ref: MediaRef) {
         positions.delete(ref.mediaKey)
         readingPositions.delete(ref.mediaKey)
         recents.delete(ref.sourceKey, ref.path)
+        if (ref.isDirectory) {
+            val folder = ref.path.trimEnd('/')
+            val keysBelow = escapeLike(mediaKey(ref.sourceKey, folder)) + "/%"
+            positions.deleteLike(keysBelow)
+            readingPositions.deleteLike(keysBelow)
+            recents.deleteLike(ref.sourceKey, escapeLike(folder) + "/%")
+        }
     }
 
     /** The subtitle path picked by hand for [mediaKey], in the same source. */

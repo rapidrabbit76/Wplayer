@@ -221,7 +221,11 @@ fun BrowserScreen(
                 add(RowAction(downloadLabel) { startDownload(entry) })
             }
             if (entry.path in state.progress) add(RowAction(forgetLabel) { viewModel.forgetHistory(entry) })
-            if (entry.kind != MediaKind.DIRECTORY) add(RowAction(deleteLabel) { deleting = entry })
+            add(
+                RowAction(deleteLabel) {
+                    if (viewModel.deleteNeedsUnlock(entry)) auth.authenticate(deleteLabel) { deleting = entry } else deleting = entry
+                },
+            )
             if (entry.kind == MediaKind.DIRECTORY) {
                 if (entry.path in state.lockedFolders) {
                     add(RowAction(unlockFolderTitle) { auth.authenticate(unlockFolderTitle) { viewModel.removeLock(entry) } })
@@ -290,7 +294,10 @@ fun BrowserScreen(
 
     deleting?.let { entry ->
         ConfirmDialog(
-            text = stringResource(R.string.browser_delete_confirm, entry.name),
+            text = stringResource(
+                if (entry.kind == MediaKind.DIRECTORY) R.string.browser_delete_folder_confirm else R.string.browser_delete_confirm,
+                entry.name,
+            ),
             onConfirm = {
                 viewModel.delete(entry)
                 deleting = null

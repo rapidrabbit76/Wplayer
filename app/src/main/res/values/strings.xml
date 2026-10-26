@@ -133,6 +133,7 @@
     <string name="browser_folders_first">Folders first</string>
     <string name="browser_forget_history">Clear playback history</string>
     <string name="browser_delete_confirm">Delete “%1$s”? This cannot be undone.</string>
+    <string name="browser_delete_folder_confirm">Delete the folder “%1$s” and everything in it? This cannot be undone.</string>
     <string name="sort_name">Name</string>
     <string name="sort_extension">Extension</string>
     <string name="sort_date">Date</string>
@@ -348,8 +349,8 @@
     <string name="download_notification_running">Downloading</string>
     <string name="message_download_started">Download started</string>
     <string name="message_file_deleted">Deleted</string>
-    <string name="message_delete_not_allowed">This source does not let you delete files</string>
-    <string name="message_delete_failed">Could not delete the file</string>
+    <string name="message_delete_not_allowed">This source does not let you delete</string>
+    <string name="message_delete_failed">Could not delete it</string>
     <string name="downloads_title">Downloads</string>
     <string name="downloads_empty">Long-press a file in a network library entry to download it.\nFiles are saved to the %1$s folder and can be found in Internal storage.</string>
     <string name="downloads_clear_finished">Clear finished</string>

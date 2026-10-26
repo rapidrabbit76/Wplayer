@@ -80,8 +80,18 @@ abstract class SearchIndexDao {
         upsertFolder(IndexedFolderEntity(sourceKey, folder, listedAtMillis))
     }
 
+    /** Removes the entry at [path] and, for a folder, everything indexed below it. */
+    @Transaction
+    open suspend fun deleteTree(sourceKey: String, path: String) {
+        val below = escapeLike(path.trimEnd('/')) + "/%"
+        deleteEntry(sourceKey, path)
+        deleteEntriesLike(sourceKey, below)
+        deleteFoldersLike(sourceKey, below)
+        deleteFolder(sourceKey, path)
+    }
+
     @Query("DELETE FROM search_index WHERE sourceKey = :sourceKey AND path = :path")
-    abstract suspend fun deleteEntry(sourceKey: String, path: String)
+    protected abstract suspend fun deleteEntry(sourceKey: String, path: String)
 
     @Query("DELETE FROM search_index WHERE sourceKey = :sourceKey AND parentPath = :folder")
     protected abstract suspend fun deleteChildren(sourceKey: String, folder: String)

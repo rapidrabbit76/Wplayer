@@ -26,6 +26,9 @@ interface PlaybackPositionDao {
     @Query("DELETE FROM playback_positions WHERE mediaKey = :mediaKey")
     suspend fun delete(mediaKey: String)
 
+    @Query("DELETE FROM playback_positions WHERE mediaKey LIKE :pattern ESCAPE '\\'")
+    suspend fun deleteLike(pattern: String)
+
     @Query("DELETE FROM playback_positions")
     suspend fun clear()
 

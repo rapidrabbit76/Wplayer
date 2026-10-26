@@ -29,6 +29,9 @@ interface ReadingPositionDao {
     @Query("DELETE FROM reading_positions WHERE mediaKey = :mediaKey")
     suspend fun delete(mediaKey: String)
 
+    @Query("DELETE FROM reading_positions WHERE mediaKey LIKE :pattern ESCAPE '\\'")
+    suspend fun deleteLike(pattern: String)
+
     @Query("DELETE FROM reading_positions")
     suspend fun clear()
 

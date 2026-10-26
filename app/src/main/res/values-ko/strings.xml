@@ -129,6 +129,7 @@
     <string name="browser_folders_first">폴더 먼저</string>
     <string name="browser_forget_history">재생 기록 지우기</string>
     <string name="browser_delete_confirm">\u201c%1$s\u201d 파일을 삭제할까요? 되돌릴 수 없습니다.</string>
+    <string name="browser_delete_folder_confirm">\u201c%1$s\u201d 폴더와 그 안의 파일을 모두 삭제할까요? 되돌릴 수 없습니다.</string>
     <string name="sort_name">이름</string>
     <string name="sort_extension">확장자</string>
     <string name="sort_date">날짜</string>
@@ -343,8 +344,8 @@
     <string name="download_notification_running">다운로드 중</string>
     <string name="message_download_started">다운로드를 시작했습니다</string>
     <string name="message_file_deleted">삭제했습니다</string>
-    <string name="message_delete_not_allowed">이 소스에서는 파일을 삭제할 권한이 없습니다</string>
-    <string name="message_delete_failed">파일을 삭제하지 못했습니다</string>
+    <string name="message_delete_not_allowed">이 소스에서는 삭제할 권한이 없습니다</string>
+    <string name="message_delete_failed">삭제하지 못했습니다</string>
     <string name="downloads_title">다운로드</string>
     <string name="downloads_empty">네트워크 보관함에서 파일을 길게 눌러 다운로드하세요.\n%1$s 폴더에 저장되어 내부 저장소에서 볼 수 있습니다.</string>
     <string name="downloads_clear_finished">완료 항목 지우기</string>

@@ -134,6 +134,9 @@ interface RecentMediaDao {
     @Query("DELETE FROM recent_media WHERE sourceKey = :sourceKey AND path = :path")
     suspend fun delete(sourceKey: String, path: String)
 
+    @Query("DELETE FROM recent_media WHERE sourceKey = :sourceKey AND path LIKE :pathPattern ESCAPE '\\'")
+    suspend fun deleteLike(sourceKey: String, pathPattern: String)
+
     @Query("DELETE FROM recent_media")
     suspend fun clear()
 }
