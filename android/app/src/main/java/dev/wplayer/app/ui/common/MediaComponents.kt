@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
@@ -303,6 +304,7 @@ val MediaKind.icon: ImageVector
         MediaKind.ARCHIVE -> Icons.AutoMirrored.Outlined.MenuBook
         MediaKind.PDF -> Icons.Outlined.PictureAsPdf
         MediaKind.EPUB -> Icons.Outlined.AutoStories
+        MediaKind.LINK -> Icons.Outlined.Link
         else -> Icons.Outlined.Movie
     }
 

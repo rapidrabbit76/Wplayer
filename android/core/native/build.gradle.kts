@@ -79,6 +79,18 @@ abstract class CargoNdkTask @Inject constructor(private val exec: ExecOperations
                     // ARMv8.2 dot-product and fp16 kernels: every 64-bit Snapdragon since 2019 has them.
                     environment("GGML_CPU_ARM_ARCH", "armv8.2-a+dotprod+fp16")
                 }
+                // bindgen (rquickjs-sys) parses the NDK headers only with the API level in the
+                // target triple. cargo-ndk sets the underscore form of this variable to the bare
+                // sysroot; bindgen reads the hyphen form first, so it carries both.
+                val (rustTriple, clangTriple) = when (abi) {
+                    "arm64-v8a" -> "aarch64-linux-android" to "aarch64-linux-android"
+                    "armeabi-v7a" -> "armv7-linux-androideabi" to "armv7a-linux-androideabi"
+                    else -> error("no Rust target for $abi")
+                }
+                // The NDK ships x86_64 host tools on every OS, Apple silicon included.
+                val hostTag = if (System.getProperty("os.name").startsWith("Mac")) "darwin-x86_64" else "linux-x86_64"
+                val sysroot = ndkDirectory.get().asFile.resolve("toolchains/llvm/prebuilt/$hostTag/sysroot")
+                environment("BINDGEN_EXTRA_CLANG_ARGS_$rustTriple", "--target=$clangTriple${minSdk.get()} --sysroot=$sysroot")
                 commandLine(
                     cargo.get(), "ndk", "-t", abi,
                     "-P", minSdk.get().toString(),

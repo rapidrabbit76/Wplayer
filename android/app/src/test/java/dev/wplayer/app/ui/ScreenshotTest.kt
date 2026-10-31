@@ -390,6 +390,7 @@ class ScreenshotTest {
         onOpenRecent = {},
         onOpenPlaylist = {},
         onCreatePlaylist = {},
+        onOpenLink = {},
     )
 
     @Composable

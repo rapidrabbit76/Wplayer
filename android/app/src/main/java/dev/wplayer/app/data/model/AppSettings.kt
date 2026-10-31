@@ -283,6 +283,20 @@ data class UpdateSettings(
     val lastCheckedAtMillis: Long = 0,
 )
 
+/** Link plugins (see LinkPluginRepository) and how links play. */
+@Serializable
+data class LinkSettings(
+    /** Where the plugin index (`index.json`) is read from; empty until the user sets one. */
+    val indexUrl: String = "",
+    /** Once a day at start-up, install newer versions of the installed plugins. */
+    val autoUpdate: Boolean = true,
+    /** Installed plugins the user switched off, by id. */
+    val disabledPlugins: Set<String> = emptySet(),
+    /** The tallest stream picked when a link offers several; null takes the plugin's first. */
+    val maxHeight: Int? = null,
+    val lastCheckedAtMillis: Long = 0,
+)
+
 /**
  * whisper.cpp models offered for AI subtitles, from the whisper.cpp model
  * repository on Hugging Face. [sha256] checks the download.
@@ -316,4 +330,5 @@ data class AppSettings(
     val gestures: GestureSettings = GestureSettings(),
     val transcription: TranscriptionSettings = TranscriptionSettings(),
     val update: UpdateSettings = UpdateSettings(),
+    val links: LinkSettings = LinkSettings(),
 )

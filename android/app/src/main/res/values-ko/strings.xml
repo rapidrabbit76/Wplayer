@@ -440,4 +440,36 @@
     <string name="reader_text_larger">글자 크게</string>
     <string name="error_unreadable_document">암호가 걸렸거나 손상된 문서는 열 수 없습니다.</string>
     <string name="error_unsupported_archive">암호가 걸린 압축 파일, 솔리드 RAR4 압축 파일, 64MB가 넘는 그림은 열 수 없습니다.</string>
+
+    <!-- 링크와 링크 플러그인 -->
+    <string name="settings_links">링크</string>
+    <string name="settings_links_summary">링크 플러그인, 화질</string>
+    <string name="links_index_url">플러그인 목록 주소</string>
+    <string name="links_index_url_hint">플러그인이 나열된 index.json의 주소입니다. 플러그인은 자기가 맡은 페이지만 읽습니다.</string>
+    <string name="links_auto_update">플러그인 자동 업데이트</string>
+    <string name="links_auto_update_hint">앱을 시작할 때 하루에 한 번 확인합니다. 새 플러그인은 직접 설치할 때만 설치됩니다.</string>
+    <string name="links_max_height">최대 화질</string>
+    <string name="links_highest">최고</string>
+    <string name="links_lines">%1$dp</string>
+    <string name="links_check">지금 확인</string>
+    <string name="links_checked">플러그인 목록을 읽었습니다</string>
+    <string name="links_no_index">플러그인 목록 주소를 넣으면 설치할 수 있는 플러그인이 보입니다.</string>
+    <string name="links_install_file">파일에서 설치</string>
+    <string name="links_no_picker">이 기기에는 파일 선택기가 없습니다.</string>
+    <string name="links_installed_notice">%1$s %2$s 설치함</string>
+    <string name="links_install_failed">설치하지 못했습니다: %1$s</string>
+    <string name="links_installed">설치된 플러그인</string>
+    <string name="links_none_installed">설치된 플러그인이 없습니다</string>
+    <string name="links_available">설치할 수 있는 플러그인</string>
+    <string name="links_version">버전 %1$s</string>
+    <string name="links_update">%1$s(으)로 업데이트</string>
+    <string name="links_update_needs_newer_app">버전 %1$s은 새 버전의 Wplayer가 필요합니다</string>
+    <string name="links_install">설치</string>
+    <string name="links_needs_newer_app">새 버전의 Wplayer 필요</string>
+    <string name="links_remove_confirm">%1$s을(를) 삭제할까요?</string>
+    <string name="link_open">링크 열기</string>
+    <string name="link_address">웹 주소</string>
+    <string name="link_play">재생</string>
+    <string name="link_source">링크</string>
+    <string name="error_plugin">링크 플러그인이 이 페이지를 읽지 못했습니다.</string>
 </resources>

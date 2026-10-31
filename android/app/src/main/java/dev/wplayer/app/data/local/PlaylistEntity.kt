@@ -82,6 +82,10 @@ interface PlaylistDao {
     @Insert
     suspend fun insertItems(items: List<PlaylistItemEntity>)
 
+    /** Names the items of [sourceKey] and [path] that are still named by their path; other names stay. */
+    @Query("UPDATE playlist_items SET name = :name WHERE sourceKey = :sourceKey AND path = :path AND name = path")
+    suspend fun nameUnnamed(sourceKey: String, path: String, name: String)
+
     @Query("DELETE FROM playlist_items WHERE id = :itemId")
     suspend fun deleteItem(itemId: Long)
 

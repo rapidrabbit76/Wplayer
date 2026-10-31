@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
+import dev.wplayer.app.data.model.MediaKind
 import dev.wplayer.app.data.model.MediaRef
 import dev.wplayer.app.data.model.Source
 import dev.wplayer.app.data.model.SourceProtocol
@@ -67,6 +68,7 @@ import dev.wplayer.app.ui.common.SectionHeader
 import dev.wplayer.app.ui.common.Thumbnail
 import dev.wplayer.app.ui.player.PlaybackRequest
 import dev.wplayer.app.ui.player.formatTime
+import dev.wplayer.app.ui.player.toPlaybackRequest
 
 /** The first tab: unfinished videos to continue, then the sources as cards. */
 @Composable
@@ -86,7 +88,7 @@ fun SourcesScreen(
         onOpenSource = onOpenSource,
         onAddSource = onAddSource,
         onEditSource = onEditSource,
-        onResume = { ref -> onPlay(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name)) },
+        onResume = { ref -> onPlay(ref.toPlaybackRequest()) },
         loadThumbnail = viewModel::thumbnail,
         continueActions = object : ContinueWatchingActions {
             override fun onShowInFolder(ref: MediaRef) = onShowInFolder(ref)
@@ -150,8 +152,9 @@ internal fun SourcesContent(
                                 onClick = { onResume(item.ref) },
                                 loadThumbnail = loadThumbnail,
                                 menu = continueActions?.let { actions ->
-                                    listOf(
-                                        RowAction(stringResource(R.string.show_in_folder)) { actions.onShowInFolder(item.ref) },
+                                    listOfNotNull(
+                                        RowAction(stringResource(R.string.show_in_folder)) { actions.onShowInFolder(item.ref) }
+                                            .takeIf { item.ref.kind != MediaKind.LINK },
                                         RowAction(stringResource(R.string.continue_forget)) { actions.onForget(item.ref) },
                                         RowAction(stringResource(R.string.continue_clear_all)) { confirmingClear = true },
                                         RowAction(stringResource(R.string.continue_hide)) { actions.onHide() },
@@ -246,7 +249,9 @@ private fun ContinueCard(
                 ),
         ) {
             Box {
-                Thumbnail(kind, loadThumbnail?.let { load -> { load(item.ref) } }, Modifier.fillMaxWidth().aspectRatio(16f / 9f), iconSize = 40.dp)
+                // A link is no file the thumbnailer could open.
+                val load = loadThumbnail?.takeIf { kind != MediaKind.LINK }
+                Thumbnail(kind, load?.let { { it(item.ref) } }, Modifier.fillMaxWidth().aspectRatio(16f / 9f), iconSize = 40.dp)
                 LinearProgressIndicator(
                     progress = { item.progress.fraction },
                     modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),

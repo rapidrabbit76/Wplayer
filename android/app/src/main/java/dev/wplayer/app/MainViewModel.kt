@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.wplayer.app.data.SettingsRepository
+import dev.wplayer.app.data.link.LinkPluginRepository
 import dev.wplayer.app.data.model.AppearanceSettings
 import dev.wplayer.app.data.update.ReleaseManifest
 import dev.wplayer.app.data.update.UpdateRepository
@@ -26,6 +27,7 @@ data class ShellSettings(val appearance: AppearanceSettings, val columnView: Boo
 class MainViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
     private val updates: UpdateRepository,
+    linkPlugins: LinkPluginRepository,
 ) : ViewModel() {
     /** Set when the start-up check runs, so its result is offered once in a dialog. */
     private val offerUpdate = MutableStateFlow(false)
@@ -44,6 +46,7 @@ class MainViewModel @Inject constructor(
                 updates.check(onlyIfDue = true)
             }
         }
+        linkPlugins.updateIfDue()
     }
 
     fun installUpdate(release: ReleaseManifest) = updates.install(release)

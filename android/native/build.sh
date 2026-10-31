@@ -89,6 +89,7 @@ fetch_all() {
     fetch libass https://github.com/libass/libass.git "$LIBASS_VERSION"
     fetch libplacebo https://code.videolan.org/videolan/libplacebo.git "$LIBPLACEBO_VERSION" --recursive
     fetch mpv https://github.com/mpv-player/mpv.git "$MPV_VERSION"
+    fetch_tarball mbedtls "https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$MBEDTLS_VERSION/mbedtls-$MBEDTLS_VERSION.tar.bz2" "$MBEDTLS_SHA256"
     fetch_tarball xz "https://github.com/tukaani-project/xz/releases/download/v$XZ_VERSION/xz-$XZ_VERSION.tar.xz" "$XZ_SHA256"
     fetch_tarball libarchive "https://github.com/libarchive/libarchive/releases/download/v$LIBARCHIVE_VERSION/libarchive-$LIBARCHIVE_VERSION.tar.xz" "$LIBARCHIVE_SHA256"
 }
@@ -181,12 +182,20 @@ build_ffmpeg() {
             --enable-jni --enable-mediacodec \
             --enable-libdav1d \
             --enable-network \
+            --enable-version3 --enable-mbedtls \
             --disable-vulkan \
             --disable-encoders --enable-encoder=mjpeg,png \
             --disable-muxers
         make -j "$JOBS"
         make install >/dev/null
     )
+}
+
+# TLS for https links and HLS segments. FFmpeg takes mbedTLS only under (L)GPLv3,
+# which the GPL-3.0-or-later app already is. Linked statically into libavformat.
+build_mbedtls() {
+    cmake_build mbedtls -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DMBEDTLS_FATAL_WARNINGS=OFF \
+        -DUSE_SHARED_MBEDTLS_LIBRARY=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON
 }
 
 build_freetype() {
@@ -274,7 +283,7 @@ collect() {
     "$TOOLCHAIN/bin/llvm-readelf" -d "$OUT"/*.so | grep -E 'NEEDED|SONAME' | sort -u
 }
 
-COMPONENTS=(dav1d ffmpeg freetype fribidi harfbuzz libass libplacebo mpv xz libarchive)
+COMPONENTS=(dav1d mbedtls ffmpeg freetype fribidi harfbuzz libass libplacebo mpv xz libarchive)
 
 main() {
     if [[ "${1:-}" == clean ]]; then

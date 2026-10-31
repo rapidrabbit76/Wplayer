@@ -22,6 +22,9 @@ data class UserError(val reason: Reason, val detail: String? = null) {
 
         /** A password-protected or damaged document. */
         UNREADABLE_DOCUMENT,
+
+        /** A link plugin failed on the page; the site may have changed, or may answer next time. */
+        PLUGIN,
         OTHER,
         ;
 
@@ -36,6 +39,7 @@ data class UserError(val reason: Reason, val detail: String? = null) {
             is CoreException.PermissionDenied, is SecurityException -> UserError(Reason.PERMISSION)
             is CoreException.Connection -> UserError(Reason.CONNECTION, error.detail)
             is CoreException.Unsupported -> UserError(Reason.UNSUPPORTED, error.detail)
+            is CoreException.Plugin -> UserError(Reason.PLUGIN, error.detail)
             is UnreadableDocumentException -> UserError(Reason.UNREADABLE_DOCUMENT)
             else -> UserError(Reason.OTHER, error.message)
         }
@@ -56,6 +60,7 @@ fun UserError.message(): String {
         UserError.Reason.UNSUPPORTED -> stringResource(R.string.error_unsupported)
         UserError.Reason.UNSUPPORTED_ARCHIVE -> stringResource(R.string.error_unsupported_archive)
         UserError.Reason.UNREADABLE_DOCUMENT -> stringResource(R.string.error_unreadable_document)
+        UserError.Reason.PLUGIN -> stringResource(R.string.error_plugin)
         UserError.Reason.OTHER -> stringResource(R.string.error_other)
     }
     return detail?.let { "$text ($it)" } ?: text

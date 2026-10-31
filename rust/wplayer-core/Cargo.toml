@@ -23,8 +23,9 @@ libloading = "0.9.0"
 log = "0.4.34"
 nfs3_client = { version = "0.9", features = ["tokio"] }
 percent-encoding = "2.3.2"
+rquickjs = { version = "0.14", default-features = false, features = ["std"] }
 quick-xml = { version = "0.42.0", features = ["serialize"] }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "http2"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "http2", "cookies"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -38,6 +39,8 @@ whisper-rs = "0.16"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.15.1"
+# rquickjs ships no bindings for Android targets; generate them as whisper-rs-sys does.
+rquickjs = { version = "0.14", default-features = false, features = ["std", "bindgen"] }
 
 [dev-dependencies]
 tempfile = "3"

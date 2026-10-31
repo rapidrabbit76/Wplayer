@@ -19,6 +19,7 @@ import dev.wplayer.app.data.SettingsRepository
 import dev.wplayer.app.data.SourceRepository
 import dev.wplayer.app.data.SubtitleFontStore
 import dev.wplayer.app.data.folderOf
+import dev.wplayer.app.data.link.LinkResolver
 import dev.wplayer.app.data.model.AppSettings
 import dev.wplayer.app.data.model.MediaButtonAction
 import dev.wplayer.app.data.model.MediaEntry
@@ -125,6 +126,7 @@ class PlayerViewModel @Inject constructor(
     private val sessions: MediaSessionHolder,
     private val audioFocus: AudioFocusController,
     private val subtitleFontStore: SubtitleFontStore,
+    private val linkResolver: LinkResolver,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> =
@@ -187,7 +189,7 @@ class PlayerViewModel @Inject constructor(
     private val playback = slot.flatMapLatest { it?.engine?.state ?: flowOf(PlaybackState()) }
 
     val uiState: StateFlow<PlayerUiState> = combine(session, playback, slot, engineError, settings) { session, playback, slot, engineError, settings ->
-        val currentPath = (session.request as? PlaybackRequest.FromSource)?.path
+        val currentPath = session.request?.storedRef?.path
         val repeat = settings.playback.repeat
         PlayerUiState(
             title = session.request?.title.orEmpty(),
@@ -376,15 +378,9 @@ class PlayerViewModel @Inject constructor(
             val playbackSettings = savedSettings().playback
             setSpeed(if (playbackSettings.keepSpeed) playbackSettings.lastSpeed else 1.0, remember = false)
         }
-        if (newRequest is PlaybackRequest.FromSource) {
-            loadQueue(newRequest)
-            applicationScope.launch {
-                history.recordPlayed(MediaRef(newRequest.sourceKey, newRequest.path, newRequest.title, isDirectory = false))
-            }
-        } else {
-            session.update { it.copy(queue = emptyList()) }
-            if (newRequest is PlaybackRequest.FromUri) showDisplayName(newRequest)
-        }
+        loadQueue(newRequest)
+        newRequest.storedRef?.let { ref -> applicationScope.launch { history.recordPlayed(ref) } }
+        if (newRequest is PlaybackRequest.FromUri) showDisplayName(newRequest)
         load(current, newRequest)
     }
 
@@ -395,16 +391,45 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * A link's page title from its plugin replaces the address here, in the recent
+     * list, and in playlists that still show the address.
+     */
+    private fun showLinkTitle(request: PlaybackRequest.FromLink, title: String) {
+        if (title == request.title) return
+        val named = request.copy(title = title)
+        session.update { if (it.request == request) it.copy(request = named) else it }
+        named.storedRef?.let { ref ->
+            applicationScope.launch {
+                history.recordPlayed(ref)
+                playlistRepository.nameUnnamed(ref)
+            }
+        }
+    }
+
+    /** What the engine opens for [request], and the HTTP headers to open it with. */
+    private class OpenedMedia(val input: MediaInput, val headers: Map<String, String> = emptyMap())
+
+    private suspend fun mediaOf(request: PlaybackRequest): OpenedMedia = when (request) {
+        is PlaybackRequest.FromSource -> OpenedMedia(MediaInput.Location(browserRepository.playbackUri(request.sourceKey, request.path)))
+        is PlaybackRequest.FromUri -> OpenedMedia(externalUris.resolve(request.uri))
+        is PlaybackRequest.FromLink -> {
+            val link = linkResolver.resolve(request.url)
+            link.title?.let { showLinkTitle(request, it) }
+            OpenedMedia(MediaInput.Location(link.streamUrl), link.headers)
+        }
+    }
+
     private fun load(target: EngineSlot, request: PlaybackRequest, start: Double? = null) {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             catchingFailures {
                 val appSettings = savedSettings()
                 val from = start ?: startPosition(request, appSettings)
-                val media = when (request) {
-                    is PlaybackRequest.FromSource -> MediaInput.Location(browserRepository.playbackUri(request.sourceKey, request.path))
-                    is PlaybackRequest.FromUri -> externalUris.resolve(request.uri)
-                }
+                val opened = mediaOf(request)
+                val media = opened.input
+                // Set for every file, so one link's headers never reach the next file.
+                target.engine.setHttpHeaders(opened.headers)
                 previewUri = (media as? MediaInput.Location)?.uri?.takeIf { request.allowsSeekPreview }
                 // Local files are already on flash: copying them into the disk cache would only wear it.
                 val cache = if (request.isLocal) "no" else mpvEnvironment.options(appSettings).getValue("cache")
@@ -435,15 +460,23 @@ class PlayerViewModel @Inject constructor(
      */
     private suspend fun savedSettings(): AppSettings = settingsRepository.settings.first()
 
-    /** Previews open the file a second time, which a content URI's single file descriptor does not allow. */
+    /**
+     * Previews open the file a second time, which a content URI's single file descriptor
+     * does not allow, nor a link's stream, whose server may want the headers previews lack.
+     */
     private val PlaybackRequest.allowsSeekPreview: Boolean
-        get() = this !is PlaybackRequest.FromUri || uri.scheme == "http" || uri.scheme == "https"
+        get() = when (this) {
+            is PlaybackRequest.FromSource -> true
+            is PlaybackRequest.FromUri -> uri.scheme == "http" || uri.scheme == "https"
+            is PlaybackRequest.FromLink -> false
+        }
 
     /** Media on this device: device storage, or a file or content URI from another app. */
     private val PlaybackRequest.isLocal: Boolean
         get() = when (this) {
             is PlaybackRequest.FromSource -> sourceKey == SourceRepository.LOCAL_KEY
             is PlaybackRequest.FromUri -> uri.scheme != "http" && uri.scheme != "https"
+            is PlaybackRequest.FromLink -> false
         }
 
     /** Where to start [request], asking the user first when the settings say so. */
@@ -646,13 +679,14 @@ class PlayerViewModel @Inject constructor(
     }
 
     /** Loads the files around [request], in the browser's saved order, unless that list is already loaded. */
-    private fun loadQueue(request: PlaybackRequest.FromSource) {
+    private fun loadQueue(request: PlaybackRequest) {
         queueJob?.cancel()
         queueJob = viewModelScope.launch {
             val origin = QueueOrigin.of(request, savedSettings().browser)
             if (origin == queueOrigin) return@launch
             queueOrigin = null
             session.update { it.copy(queue = emptyList()) }
+            if (origin == null) return@launch
             catchingFailures {
                 when (origin) {
                     is QueueOrigin.Folder -> browserRepository.playableFiles(origin.sourceKey, origin.folder, origin.browser)
@@ -663,7 +697,7 @@ class PlayerViewModel @Inject constructor(
                     queueOrigin = origin
                     session.update { it.copy(queue = files) }
                 }
-                .onFailure { Log.w(TAG, "cannot list the files around ${request.path}", it) }
+                .onFailure { Log.w(TAG, "cannot list the files around ${request.mediaKey}", it) }
         }
     }
 
@@ -700,8 +734,12 @@ class PlayerViewModel @Inject constructor(
 
     /** Plays [ref] from the current queue. */
     fun play(ref: MediaRef) {
-        val request = session.value.request as? PlaybackRequest.FromSource ?: return
-        open(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name, request.queue))
+        val queue = when (val request = session.value.request) {
+            is PlaybackRequest.FromSource -> request.queue
+            is PlaybackRequest.FromLink -> request.playlist ?: return
+            is PlaybackRequest.FromUri, null -> return
+        }
+        open(ref.toPlaybackRequest(queue))
     }
 
     fun onSurfaceCreated(surface: Surface) {

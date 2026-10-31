@@ -84,4 +84,32 @@ class PlayerEntryTest {
             PlaybackRequest.from(delivered(Intent(Intent.ACTION_VIEW, Uri.parse("HTTPS://example.com/a.mp4")), entry)),
         )
     }
+
+    @Test
+    fun `a page shared as text opens as a link`() {
+        val share = Intent(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, "Watch this https://video.example.test/watch/42 now")
+        val entry = entryFor(share)
+
+        assertEquals(PlayerActivity::class.java.name, entry.targetActivity)
+        val link = "https://video.example.test/watch/42"
+        assertEquals(PlaybackRequest.FromLink(link, link), PlaybackRequest.from(delivered(share, entry)))
+        assertNull(PlaybackRequest.from(delivered(Intent(share).putExtra(Intent.EXTRA_TEXT, "no address"), entry)))
+    }
+
+    @Test
+    fun `the app's own link intent keeps its title and playlist`() {
+        val link = PlaybackRequest.FromLink("https://video.example.test/watch/42", "Clip", PlayQueue.Playlist(7))
+
+        assertEquals(link, PlaybackRequest.from(PlayerActivity.createIntent(app, link)))
+    }
+
+    @Test
+    fun `another app's link extras are ignored`() {
+        val share = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "nothing")
+        val entry = entryFor(share)
+        val forged = PlaybackRequest.FromLink("https://video.example.test/watch/1", "Clip").writeTo(Intent(share))
+
+        assertNull(PlaybackRequest.from(delivered(forged, entry)))
+    }
 }

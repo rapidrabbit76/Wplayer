@@ -5,6 +5,7 @@
 //! - `archive`: the images inside comic archives, read in place (UniFFI).
 //! - [`player`]: libmpv-backed playback control (UniFFI).
 //! - `transcription`: speech to subtitle lines with whisper.cpp (UniFFI).
+//! - `link`: link plugins, JavaScript that finds the streams on a web page (UniFFI).
 //! - `android`: raw JNI entry points that UniFFI cannot express (JavaVM, Surface).
 
 uniffi::setup_scaffolding!();
@@ -12,6 +13,7 @@ uniffi::setup_scaffolding!();
 mod archive;
 pub mod browser;
 mod error;
+pub mod link;
 mod logging;
 pub mod player;
 mod runtime;

@@ -10,7 +10,7 @@ mod nfs;
 pub mod path;
 mod smb;
 mod srvsvc;
-mod tls;
+pub(crate) mod tls;
 mod webdav;
 
 use std::sync::Arc;

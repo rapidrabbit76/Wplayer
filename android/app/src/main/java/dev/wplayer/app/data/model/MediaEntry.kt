@@ -16,6 +16,9 @@ enum class MediaKind {
     EPUB,
     SUBTITLE,
     OTHER,
+
+    /** A web page or stream address in a playlist or the recent list; never a file in a folder. */
+    LINK,
     ;
 
     /** Opens in the image viewer or the reader rather than the player, so playlists cannot hold it. */
