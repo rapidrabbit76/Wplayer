@@ -99,8 +99,10 @@ if [[ -n $last ]]; then
 else
     notes="First release."
 fi
+# The app shows latest.json's notes as plain text, so they go there without Markdown.
+app_notes=$(sed -e 's/^## //' -e 's/^- /• /' <<<"$notes")
 
-BADGING=$badging python3 - "$next" "$apk_name" "$(shasum -a 256 "$out" | cut -d' ' -f1)" "$notes" >build/release/latest.json <<'PY'
+BADGING=$badging python3 - "$next" "$apk_name" "$(shasum -a 256 "$out" | cut -d' ' -f1)" "$app_notes" >build/release/latest.json <<'PY'
 import json, os, re, sys
 name, apk, sha, notes = sys.argv[1:]
 code = int(re.search(r"\bversionCode='(\d+)'", os.environ["BADGING"]).group(1))
