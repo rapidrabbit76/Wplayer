@@ -32,11 +32,12 @@ plugins {
 }
 
 /**
- * The release key, from keystore.properties (not committed; keep a backup outside the repository).
+ * The release key, from keystore.properties at the repository root (not committed; keep a backup
+ * outside the repository).
  * Without it release builds use the debug key, and such an APK cannot update an
  * install signed with the release key.
  */
-val releaseSigning: Properties? = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { file ->
+val releaseSigning: Properties? = rootProject.file("../keystore.properties").takeIf { it.exists() }?.let { file ->
     Properties().apply { file.inputStream().use(::load) }
 }
 
@@ -247,7 +248,7 @@ abstract class LibraryDefinitionsTask @Inject constructor(private val exec: Exec
 }
 
 val libraryDefinitions = tasks.register<LibraryDefinitionsTask>("libraryDefinitions") {
-    val rustWorkspace = rootProject.layout.projectDirectory.dir("rust")
+    val rustWorkspace = rootProject.layout.projectDirectory.dir("../rust")
     staticDefinitions.set(layout.projectDirectory.dir("aboutlibraries"))
     nativeVersions.set(rootProject.layout.projectDirectory.file("native/versions.env"))
     cargoManifests.from(rustWorkspace.file("Cargo.lock"), rustWorkspace.asFileTree.matching { include("**/Cargo.toml"); exclude("target/**") })

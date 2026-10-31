@@ -59,14 +59,15 @@ The native libraries need `meson`, `ninja`, `cmake`, `nasm`, `pkg-config`, `git`
 On Ubuntu: `sudo apt-get install ninja-build nasm pkg-config cmake libclang-dev` and `pipx install meson`.
 
 ```sh
+cd android
 source ./env.sh
 native/build.sh
 ./gradlew :app:assembleDebug
 ```
 
-Set the SDK and JDK paths in `env.sh` to match your machine.
+Set the SDK and JDK paths in `android/env.sh` to match your machine.
 Gradle builds the Rust core and generates the Kotlin bindings.
-Native library versions are pinned in [`native/versions.env`](native/versions.env).
+Native library versions are pinned in [`android/native/versions.env`](android/native/versions.env).
 
 For release signing, put `storeFile`, `storePassword`, `keyAlias` and `keyPassword` in an untracked
 `keystore.properties` at the repository root. Without it, release builds use the debug key.

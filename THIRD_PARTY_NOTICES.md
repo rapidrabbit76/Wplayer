@@ -4,7 +4,7 @@ Wplayer is licensed under the GNU General Public License, version 3 or (at your 
 version; see [LICENSE](LICENSE). The APK contains the software below. Every license listed is
 compatible with GPL-3.0; the GPL is required because mpv is built with its GPL parts (`-Dgpl=true`).
 
-## Native libraries (built by native/build.sh)
+## Native libraries (built by android/native/build.sh)
 
 | Component | Version | License | Source |
 |---|---|---|---|
@@ -20,7 +20,7 @@ compatible with GPL-3.0; the GPL is required because mpv is built with its GPL p
 | liblzma from XZ Utils (linked into `libwplayer_core.so`) | 5.8.4 | 0BSD | https://tukaani.org/xz/ |
 | LLVM libc++ (`libc++_shared.so`, Android NDK) | NDK 30 | Apache-2.0 WITH LLVM-exception | https://github.com/llvm/llvm-project |
 
-## Video shaders (app/src/main/assets/shaders, unmodified)
+## Video shaders (android/app/src/main/assets/shaders, unmodified)
 
 | Component | License | Source |
 |---|---|---|

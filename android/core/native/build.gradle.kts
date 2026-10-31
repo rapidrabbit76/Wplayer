@@ -19,7 +19,8 @@ plugins {
 
 /** 64-bit ARM for phones and tablets; 32-bit ARM for TVs that run a 32-bit system on a 64-bit CPU. */
 val targetAbis = listOf("arm64-v8a", "armeabi-v7a")
-val rustWorkspace = rootProject.layout.projectDirectory.dir("rust")
+/** The Rust core, shared with the other platforms at the repository root. */
+val rustWorkspace = rootProject.layout.projectDirectory.dir("../rust")
 val rustSources = rustWorkspace.asFileTree.matching { exclude("target/**") }
 val mediaLibs = rootProject.layout.projectDirectory.dir("native/out/jniLibs").asFile
 val cargoExecutable = providers.gradleProperty("wplayer.cargo")

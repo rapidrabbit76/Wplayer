@@ -15,6 +15,7 @@ Never attach credentials, server addresses you would rather keep private, or per
 Follow [Build](README.md#build) in the README. In short:
 
 ```sh
+cd android
 source ./env.sh            # adjust for your machine, or set the variables yourself
 native/build.sh            # once; libmpv, FFmpeg and friends for both ABIs
 ./gradlew :app:assembleDebug
@@ -24,13 +25,16 @@ Before opening a pull request, run what CI runs:
 
 ```sh
 (cd rust && cargo fmt --check -p wplayer-core && cargo clippy -p wplayer-core --all-targets -- -D warnings && cargo test -p wplayer-core)
-./gradlew :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease
+(cd android && ./gradlew :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease)
 ```
 
-Lint warnings fail the build. Fix them; suppress one only in [`app/lint.xml`](app/lint.xml) with a comment saying why.
+Lint warnings fail the build. Fix them; suppress one only in [`android/app/lint.xml`](android/app/lint.xml) with a comment saying why.
 
 ## Code
 
+- **Layout**: a monorepo. `rust/` holds the core shared by every platform; `android/` is the Gradle project
+  (`app`, `core/native`, `baselineprofile`) with its libmpv build in `android/native/`. Paths below under `app/` and
+  `native/` are relative to `android/`.
 - **Architecture**: unidirectional data flow. ViewModels expose `StateFlow<UiState>`; composables render state and
   send events up. Data goes through repositories (Room, DataStore, the Rust core); dependencies come from Hilt.
 - **Rust core** (`rust/wplayer-core`): protocols, the libmpv bridge, thumbnails, downloads and speech
