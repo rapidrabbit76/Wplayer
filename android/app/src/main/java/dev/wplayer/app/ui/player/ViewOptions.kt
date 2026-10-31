@@ -36,3 +36,16 @@ enum class ScaleMode {
     /** Fills the screen keeping the aspect ratio; edges are cropped. */
     CROP,
 }
+
+/**
+ * The visible rows of the picture in a view [height] tall and [width] wide, as
+ * top until bottom. mpv places subtitles relative to the picture, so with black
+ * bars a subtitle sits above the view's bottom edge. [videoAspect] null means unknown.
+ */
+fun visibleVideoRows(width: Float, height: Float, videoAspect: Float?, scale: ScaleMode, zoom: Float): ClosedFloatingPointRange<Float> {
+    if (videoAspect == null || videoAspect <= 0f || width <= 0f || scale == ScaleMode.STRETCH) return 0f..height
+    val fitted = width / videoAspect
+    val pictureHeight = (if (scale == ScaleMode.FIT) minOf(height, fitted) else maxOf(height, fitted)) * zoom
+    val top = (height - pictureHeight) / 2
+    return top.coerceAtLeast(0f)..(top + pictureHeight).coerceAtMost(height)
+}

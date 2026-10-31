@@ -237,9 +237,18 @@ fun PlayerScreen(
 
             override fun isOnSubtitle(position: Offset, size: IntSize): Boolean {
                 val playback = currentState.playback
-                if (playback.subtitleText.isBlank() || !currentState.subtitlesVisible || size.height == 0) return false
-                val bottom = viewModel.effectiveSubtitlePosition() / 100f * size.height
-                val lines = playback.subtitleText.trim().lines().size
+                // Between lines the place where they show still counts, so swiping there steps to the next line.
+                val hasSubtitles = playback.tracks.any { it.kind == TrackKind.SUBTITLE && it.selected }
+                if (!hasSubtitles || !currentState.subtitlesVisible || size.height == 0) return false
+                val videoAspect = currentState.aspect.ratio ?: (playback.videoWidth.toFloat() / playback.videoHeight).takeIf { playback.videoHeight > 0 }
+                // Direct output draws its own subtitles relative to the whole screen.
+                val rows = if (currentState.directOutput) {
+                    0f..size.height.toFloat()
+                } else {
+                    visibleVideoRows(size.width.toFloat(), size.height.toFloat(), videoAspect, currentState.scale, currentState.zoom)
+                }
+                val bottom = rows.start + viewModel.effectiveSubtitlePosition() / 100f * (rows.endInclusive - rows.start)
+                val lines = maxOf(playback.subtitleText.trim().lines().size, MIN_SUBTITLE_LINES)
                 val lineHeight = size.height * SUBTITLE_LINE_FRACTION * currentSettings.subtitle.sizePercent / 100f
                 val slack = size.height * SUBTITLE_TOUCH_SLACK
                 return position.y in (bottom - lines * lineHeight - slack)..(bottom + slack)
@@ -798,6 +807,9 @@ private fun IntRange.toFloatRange() = first.toFloat()..last.toFloat()
 
 /** Approximate height of one subtitle line at 100% size, as a fraction of the screen height. */
 private const val SUBTITLE_LINE_FRACTION = 0.08f
+
+/** Lines of touch area kept for the subtitle while none is shown or it has one line. */
+private const val MIN_SUBTITLE_LINES = 2
 
 /** Extra touch area around the subtitle, as a fraction of the screen height. */
 private const val SUBTITLE_TOUCH_SLACK = 0.04f
