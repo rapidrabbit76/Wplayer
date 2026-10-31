@@ -447,4 +447,36 @@
     <string name="reader_text_larger">Larger text</string>
     <string name="error_unreadable_document">Password-protected or damaged documents cannot be opened.</string>
     <string name="error_unsupported_archive">Encrypted archives, solid RAR4 archives and pictures over 64 MB cannot be opened.</string>
+
+    <!-- Links and link plugins -->
+    <string name="settings_links">Links</string>
+    <string name="settings_links_summary">Link plugins, quality</string>
+    <string name="links_index_url">Plugin index address</string>
+    <string name="links_index_url_hint">The address of an index.json listing plugins. Plugins only read the pages they are made for.</string>
+    <string name="links_auto_update">Update plugins automatically</string>
+    <string name="links_auto_update_hint">Once a day when the app starts. New plugins are only installed by you.</string>
+    <string name="links_max_height">Highest quality</string>
+    <string name="links_highest">Best</string>
+    <string name="links_lines">%1$dp</string>
+    <string name="links_check">Check now</string>
+    <string name="links_checked">Plugin list read</string>
+    <string name="links_no_index">Set the plugin index address to see plugins you can install.</string>
+    <string name="links_install_file">Install from file</string>
+    <string name="links_no_picker">This device has no file picker.</string>
+    <string name="links_installed_notice">Installed %1$s %2$s</string>
+    <string name="links_install_failed">Could not install: %1$s</string>
+    <string name="links_installed">Installed plugins</string>
+    <string name="links_none_installed">No plugins installed</string>
+    <string name="links_available">Plugins you can install</string>
+    <string name="links_version">Version %1$s</string>
+    <string name="links_update">Update to %1$s</string>
+    <string name="links_update_needs_newer_app">Version %1$s needs a newer Wplayer</string>
+    <string name="links_install">Install</string>
+    <string name="links_needs_newer_app">Needs a newer Wplayer</string>
+    <string name="links_remove_confirm">Remove %1$s?</string>
+    <string name="link_open">Open link</string>
+    <string name="link_address">Web address</string>
+    <string name="link_play">Play</string>
+    <string name="link_source">Link</string>
+    <string name="error_plugin">The link plugin could not read this page.</string>
 </resources>

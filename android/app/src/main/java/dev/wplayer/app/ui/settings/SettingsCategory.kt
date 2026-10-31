@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Gesture
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.ScreenRotation
@@ -25,6 +26,7 @@ enum class SettingsCategory(@StringRes val title: Int, @StringRes val summary: I
     AUDIO(R.string.settings_audio, R.string.settings_audio_summary, Icons.Outlined.MusicNote),
     GESTURES(R.string.settings_gestures, R.string.settings_gestures_summary, Icons.Outlined.Gesture),
     NETWORK(R.string.settings_network, R.string.settings_network_summary, Icons.Outlined.Wifi),
+    LINKS(R.string.settings_links, R.string.settings_links_summary, Icons.Outlined.Link),
     UPDATES(R.string.settings_updates, R.string.settings_updates_summary, Icons.Outlined.SystemUpdate),
     ABOUT(R.string.settings_about, R.string.settings_about_summary, Icons.Outlined.Info),
 }

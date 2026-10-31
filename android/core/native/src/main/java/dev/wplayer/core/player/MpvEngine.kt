@@ -127,6 +127,9 @@ class MpvEngine(config: PlayerConfig) : AutoCloseable {
 
     fun setProperty(name: String, value: String) = post { player.setProperty(name, value) }
 
+    /** Headers sent with every HTTP request of the files loaded after it; empty sends none. */
+    fun setHttpHeaders(headers: Map<String, String>) = post { player.setHttpHeaders(headers) }
+
     /**
      * Roughly how many video frames have been shown, for noticing a picture
      * that froze while the sound plays on. Does not wait for the core.

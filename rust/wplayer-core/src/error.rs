@@ -19,6 +19,8 @@ pub enum CoreError {
     Player { detail: String },
     #[error("i/o error: {detail}")]
     Io { detail: String },
+    #[error("link plugin failed: {detail}")]
+    Plugin { detail: String },
     #[error("cancelled")]
     Cancelled,
 }

@@ -292,6 +292,7 @@ class PlayerActivity : AppCompatActivity() {
             return when (request) {
                 is PlaybackRequest.FromSource -> request.writeTo(intent)
                 is PlaybackRequest.FromUri -> intent.setData(request.uri)
+                is PlaybackRequest.FromLink -> request.writeTo(intent)
             }
         }
 

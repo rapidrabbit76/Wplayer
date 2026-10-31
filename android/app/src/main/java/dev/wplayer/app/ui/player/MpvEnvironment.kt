@@ -2,6 +2,7 @@ package dev.wplayer.app.ui.player
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import android.util.Log
 import android.view.Display
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.wplayer.app.data.CacheStorage
@@ -38,6 +39,22 @@ class MpvEnvironment @Inject constructor(
         dir.absolutePath
     }
 
+    /**
+     * The device's trusted CAs as one PEM file, for mpv's TLS (ffmpeg checks HLS
+     * segment servers' certificates); written once per process. Null when none were found.
+     */
+    val caFile: File? by lazy {
+        val certificates = systemCaCertificates()
+        if (certificates.isEmpty()) {
+            Log.w(TAG, "no CA certificates found; https streams will not verify")
+            return@lazy null
+        }
+        val file = File(context.filesDir, CA_FILE)
+        val partial = File(context.filesDir, "$CA_FILE.tmp")
+        partial.writeText(certificates.joinToString("\n", postfix = "\n"))
+        if (partial.renameTo(file)) file else null
+    }
+
     fun options(settings: AppSettings): Map<String, String> =
         mpvOptions(settings, cacheStorage.maxCacheMegabytes(), shaderDirectory, displayFps())
 
@@ -45,6 +62,8 @@ class MpvEnvironment @Inject constructor(
         context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.refreshRate
 
     private companion object {
+        const val TAG = "MpvEnvironment"
         const val SHADER_DIR = "shaders"
+        const val CA_FILE = "ca-certificates.pem"
     }
 }

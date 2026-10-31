@@ -124,6 +124,12 @@
                 <data android:pathPattern=".*\\.webm" />
                 <data android:pathPattern=".*\\.ts" />
             </intent-filter>
+            <!-- A page shared from a browser or another app; its link plugin, if any, finds the video. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity-alias>
         <!-- Exported so system UI, Bluetooth and Android Auto controllers can bind (Media3 requirement). -->
         <service

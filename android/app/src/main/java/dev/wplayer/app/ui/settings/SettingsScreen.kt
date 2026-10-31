@@ -135,6 +135,7 @@ internal fun SettingsHomeContent(selected: SettingsCategory?, onOpenCategory: (S
 @Composable
 fun SettingsCategoryScreen(category: SettingsCategory, onBack: (() -> Unit)?, viewModel: SettingsViewModel = hiltViewModel()) {
     when (category) {
+        SettingsCategory.LINKS -> return LinkSettingsScreen(onBack)
         SettingsCategory.UPDATES -> return UpdateSettingsScreen(onBack)
         SettingsCategory.ABOUT -> return AboutScreen(onBack)
         else -> Unit
@@ -292,8 +293,8 @@ fun LazyListScope.categoryRows(
         SettingsCategory.AUDIO -> audioSection(settings, onUpdate)
         SettingsCategory.GESTURES -> gestureSection(settings, onUpdate)
         SettingsCategory.NETWORK -> networkSection(settings, onUpdate)
-        // Have their own screens; see UpdateSettingsScreen and AboutScreen.
-        SettingsCategory.UPDATES, SettingsCategory.ABOUT -> Unit
+        // Have their own screens; see LinkSettingsScreen, UpdateSettingsScreen and AboutScreen.
+        SettingsCategory.LINKS, SettingsCategory.UPDATES, SettingsCategory.ABOUT -> Unit
     }
 }
 
@@ -678,7 +679,7 @@ private fun LanguageRow() {
 /** Segmented buttons, for up to four short options. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> ChoiceRow(
+internal fun <T> ChoiceRow(
     @StringRes title: Int,
     options: List<T>,
     selected: T,

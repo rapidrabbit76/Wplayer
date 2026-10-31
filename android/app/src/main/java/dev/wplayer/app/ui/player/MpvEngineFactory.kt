@@ -32,6 +32,10 @@ class MpvEngineFactory @Inject constructor(
             // Network read-ahead goes to flash, not RAM, so it can be gigabytes.
             put("cache-on-disk", "yes")
             put("demuxer-cache-dir", cacheStorage.playerCacheDir.absolutePath)
+            environment.caFile?.let {
+                put("tls-ca-file", it.absolutePath)
+                put("tls-verify", "yes")
+            }
             putAll(environment.options(settings))
         }
         return MpvEngine(

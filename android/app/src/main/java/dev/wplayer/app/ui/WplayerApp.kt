@@ -233,6 +233,7 @@ fun WplayerApp(columnView: Boolean, onPlay: (PlaybackRequest) -> Unit) {
                         LibraryScreen(
                             onOpenRecent = { backStack.add(RecentRoute) },
                             onOpenPlaylist = { id -> backStack.add(PlaylistRoute(id)) },
+                            onPlay = openMedia,
                         )
                     }
                     entry<PlaylistRoute> { route ->

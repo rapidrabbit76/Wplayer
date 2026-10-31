@@ -135,6 +135,9 @@ const STATS_ID_BASE: u64 = 1000;
 /// [Player::presented_frames].
 const FRAME_CLOCK_ID: u64 = 2000;
 
+/// mpv's own `user-agent`, restored when a file needs none of its own.
+const DEFAULT_USER_AGENT: &str = "libmpv";
+
 /// Owned mpv handle. The libmpv client API is thread-safe.
 struct Mpv {
     api: &'static MpvApi,
@@ -391,6 +394,32 @@ impl Player {
             }
         }
         Ok(())
+    }
+
+    /// HTTP headers for the next files opened, playlists' segments included;
+    /// empty for none. `User-Agent` and `Referer` go to mpv's own options,
+    /// which would otherwise send theirs as well.
+    pub fn set_http_headers(&self, headers: HashMap<String, String>) -> CoreResult<()> {
+        let mut user_agent = DEFAULT_USER_AGENT.to_owned();
+        let mut referrer = String::new();
+        self.mpv.command(&["change-list", "http-header-fields", "clr", ""])?;
+        for (name, value) in &headers {
+            if name.eq_ignore_ascii_case("user-agent") {
+                user_agent.clone_from(value);
+            } else if name.eq_ignore_ascii_case("referer") {
+                referrer.clone_from(value);
+            } else {
+                // `append` adds one item as it is; a plain set would split it at commas.
+                self.mpv.command(&[
+                    "change-list",
+                    "http-header-fields",
+                    "append",
+                    &format!("{name}: {value}"),
+                ])?;
+            }
+        }
+        self.mpv.set_property("user-agent", &user_agent)?;
+        self.mpv.set_property("referrer", &referrer)
     }
 
     /// Escape hatch for mpv properties without a dedicated method.

@@ -1,16 +1,18 @@
 package dev.wplayer.app.data.model
 
+import dev.wplayer.app.data.SourceRepository
+
 /** Identifies a file in a source for resume positions and history; stable across launches. */
 fun mediaKey(sourceKey: String, path: String): String = "$sourceKey:$path"
 
-/** A file or folder inside a source. */
+/** A file or folder inside a source, or a web link stored under [SourceRepository.LINK_KEY]. */
 data class MediaRef(
     val sourceKey: String,
     val path: String,
     val name: String,
     val isDirectory: Boolean,
 ) {
-    val kind: MediaKind get() = MediaEntry.kindOf(name, isDirectory)
+    val kind: MediaKind get() = if (sourceKey == SourceRepository.LINK_KEY) MediaKind.LINK else MediaEntry.kindOf(name, isDirectory)
     val mediaKey: String get() = mediaKey(sourceKey, path)
 }
 

@@ -41,6 +41,12 @@ class PlaylistRepository @Inject constructor(
         refs.map { PlaylistItemEntity(playlistId = playlistId, sourceKey = it.sourceKey, path = it.path, name = it.name, isDirectory = it.isDirectory, sortOrder = 0) },
     )
 
+    /**
+     * Gives [ref]'s name to its items that are still named by their address, such as
+     * a link added before it was ever played; a name the item already had stays.
+     */
+    suspend fun nameUnnamed(ref: MediaRef) = dao.nameUnnamed(ref.sourceKey, ref.path, ref.name)
+
     suspend fun remove(itemId: Long) = dao.deleteItem(itemId)
 
     suspend fun reorder(itemIds: List<Long>) = dao.reorder(itemIds)

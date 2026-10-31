@@ -186,6 +186,12 @@ class SourceRepository @Inject constructor(
 
     companion object {
         const val LOCAL_KEY = "local"
+
+        /**
+         * Web links in playlists, the recent list and resume positions, stored with the link as the path.
+         * Never a registered source: see PlaybackRequest.FromLink and MediaRef.toPlaybackRequest.
+         */
+        const val LINK_KEY = "link"
         private const val STORED_PREFIX = "source-"
     }
 }

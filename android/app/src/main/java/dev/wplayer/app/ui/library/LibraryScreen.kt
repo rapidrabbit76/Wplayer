@@ -13,11 +13,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -35,23 +39,69 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.model.BrowserViewMode
 import dev.wplayer.app.data.model.Playlist
+import dev.wplayer.app.ui.common.AddToPlaylistDialog
 import dev.wplayer.app.ui.common.CollectionCard
 import dev.wplayer.app.ui.common.FAB_CLEARANCE
 import dev.wplayer.app.ui.common.PlaylistNameDialog
+import dev.wplayer.app.ui.common.UserMessageEffect
 import dev.wplayer.app.ui.common.ViewModeToggle
 import dev.wplayer.app.ui.common.mediaGridCellMinWidth
+import dev.wplayer.app.ui.player.PlaybackRequest
 
-/** The playlists tab: recently played, then the user's playlists. */
+/** The playlists tab: recently played, then the user's playlists; web links open from its bar. */
 @Composable
 fun LibraryScreen(
     onOpenRecent: () -> Unit,
     onOpenPlaylist: (Long) -> Unit,
+    onPlay: (PlaybackRequest) -> Unit,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
     var creating by remember { mutableStateOf(false) }
-    LibraryContent(playlists, viewMode, viewModel::setViewMode, onOpenRecent, onOpenPlaylist, onCreatePlaylist = { creating = true })
+    var openingLink by remember { mutableStateOf(false) }
+    var addingLink by remember { mutableStateOf<String?>(null) }
+    val snackbar = remember { SnackbarHostState() }
+    UserMessageEffect(message, snackbar, viewModel::messageShown)
+    LibraryContent(
+        playlists,
+        viewMode,
+        viewModel::setViewMode,
+        onOpenRecent,
+        onOpenPlaylist,
+        onCreatePlaylist = { creating = true },
+        onOpenLink = { openingLink = true },
+        snackbar = snackbar,
+    )
+    if (openingLink) {
+        OpenLinkDialog(
+            onPlay = { url ->
+                openingLink = false
+                onPlay(PlaybackRequest.FromLink(url, url))
+            },
+            onAddToPlaylist = { url ->
+                openingLink = false
+                addingLink = url
+            },
+            onDismiss = { openingLink = false },
+        )
+    }
+    addingLink?.let { url ->
+        AddToPlaylistDialog(
+            itemName = url,
+            playlists = playlists,
+            onPick = {
+                viewModel.addLink(url, it)
+                addingLink = null
+            },
+            onCreate = {
+                viewModel.addLinkToNewPlaylist(url, it)
+                addingLink = null
+            },
+            onDismiss = { addingLink = null },
+        )
+    }
     if (creating) {
         PlaylistNameDialog(
             title = stringResource(R.string.playlist_new),
@@ -74,14 +124,20 @@ internal fun LibraryContent(
     onOpenRecent: () -> Unit,
     onOpenPlaylist: (Long) -> Unit,
     onCreatePlaylist: () -> Unit,
+    onOpenLink: () -> Unit,
+    snackbar: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.library_title)) },
-                actions = { ViewModeToggle(viewMode, onViewModeChange) },
+                actions = {
+                    IconButton(onClick = onOpenLink) { Icon(Icons.Outlined.Link, contentDescription = stringResource(R.string.link_open)) }
+                    ViewModeToggle(viewMode, onViewModeChange)
+                },
             )
         },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onCreatePlaylist,

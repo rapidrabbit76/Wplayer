@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wplayer.app.R
 import dev.wplayer.app.data.SourceRepository
@@ -39,6 +40,7 @@ import dev.wplayer.app.ui.common.UserMessageEffect
 import dev.wplayer.app.ui.common.ViewModeToggle
 import dev.wplayer.app.ui.player.PlayQueue
 import dev.wplayer.app.ui.player.PlaybackRequest
+import dev.wplayer.app.ui.player.toPlaybackRequest
 
 /**
  * A playlist. Files play through the playlist in order; folders work as
@@ -56,7 +58,7 @@ fun PlaylistScreen(
     var renaming by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
     val queue = PlayQueue.Playlist(viewModel.playlistId)
-    fun play(ref: MediaRef) = onPlay(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name, queue))
+    fun play(ref: MediaRef) = onPlay(ref.toPlaybackRequest(queue))
 
     LibraryLayout(
         title = state.name.orEmpty(),
@@ -87,14 +89,14 @@ fun PlaylistScreen(
                     grid = grid,
                     name = item.ref.name,
                     kind = item.ref.kind,
-                    supporting = sourceLabel(item.ref.sourceKey, state.sourceNames) + " · " + folderOf(item.ref.path),
+                    supporting = whereItIs(item.ref, state.sourceNames),
                     progress = state.progress[item.id],
-                    actions = listOf(
-                        RowAction(showInFolder) { onShowInFolder(item.ref) },
-                        RowAction(moveUp) { viewModel.move(item, -1) },
-                        RowAction(moveDown) { viewModel.move(item, 1) },
-                        RowAction(remove) { viewModel.remove(item) },
-                    ),
+                    actions = buildList {
+                        if (item.ref.kind != MediaKind.LINK) add(RowAction(showInFolder) { onShowInFolder(item.ref) })
+                        add(RowAction(moveUp) { viewModel.move(item, -1) })
+                        add(RowAction(moveDown) { viewModel.move(item, 1) })
+                        add(RowAction(remove) { viewModel.remove(item) })
+                    },
                     onClick = {
                         if (item.ref.isDirectory) onOpenFolder(item.ref.sourceKey, item.ref.path) else play(item.ref)
                     },
@@ -164,15 +166,15 @@ fun RecentScreen(
                     grid = grid,
                     name = ref.name,
                     kind = ref.kind,
-                    supporting = sourceLabel(ref.sourceKey, state.sourceNames) + " · " + folderOf(ref.path),
+                    supporting = whereItIs(ref, state.sourceNames),
                     progress = state.progress[ref.mediaKey],
                     actions = buildList {
-                        add(RowAction(showInFolder) { onShowInFolder(ref) })
+                        if (ref.kind != MediaKind.LINK) add(RowAction(showInFolder) { onShowInFolder(ref) })
                         // Comic archives and books open in the viewer, which playlists do not reach.
                         if (!ref.kind.isViewed) add(RowAction(addLabel) { addingToPlaylist = ref })
                         add(RowAction(forgetLabel) { viewModel.forget(ref) })
                     },
-                    onClick = { onPlay(PlaybackRequest.FromSource(ref.sourceKey, ref.path, ref.name)) },
+                    onClick = { onPlay(ref.toPlaybackRequest()) },
                     loadThumbnail = if (state.showThumbnails && ref.kind == MediaKind.VIDEO) ({ viewModel.thumbnail(ref) }) else null,
                 )
             }
@@ -221,6 +223,15 @@ private fun LibraryLayout(
         Box(Modifier.padding(padding).fillMaxSize()) { content() }
     }
 }
+
+/** The source and folder of a file, or the site of a link. */
+@Composable
+private fun whereItIs(ref: MediaRef, sourceNames: Map<String, String>): String =
+    if (ref.kind == MediaKind.LINK) {
+        ref.path.toUri().host ?: stringResource(R.string.link_source)
+    } else {
+        sourceLabel(ref.sourceKey, sourceNames) + " · " + folderOf(ref.path)
+    }
 
 /** The source's name; device storage has no stored name. */
 @Composable
