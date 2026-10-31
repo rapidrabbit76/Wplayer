@@ -59,14 +59,15 @@ Rust 타깃은 `aarch64-linux-android`와 `armv7-linux-androideabi`를 추가하
 Ubuntu에서는 `sudo apt-get install ninja-build nasm pkg-config cmake libclang-dev`와 `pipx install meson`으로 설치합니다.
 
 ```sh
+cd android
 source ./env.sh
 native/build.sh
 ./gradlew :app:assembleDebug
 ```
 
-`env.sh`의 SDK·JDK 경로를 환경에 맞게 설정하세요.
+`android/env.sh`의 SDK·JDK 경로를 환경에 맞게 설정하세요.
 Rust 코어 빌드와 Kotlin 바인딩 생성은 Gradle이 처리합니다.
-네이티브 라이브러리 버전은 [`native/versions.env`](../../native/versions.env)에서 관리합니다.
+네이티브 라이브러리 버전은 [`android/native/versions.env`](../../android/native/versions.env)에서 관리합니다.
 
 릴리스 서명은 저장소 루트의 `keystore.properties`에 `storeFile`, `storePassword`, `keyAlias`,
 `keyPassword`를 설정합니다. 이 파일은 커밋하지 않습니다. 파일이 없으면 디버그 키로 서명합니다.

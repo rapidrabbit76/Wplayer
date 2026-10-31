@@ -8,7 +8,7 @@
 #   scripts/release.sh major      # 0.2.0 -> 1.0.0
 #   scripts/release.sh --dry-run  # everything except pushing and publishing
 #
-# The version lives only in git tags; app/build.gradle.kts reads it from there.
+# The version lives only in git tags; android/app/build.gradle.kts reads it from there.
 #
 # Local settings go in scripts/release.env (not committed), sourced if present.
 # While the repository is private, the app needs a read-only token to see its
@@ -64,7 +64,7 @@ git tag -a "$tag" -m "Wplayer $next"
 cleanup() { [[ $published == true ]] || git tag -d "$tag" >/dev/null; }
 trap cleanup EXIT
 
-source ./env.sh
+source android/env.sh
 # There is no CI: these are the checks a release has to pass.
 (
     cd rust
@@ -72,18 +72,18 @@ source ./env.sh
     cargo clippy -p wplayer-core --all-targets -- -D warnings
     cargo test -p wplayer-core
 )
-./gradlew --console=plain :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease :app:assembleRelease
+(cd android && ./gradlew --console=plain :app:testDebugUnitTest :core:native:testDebugUnitTest :app:lintRelease :app:assembleRelease)
 
-apk=app/build/outputs/apk/release/app-release.apk
+apk=android/app/build/outputs/apk/release/app-release.apk
 build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
 # Captured first: `tool | grep -q` would fail under pipefail when grep stops reading early.
 badging=$("$build_tools/aapt2" dump badging "$apk")
 [[ $badging == *"versionName='$next'"* ]] || fail "the APK does not carry version $next"
-# Gradle leaves libmpv out without complaint when native/out is missing (native/build.sh not run).
+# Gradle leaves libmpv out without complaint when android/native/out is missing (android/native/build.sh not run).
 contents=$(unzip -l "$apk")
 for abi in arm64-v8a armeabi-v7a; do
     for lib in libmpv.so libc++_shared.so libwplayer_core.so; do
-        [[ $contents == *"lib/$abi/$lib"* ]] || fail "the APK lacks lib/$abi/$lib; run native/build.sh"
+        [[ $contents == *"lib/$abi/$lib"* ]] || fail "the APK lacks lib/$abi/$lib; run android/native/build.sh"
     done
 done
 certs=$("$build_tools/apksigner" verify --print-certs "$apk")
