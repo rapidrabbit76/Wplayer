@@ -3,7 +3,7 @@ agp = "9.5.0"
 kotlin = "2.4.21"
 ksp = "2.3.12"
 hilt = "2.60.1"
-compose-bom = "2026.09.00"
+compose-bom = "2026.11.01"
 activity-compose = "1.13.0"
 core-ktx = "1.19.1"
 appcompat = "1.8.0"
@@ -29,7 +29,7 @@ coil = "3.6.3"
 telephoto = "0.19.0"
 readium = "3.4.0"
 desugar-jdk-libs = "2.1.5"
-uiautomator = "2.4.0"
+uiautomator = "2.4.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
