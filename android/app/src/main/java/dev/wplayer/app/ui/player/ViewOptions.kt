@@ -1,5 +1,25 @@
 package dev.wplayer.app.ui.player
 
+import android.content.pm.ActivityInfo
+import dev.wplayer.app.data.model.OrientationMode
+
+/** The screen turns with the device in [mode], so the player offers to lock it. TVs never turn. */
+fun rotatesWithDevice(mode: OrientationMode, television: Boolean): Boolean =
+    !television && (mode == OrientationMode.AUTO || mode == OrientationMode.SENSOR)
+
+/**
+ * The activity's requested orientation. Automatic turns phones with the sensor
+ * even when the system's auto-rotate is off, since the player has its own
+ * [rotationLocked], which keeps the screen as it is.
+ */
+fun requestedOrientationFor(mode: OrientationMode, rotationLocked: Boolean, tablet: Boolean, television: Boolean): Int = when {
+    rotationLocked && rotatesWithDevice(mode, television) -> ActivityInfo.SCREEN_ORIENTATION_LOCKED
+    mode == OrientationMode.AUTO && !tablet && !television -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
+    mode == OrientationMode.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    mode == OrientationMode.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+    else -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+}
+
 /**
  * Forced display aspect ratio; [mpvValue] is the `video-aspect-override` value
  * and [ratio] the same as width / height (null keeps the video's own).

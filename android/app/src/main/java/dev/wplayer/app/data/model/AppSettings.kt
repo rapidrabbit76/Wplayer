@@ -52,8 +52,10 @@ enum class SeekPrecision { FAST, ACCURATE }
 
 @Serializable
 enum class OrientationMode {
-    /** Phones follow the video's orientation; tablets rotate freely. */
+    /** Phones turn with the sensor even with the system's auto-rotate off; tablets follow the system. */
     AUTO,
+
+    /** Turns only when the system's auto-rotate is on. */
     SENSOR,
     LANDSCAPE,
     PORTRAIT,

@@ -44,6 +44,8 @@
     <string name="player_more">더보기</string>
     <string name="player_lock">화면 잠금</string>
     <string name="player_unlock">잠금 해제</string>
+    <string name="player_lock_rotation">화면 회전 잠금</string>
+    <string name="player_unlock_rotation">화면 회전 잠금 해제</string>
     <string name="player_ab_repeat">A-B 반복</string>
     <string name="player_speed">재생 속도</string>
     <string name="player_brightness">밝기</string>
@@ -232,7 +234,7 @@
     <string name="settings_screen">화면</string>
     <string name="settings_orientation">화면 방향</string>
     <string name="orientation_auto">자동</string>
-    <string name="orientation_sensor">회전</string>
+    <string name="orientation_sensor">시스템 설정 따름</string>
     <string name="orientation_landscape">가로</string>
     <string name="orientation_portrait">세로</string>
     <string name="settings_save_brightness">밝기 기억하기</string>
