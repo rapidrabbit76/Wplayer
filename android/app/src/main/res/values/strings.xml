@@ -47,6 +47,8 @@
     <string name="player_more">More</string>
     <string name="player_lock">Lock screen</string>
     <string name="player_unlock">Unlock</string>
+    <string name="player_lock_rotation">Lock rotation</string>
+    <string name="player_unlock_rotation">Unlock rotation</string>
     <string name="player_ab_repeat">A-B repeat</string>
     <string name="player_speed">Playback speed</string>
     <string name="player_brightness">Brightness</string>
@@ -237,7 +239,7 @@
     <string name="settings_screen">Screen</string>
     <string name="settings_orientation">Orientation</string>
     <string name="orientation_auto">Automatic</string>
-    <string name="orientation_sensor">Rotate</string>
+    <string name="orientation_sensor">Follow system</string>
     <string name="orientation_landscape">Landscape</string>
     <string name="orientation_portrait">Portrait</string>
     <string name="settings_save_brightness">Remember brightness</string>

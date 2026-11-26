@@ -468,7 +468,7 @@ class ScreenshotTest {
                     abLoopEnd = 1860.0,
                 ),
             ),
-            config = ControlsConfig(seekBackSeconds = 10, seekForwardSeconds = 30, showClock = true, hasPrevious = true, hasNext = true),
+            config = ControlsConfig(seekBackSeconds = 10, seekForwardSeconds = 30, showClock = true, hasPrevious = true, hasNext = true, canLockRotation = true),
             actions = NoOpPlayerActions,
         )
     }
@@ -539,6 +539,7 @@ private object NoOpPlayerActions : PlayerControlActions {
     override fun onOpenSheet(panel: PlayerSheet) = Unit
     override fun onCycleAbRepeat() = Unit
     override fun onLock() = Unit
+    override fun onToggleRotationLock() = Unit
     override fun onPictureInPicture() = Unit
     override fun onSetSpeed(speed: Double) = Unit
     override fun onSetScale(scale: ScaleMode) = Unit

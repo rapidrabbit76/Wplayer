@@ -51,6 +51,8 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Replay30
 import androidx.compose.material.icons.filled.Replay5
+import androidx.compose.material.icons.filled.ScreenLockRotation
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
@@ -122,6 +124,7 @@ interface PlayerControlActions {
     fun onOpenSheet(panel: PlayerSheet)
     fun onCycleAbRepeat()
     fun onLock()
+    fun onToggleRotationLock()
     fun onPictureInPicture()
     fun onSetSpeed(speed: Double)
     fun onSetScale(scale: ScaleMode)
@@ -143,6 +146,8 @@ data class ControlsConfig(
     val hasNext: Boolean = false,
     /** Many TVs have no picture-in-picture. */
     val canPictureInPicture: Boolean = true,
+    /** The screen turns with the device (see [rotatesWithDevice]). */
+    val canLockRotation: Boolean = false,
 )
 
 @Composable
@@ -215,7 +220,7 @@ fun PlayerControls(
 
         if (quickBesidePlay) {
             val sides = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-            QuickStartButtons(state, actions, sides.align(Alignment.CenterStart).padding(start = 16.dp))
+            QuickStartButtons(state, config.canLockRotation, actions, sides.align(Alignment.CenterStart).padding(start = 16.dp))
             QuickEndButtons(state, actions, sides.align(Alignment.CenterEnd).padding(end = 16.dp))
         }
 
@@ -242,7 +247,7 @@ fun PlayerControls(
         ) {
             if (!quickBesidePlay) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    QuickStartButtons(state, actions)
+                    QuickStartButtons(state, config.canLockRotation, actions)
                     QuickEndButtons(state, actions)
                 }
             }
@@ -348,12 +353,22 @@ private fun TopBar(
     }
 }
 
-/** Left of the play buttons: screen lock and playback speed. */
+/** Left of the play buttons: screen lock, rotation lock and playback speed. */
 @Composable
-private fun QuickStartButtons(state: PlayerUiState, actions: PlayerControlActions, modifier: Modifier = Modifier) {
+private fun QuickStartButtons(state: PlayerUiState, canLockRotation: Boolean, actions: PlayerControlActions, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         IconButton(onClick = actions::onLock) {
             Icon(Icons.Filled.Lock, contentDescription = stringResource(R.string.player_lock), Modifier.size(QUICK_ICON_SIZE))
+        }
+        if (canLockRotation) {
+            IconButton(onClick = actions::onToggleRotationLock) {
+                Icon(
+                    if (state.rotationLocked) Icons.Filled.ScreenLockRotation else Icons.Filled.ScreenRotation,
+                    contentDescription = stringResource(if (state.rotationLocked) R.string.player_unlock_rotation else R.string.player_lock_rotation),
+                    modifier = Modifier.size(QUICK_ICON_SIZE),
+                    tint = if (state.rotationLocked) OverlayColors.accent else LocalContentColor.current,
+                )
+            }
         }
         val speed = state.playback.speed
         QuickMenu(stringResource(R.string.player_speed), actions::onQuickMenu, label = formatSpeed(speed)) { close ->

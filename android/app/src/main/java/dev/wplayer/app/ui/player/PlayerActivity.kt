@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
@@ -133,6 +132,7 @@ class PlayerActivity : AppCompatActivity() {
                         autoEnter = settings.playback.autoPictureInPicture,
                         bounds = bounds,
                         orientation = settings.screen.orientation,
+                        rotationLocked = ui.rotationLocked,
                     )
                 }.distinctUntilChanged().collect { inputs ->
                     if (inputs.playing) {
@@ -141,7 +141,12 @@ class PlayerActivity : AppCompatActivity() {
                         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     }
                     updatePipParams(inputs)
-                    applyOrientation(inputs.orientation, inputs.width, inputs.height)
+                    requestedOrientation = requestedOrientationFor(
+                        inputs.orientation,
+                        inputs.rotationLocked,
+                        tablet = isTablet(),
+                        television = resources.configuration.isTelevision,
+                    )
                 }
             }
         }
@@ -154,6 +159,7 @@ class PlayerActivity : AppCompatActivity() {
         val autoEnter: Boolean,
         val bounds: Rect?,
         val orientation: OrientationMode,
+        val rotationLocked: Boolean,
     )
 
     private fun pipParams(inputs: PipInputs): PictureInPictureParams {
@@ -216,6 +222,7 @@ class PlayerActivity : AppCompatActivity() {
             autoEnter = viewModel.settings.value.playback.autoPictureInPicture,
             bounds = videoBounds.value,
             orientation = viewModel.settings.value.screen.orientation,
+            rotationLocked = ui.rotationLocked,
         )
     }
 
@@ -247,21 +254,6 @@ class PlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         unregisterReceiver(pipActionReceiver)
         super.onDestroy()
-    }
-
-    /** By default phones follow the video's orientation; tablets keep whatever the user holds, TVs their own. */
-    private fun applyOrientation(mode: OrientationMode, width: Int, height: Int) {
-        requestedOrientation = when (mode) {
-            OrientationMode.SENSOR -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-            OrientationMode.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            OrientationMode.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-            OrientationMode.AUTO -> when {
-                isTablet() || resources.configuration.isTelevision -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-                width == 0 || height == 0 -> return
-                width >= height -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-            }
-        }
     }
 
     /** Judged by the whole display, so split screen or PiP on a tablet still counts as a tablet. */

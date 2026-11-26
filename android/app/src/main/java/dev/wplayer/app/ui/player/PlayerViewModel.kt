@@ -101,6 +101,8 @@ data class PlayerUiState(
     /** The decoder draws the video itself: the screen sizes it and draws the subtitles. */
     val directOutput: Boolean = false,
     val subtitlesVisible: Boolean = true,
+    /** The screen stays as it is instead of turning with the device, until the player closes. */
+    val rotationLocked: Boolean = false,
     val hasPrevious: Boolean = false,
     val hasNext: Boolean = false,
     /** The last file ended with nothing to play next: the player should close. */
@@ -178,6 +180,7 @@ class PlayerViewModel @Inject constructor(
         val scale: ScaleMode = ScaleMode.FIT,
         val audioDelay: Double = 0.0,
         val subtitlesVisible: Boolean? = null,
+        val rotationLocked: Boolean = false,
         val finished: Boolean = false,
     )
 
@@ -208,6 +211,7 @@ class PlayerViewModel @Inject constructor(
             hardwareDecoding = slot?.path?.hardware ?: false,
             directOutput = slot?.path == VideoPath.DIRECT,
             subtitlesVisible = session.subtitlesVisible ?: settings.subtitle.showByDefault,
+            rotationLocked = session.rotationLocked,
             finished = session.finished,
             hasPrevious = currentPath != null && previousInQueue(session.queue, currentPath, repeat) != null,
             hasNext = currentPath != null && if (settings.playback.shuffle) {
@@ -948,6 +952,10 @@ class PlayerViewModel @Inject constructor(
         session.update { it.copy(scale = scale) }
         resetZoom()
         engine?.let { applyScale(it, scale) }
+    }
+
+    fun toggleRotationLock() {
+        session.update { it.copy(rotationLocked = !it.rotationLocked) }
     }
 
     private fun applyScale(engine: MpvEngine, scale: ScaleMode) {

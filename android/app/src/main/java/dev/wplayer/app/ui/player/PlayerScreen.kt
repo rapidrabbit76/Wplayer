@@ -65,6 +65,7 @@ import dev.wplayer.app.data.model.CenterDoubleTapAction
 import dev.wplayer.app.data.model.SUBTITLE_POSITION_RANGE
 import dev.wplayer.app.data.model.SUBTITLE_SIZE_RANGE
 import dev.wplayer.app.data.model.VerticalSwipeAction
+import dev.wplayer.app.ui.common.isTelevision
 import dev.wplayer.app.ui.common.message
 import dev.wplayer.app.ui.settings.SubtitleFontRow
 import dev.wplayer.core.ffi.TrackKind
@@ -120,6 +121,7 @@ fun PlayerScreen(
 
     val brightness = rememberBrightnessController()
     val volume = rememberVolumeController()
+    val television = isTelevision()
     val currentState by rememberUpdatedState(state)
     val currentSettings by rememberUpdatedState(settings)
 
@@ -379,6 +381,10 @@ fun PlayerScreen(
                 locked = true
                 controlsVisible = true
             }
+            override fun onToggleRotationLock() {
+                onControlUsed()
+                viewModel.toggleRotationLock()
+            }
             override fun onPictureInPicture() = onEnterPictureInPicture()
             override fun onSetSpeed(speed: Double) = viewModel.setSpeed(speed)
             override fun onSetScale(scale: ScaleMode) = viewModel.setScale(scale)
@@ -548,6 +554,7 @@ fun PlayerScreen(
                                     hasPrevious = state.hasPrevious,
                                     hasNext = state.hasNext,
                                     canPictureInPicture = canPictureInPicture,
+                                    canLockRotation = rotatesWithDevice(settings.screen.orientation, television),
                                 ),
                                 actions = controlActions,
                                 preview = seekPreview,
