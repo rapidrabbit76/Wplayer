@@ -526,7 +526,7 @@ class ScreenshotTest {
     }
 }
 
-private object NoOpPlayerActions : PlayerControlActions {
+internal object NoOpPlayerActions : PlayerControlActions {
     override fun onBack() = Unit
     override fun onTogglePause() = Unit
     override fun onSeekBy(seconds: Double) = Unit
@@ -567,7 +567,7 @@ private object NoOpSubtitleActions : SubtitlePanelActions {
     override fun onDownloadAiModel() = Unit
 }
 
-private object NoOpEditorActions : SourceEditorActions {
+internal object NoOpEditorActions : SourceEditorActions {
     override fun onProtocolChange(protocol: SourceProtocol) = Unit
     override fun onNameChange(name: String) = Unit
     override fun onHostChange(host: String) = Unit

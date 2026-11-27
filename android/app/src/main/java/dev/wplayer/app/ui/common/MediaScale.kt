@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -70,16 +71,17 @@ fun ThumbnailSizeButton(scale: Float, onScaleChange: (Float) -> Unit) {
             )
             val colors = SliderDefaults.colors()
             val interaction = remember { MutableInteractionSource() }
+            val sizeSlider = rememberSliderState(trackRange = MIN_MEDIA_SCALE..MAX_MEDIA_SCALE)
+            sizeSlider.value = scale
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Image, contentDescription = null, modifier = Modifier.size(16.dp))
                 Slider(
-                    value = scale,
+                    state = sizeSlider,
                     // Moves continuously but saves only when the value crosses a 0.05 step.
                     onValueChange = { value ->
                         val snapped = (value / MEDIA_SCALE_STEP).roundToInt() * MEDIA_SCALE_STEP
                         if (abs(snapped - scale) >= MEDIA_SCALE_STEP / 2) onScaleChange(snapped)
                     },
-                    valueRange = MIN_MEDIA_SCALE..MAX_MEDIA_SCALE,
                     interactionSource = interaction,
                     // A small round thumb on a thin track; the slider keeps its 48dp touch height.
                     thumb = {

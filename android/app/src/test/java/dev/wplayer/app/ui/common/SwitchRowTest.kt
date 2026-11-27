@@ -10,7 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.test.ComposeUiTestConfig
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -29,7 +31,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36], application = Application::class)
 class SwitchRowTest {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(ComposeUiTestConfig(inputMode = InputMode.Keyboard))
 
     @Test
     fun focusStopsOnceOnTheRow() {

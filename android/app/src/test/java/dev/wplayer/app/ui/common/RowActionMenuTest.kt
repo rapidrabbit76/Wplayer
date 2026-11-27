@@ -4,7 +4,10 @@ import android.app.Application
 import android.view.KeyEvent.ACTION_DOWN
 import android.view.KeyEvent.ACTION_UP
 import android.view.KeyEvent.KEYCODE_DPAD_CENTER
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.test.ComposeUiTestConfig
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performKeyPress
@@ -21,7 +24,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36], application = Application::class)
 class RowActionMenuTest {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(ComposeUiTestConfig(inputMode = InputMode.Keyboard))
 
     private val picked = mutableListOf<String>()
 
@@ -50,6 +53,7 @@ class RowActionMenuTest {
             )
         }
         compose.onNodeWithText("first").requestFocus()
+        compose.onNodeWithText("first").assertIsFocused()
     }
 
     private fun press(events: List<KeyEvent>) = events.forEach { compose.onNodeWithText("first").performKeyPress(it) }

@@ -5,7 +5,10 @@ import android.net.Uri
 import android.view.KeyEvent.ACTION_DOWN
 import android.view.KeyEvent.ACTION_UP
 import android.view.KeyEvent.KEYCODE_DPAD_CENTER
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.test.ComposeUiTestConfig
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -24,7 +27,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36], application = Application::class)
 class SubtitleFontDialogTest {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(ComposeUiTestConfig(inputMode = InputMode.Keyboard))
 
     @Test
     fun selectOnTheSystemFontChoosesIt() {
@@ -36,6 +39,7 @@ class SubtitleFontDialogTest {
         compose.onNodeWithText("Subtitle font").performClick()
         val system = compose.onNodeWithText("System font")
         system.requestFocus()
+        system.assertIsFocused()
         system.performKeyPress(KeyEvent(android.view.KeyEvent(ACTION_DOWN, KEYCODE_DPAD_CENTER)))
         system.performKeyPress(KeyEvent(android.view.KeyEvent(ACTION_UP, KEYCODE_DPAD_CENTER)))
         compose.runOnIdle { assertEquals(listOf<SubtitleFont?>(null), chosen) }
