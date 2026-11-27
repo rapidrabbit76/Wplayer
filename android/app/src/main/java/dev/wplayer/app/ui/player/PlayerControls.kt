@@ -67,6 +67,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -536,6 +537,8 @@ private fun SeekBar(
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val duration = playback.duration.coerceAtLeast(0.0)
     val fraction = dragFraction ?: if (duration > 0) (playback.position / duration).toFloat() else 0f
+    val positionSlider = rememberSliderState()
+    positionSlider.value = fraction.coerceIn(0f, 1f)
     val shownPosition = dragFraction?.let { it * duration } ?: playback.position
 
     val colors = SliderDefaults.colors(
@@ -550,7 +553,7 @@ private fun SeekBar(
     Column(modifier.fillMaxWidth().padding(horizontal = SEEK_BAR_PADDING, vertical = 8.dp)) {
         // A thin track and thumb like video sites; the slider keeps its 48dp touch height.
         Slider(
-            value = fraction.coerceIn(0f, 1f),
+            state = positionSlider,
             onValueChange = {
                 dragFraction = it
                 onDrag(it)

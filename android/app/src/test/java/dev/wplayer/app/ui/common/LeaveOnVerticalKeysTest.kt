@@ -10,9 +10,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ComposeUiTestConfig
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -30,7 +32,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36], application = Application::class)
 class LeaveOnVerticalKeysTest {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(ComposeUiTestConfig(inputMode = InputMode.Keyboard))
 
     @Test
     fun downAndUpMoveFocusOutOfTheField() {
