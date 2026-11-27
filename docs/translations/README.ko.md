@@ -52,7 +52,7 @@ Android TV에서는 `adb install`이나 사이드로딩 앱으로 설치할 수 
 
 ## 빌드
 
-JDK 21, Android SDK 플랫폼 37, NDK `30.0.16248370`, stable Rust, `cargo-ndk`가 필요합니다.
+JDK 21, Android SDK 플랫폼 37.1, NDK `30.0.16248370`, stable Rust, `cargo-ndk`가 필요합니다.
 Rust 타깃은 `aarch64-linux-android`와 `armv7-linux-androideabi`를 추가하세요.
 
 네이티브 라이브러리 빌드에는 `meson`, `ninja`, `cmake`, `nasm`, `pkg-config`, `git`, `libclang`이 필요합니다.
