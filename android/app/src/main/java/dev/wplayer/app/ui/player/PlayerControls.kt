@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -94,6 +95,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -168,8 +170,11 @@ fun PlayerControls(
         if (focusPlay) playFocus.requestFocus()
     }
     BoxWithConstraints(modifier.fillMaxSize()) {
-        // Wide windows put the quick menus beside the play buttons; narrow ones above the seek bar.
-        val quickBesidePlay = maxWidth >= QUICK_BESIDE_PLAY_MIN_WIDTH
+        // Playback is centered in the window, so both sides must clear the larger inset.
+        val insets = WindowInsets.safeDrawing.asPaddingValues()
+        val direction = LocalLayoutDirection.current
+        val sideInset = maxOf(insets.calculateLeftPadding(direction), insets.calculateRightPadding(direction))
+        val quickBesidePlay = maxWidth - sideInset * 2 >= QUICK_BESIDE_PLAY_MIN_WIDTH
         TopBar(
             state = state,
             showClock = config.showClock,
@@ -684,7 +689,8 @@ private val SEEK_THUMB_SIZE = DpSize(4.dp, 18.dp)
 private val SEEK_THUMB_FOCUSED_SIZE = DpSize(8.dp, 28.dp)
 private val TOP_BAR_ICON_SIZE = 20.dp
 private val QUICK_ICON_SIZE = 22.dp
-private val QUICK_BESIDE_PLAY_MIN_WIDTH = 600.dp
+// The transport row spans 384dp and the quick controls need up to 192dp on either side.
+private val QUICK_BESIDE_PLAY_MIN_WIDTH = 768.dp
 private val SEEK_PREVIEW_WIDTH = 240.dp
 private val SEEK_PREVIEW_MAX_HEIGHT = 160.dp
 
