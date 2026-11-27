@@ -52,7 +52,7 @@ Video: [Cyberpunk: Edgerunners — Official Trailer](https://www.youtube.com/wat
 
 ## Build
 
-You need JDK 21, Android SDK platform 37, NDK `30.0.16248370`, stable Rust and `cargo-ndk`.
+You need JDK 21, Android SDK platform 37.1, NDK `30.0.16248370`, stable Rust and `cargo-ndk`.
 Add the Rust targets `aarch64-linux-android` and `armv7-linux-androideabi`.
 
 The native libraries need `meson`, `ninja`, `cmake`, `nasm`, `pkg-config`, `git` and `libclang`.

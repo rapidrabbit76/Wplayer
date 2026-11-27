@@ -64,7 +64,9 @@ val releaseVersionCode: Int = gitDescribe.substringBefore('-').split('.').map(St
 
 android {
     namespace = "dev.wplayer.app"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
 
     defaultConfig {
         applicationId = "dev.wplayer"

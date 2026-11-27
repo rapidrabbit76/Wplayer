@@ -28,7 +28,9 @@ val cargoExecutable = providers.gradleProperty("wplayer.cargo")
 
 android {
     namespace = "dev.wplayer.core"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
     ndkVersion = "30.0.16248370"
 
     defaultConfig {
