@@ -16,8 +16,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
@@ -87,6 +90,7 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -264,6 +268,24 @@ class ScreenshotTest {
     @Test
     @Config(qualifiers = PHONE_LANDSCAPE)
     fun player_phone_landscape() = capture("player_phone_landscape") { Player() }
+
+    @Test
+    @Config(qualifiers = "en-w600dp-h360dp-land-mdpi")
+    fun player_medium_width_controls_receive_their_own_taps() {
+        val taps = mutableListOf<String>()
+        val actions = object : PlayerControlActions by NoOpPlayerActions {
+            override fun onPrevious() { taps += "previous" }
+            override fun onToggleRotationLock() { taps += "rotation" }
+            override fun onQuickMenu(open: Boolean) { if (open) taps += "speed" }
+        }
+        capture("player_medium_width") { Player(actions) }
+
+        compose.onNodeWithContentDescription("Previous file").performTouchInput { click() }
+        assertEquals(listOf("previous"), taps)
+        compose.onNodeWithContentDescription("Lock rotation").performTouchInput { click() }
+        compose.onNodeWithContentDescription("Playback speed").performTouchInput { click() }
+        assertEquals(listOf("previous", "rotation", "speed"), taps)
+    }
 
     @Test
     @Config(qualifiers = TABLET)
@@ -453,7 +475,7 @@ class ScreenshotTest {
     )
 
     @Composable
-    private fun Player() = VideoBackground {
+    private fun Player(actions: PlayerControlActions = NoOpPlayerActions) = VideoBackground {
         PlayerControls(
             state = PlayerUiState(
                 title = "[1080p] 아주 긴 한국어 영화 제목이 들어가는 경우 - 감독판 확장 에디션.mkv",
@@ -469,7 +491,7 @@ class ScreenshotTest {
                 ),
             ),
             config = ControlsConfig(seekBackSeconds = 10, seekForwardSeconds = 30, showClock = true, hasPrevious = true, hasNext = true, canLockRotation = true),
-            actions = NoOpPlayerActions,
+            actions = actions,
         )
     }
 
